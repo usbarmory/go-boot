@@ -13,7 +13,7 @@ REV = $(shell git rev-parse --short HEAD 2> /dev/null)
 SHELL = /bin/bash
 
 APP ?= efi-boot
-TEXT_START := 0x10010000 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
+TEXT_START := 0x05e10000 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
 TAMAGOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000 -X 'main.Build=${BUILD}' -X 'main.Revision=${REV}' -X 'main.Boot=${BOOT}' -X 'main.Start=${START}' -X 'main.PublicKeyStr=${PUBLIC_KEY}'"
 GOENV := GOOS=tamago GOARCH=amd64
 
@@ -40,10 +40,13 @@ clean:
 
 $(APP): check_tamago
 	$(GOENV) $(TAMAGO) build $(TAMAGOFLAGS) -o ${APP}
+
+$(APP).efi: $(APP)
 	objcopy \
 		--strip-debug \
-		--image-base 0x1000f000 \
+		--image-base 0x0500f000 \
 		--target efi-app-x86_64 \
 		--subsystem=efi-app \
-		${APP}
-	printf '\x26\x02' | dd of=$(APP) bs=1 seek=150 count=2 conv=notrunc,fsync # ajust Characteristics
+		--stack=0x10000 \
+		${APP} ${APP}.efi
+	printf '\x26\x02' | dd of=${APP}.efi bs=1 seek=150 count=2 conv=notrunc,fsync # ajust Characteristics

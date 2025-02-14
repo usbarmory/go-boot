@@ -74,7 +74,5 @@ func init() {
 }
 
 func main() {
-	for {
-		log.Printf("%s/%s (%s) • %s %s", runtime.GOOS, runtime.GOARCH, runtime.Version(), Revision, Build)
-	}
+	log.Printf("%s/%s (%s) • %s %s", runtime.GOOS, runtime.GOARCH, runtime.Version(), Revision, Build)
 }
