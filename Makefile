@@ -55,7 +55,7 @@ check_tamago:
 	fi
 
 clean:
-	@rm -fr $(APP)
+	@rm -fr $(APP) $(APP).efi
 
 #### dependencies ####
 
