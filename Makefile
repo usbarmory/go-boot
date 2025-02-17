@@ -7,7 +7,7 @@ BUILD_TAGS = linkramsize,linkramstart,linkprintk
 
 SHELL = /bin/bash
 
-APP ?= efi-boot
+APP ?= go-boot
 # FIXME
 TEXT_START := 0x05c61b00 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
 TAMAGOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000"
