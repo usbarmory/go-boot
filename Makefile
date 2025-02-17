@@ -3,18 +3,14 @@
 # Use of this source code is governed by the license
 # that can be found in the LICENSE file.
 
-BUILD_USER ?= $(shell whoami)
-BUILD_HOST ?= $(shell hostname)
-BUILD_DATE ?= $(shell /bin/date -u "+%Y-%m-%d %H:%M:%S")
 BUILD_TAGS = linkramsize,linkramstart,linkprintk
-BUILD = ${BUILD_USER}@${BUILD_HOST} on ${BUILD_DATE}
-REV = $(shell git rev-parse --short HEAD 2> /dev/null)
 
 SHELL = /bin/bash
 
 APP ?= efi-boot
-TEXT_START := 0x05e10000 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
-TAMAGOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000 -X 'main.Build=${BUILD}' -X 'main.Revision=${REV}' -X 'main.Boot=${BOOT}' -X 'main.Start=${START}' -X 'main.PublicKeyStr=${PUBLIC_KEY}'"
+# FIXME
+TEXT_START := 0x05c61b00 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
+TAMAGOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000"
 GOENV := GOOS=tamago GOARCH=amd64
 
 .PHONY: clean
@@ -24,6 +20,8 @@ GOENV := GOOS=tamago GOARCH=amd64
 all: $(APP)
 
 elf: $(APP)
+
+efi: $(APP).efi
 
 #### utilities ####
 
@@ -44,7 +42,7 @@ $(APP): check_tamago
 $(APP).efi: $(APP)
 	objcopy \
 		--strip-debug \
-		--image-base 0x0500f000 \
+		--image-base 0x0500e000 \
 		--target efi-app-x86_64 \
 		--subsystem=efi-app \
 		--stack=0x10000 \

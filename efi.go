@@ -8,11 +8,11 @@
 package main
 
 import (
-	"log"
 	"runtime"
 	_ "unsafe"
 
 	"github.com/usbarmory/tamago/amd64"
+	"github.com/usbarmory/tamago/soc/intel/rtc"
 	"github.com/usbarmory/tamago/soc/intel/uart"
 )
 
@@ -29,6 +29,9 @@ const (
 var (
 	// AMD64 core
 	AMD64 = &amd64.CPU{}
+
+	// Real-Time Clock
+	RTC = &rtc.RTC{}
 
 	// Serial port
 	UART0 = &uart.UART{
@@ -58,9 +61,9 @@ func printk(c byte) {
 //
 //go:linkname Init runtime.hwinit
 func Init() {
-
 	// initialize CPU
 	AMD64.Init()
+
 	// initialize serial console
 	UART0.Init()
 
@@ -70,9 +73,10 @@ func Init() {
 }
 
 func init() {
-	log.SetFlags(0)
-}
+	// Real-Time Clock
+	RTC = &rtc.RTC{}
 
-func main() {
-	log.Printf("%s/%s (%s) • %s %s", runtime.GOOS, runtime.GOARCH, runtime.Version(), Revision, Build)
+	if t, err := RTC.Now(); err == nil {
+		AMD64.SetTimer(t.UnixNano())
+	}
 }
