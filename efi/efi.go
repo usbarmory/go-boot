@@ -3,6 +3,14 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
+// Package efi implements a driver for the Unified Extensible Firmware Interface (UEFI)
+// interface following the specifications at:
+//
+//	https://uefi.org/specs/UEFI/2.10/
+//
+// This package is only meant to be used with `GOOS=tamago` as
+// supported by the TamaGo framework for bare metal Go, see
+// https://github.com/usbarmory/tamago.
 package efi
 
 import (
@@ -14,15 +22,15 @@ import (
 )
 
 // EFI Table Header Signature
-const Signature = 0x5453595320494249 // TSYS IBI
+const signature = 0x5453595320494249 // TSYS IBI
 
-// EFI Boot Service offsets
-const (
-	AllocatePages = 0x28
-)
+// EFI Boot Service function prototype
+func callService(fn uintptr, a1 uint64, a2 uint64, a3 uint64, a4 uint64) uint64
 
-// EFI Boot Service prototypes (TODO)
-func allocatePages(allocateType int, memoryType int, n uint, addr uint64)
+// BootServices represents an EFI Boot Services instance.
+type BootServices struct {
+	base uintptr
+}
 
 // TableHeader represents the data structure that precedes all of the standard
 // EFI table types.
@@ -88,8 +96,21 @@ func GetSystemTable() (t *SystemTable, err error) {
 		return
 	}
 
-	if t.Header.Signature != Signature {
+	if t.Header.Signature != signature {
 		return nil, errors.New("EFI System Table pointer is invalid")
+	}
+
+	return
+}
+
+// GetBootServices returns an EFI Boot Services instance.
+func (d *SystemTable) GetBootServices() (b *BootServices, err error) {
+	if d.BootServices == 0 {
+		return nil, errors.New("EFI Boot Servies pointer is nil")
+	}
+
+	b = &BootServices{
+		base: uintptr(d.BootServices),
 	}
 
 	return

@@ -48,7 +48,7 @@ var cmds = make(map[string]*Cmd)
 type Interface struct {
 	sync.Mutex
 
-	CPU *amd64.CPU
+	CPU  *amd64.CPU
 	UART io.ReadWriter
 
 	Log *os.File
