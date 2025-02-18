@@ -24,7 +24,7 @@ const (
 const (
 	EfiReservedMemoryType = iota
 	EfiLoaderCode
-	EfiLoaderDat
+	EfiLoaderData
 	EfiBootServicesCode
 	EfiBootServicesData
 	EfiRuntimeServicesCode
