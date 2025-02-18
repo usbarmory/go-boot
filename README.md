@@ -16,6 +16,7 @@ Shell> go-boot.efi
 
 tamago/amd64 (go1.24.0) • UEFI
 
+alloc           <hex offset> <size>      # allocate pages via UEFI boot services
 build                                    # build information
 date            (time in RFC339 format)? # show/change runtime date and time
 dma             (free|used)?             # show allocation of default DMA region
