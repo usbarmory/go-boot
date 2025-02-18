@@ -41,7 +41,7 @@ var (
 )
 
 // set in amd64.s
-var SystemTable uintptr
+var systemTable uintptr
 
 //go:linkname ramStart runtime.ramStart
 var ramStart uint64 = 0x10000000

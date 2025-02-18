@@ -6,5 +6,5 @@
 #include "textflag.h"
 
 TEXT cpuinit(SB),NOSPLIT|NOFRAME,$0
-	MOVQ	DX, ·SystemTable(SB)
+	MOVQ	DX, ·systemTable(SB)
 	JMP	runtime·rt0_amd64_tamago(SB)

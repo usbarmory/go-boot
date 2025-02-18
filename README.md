@@ -28,9 +28,14 @@ poke            <hex offset> <hex value> # memory write   (use with caution)
 reboot                                   # reset device
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
+uefi                                     # UEFI information
 uptime                                   # show how long the system has been running
 
->
+> uefi
+Firmware Revision .: 10000
+Runtime Services  .: 0x79ecb98
+Boot Services .....: 0x7ea5720
+Table Entries .....: 10
 ```
 
 Compiling

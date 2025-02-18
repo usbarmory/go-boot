@@ -6,6 +6,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 
 	"golang.org/x/term"
@@ -22,6 +23,18 @@ func init() {
 }
 
 func uefiCmd(_ *Interface, term *term.Terminal, _ []string) (string, error) {
-	fmt.Fprintf(term, "System table: %x\n", efi.SystemTable)
-	return "", nil
+	var res bytes.Buffer
+
+	t, err := efi.GetSystemTable()
+
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Fprintf(term, "Firmware Revision .: %x\n", t.FirmwareRevision)
+	fmt.Fprintf(term, "Runtime Services  .: %#x\n", t.RuntimeServices)
+	fmt.Fprintf(term, "Boot Services .....: %#x\n", t.BootServices)
+	fmt.Fprintf(term, "Table Entries .....: %d\n", t.NumberOfTableEntries)
+
+	return res.String(), nil
 }
