@@ -1,5 +1,9 @@
 github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b h1:wDUNC2eKiL35DbLvsDhiblTUXHxcOPwQSCzi7xpQUN4=
 github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b/go.mod h1:VzxiSdG6j1pi7rwGm/xYI5RbtpBgM8sARDXlvEvxlu0=
+github.com/usbarmory/tamago v0.0.0-20250212123402-5facf762488d h1:V3R6r4ofDFTZAlz2iGpeSXJ97OMZcBhdS0bskfPbwxw=
+github.com/usbarmory/tamago v0.0.0-20250212123402-5facf762488d/go.mod h1:NL88q9ZsIPYFzXaosAeKgu1Kr5i1k4Rau3wnbNBL5bY=
+github.com/usbarmory/tamago v0.0.0-20250218125834-74a4bfc47050 h1:VLbp9uoirGOc5V3MjDPXTb8W4ACWxMmTdf/HzZ/TJc0=
+github.com/usbarmory/tamago v0.0.0-20250218125834-74a4bfc47050/go.mod h1:NL88q9ZsIPYFzXaosAeKgu1Kr5i1k4Rau3wnbNBL5bY=
 golang.org/x/sys v0.30.0 h1:QjkSwP/36a20jFYWkSue1YwXzLmsV5Gfq7Eiy72C1uc=
 golang.org/x/sys v0.30.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
 golang.org/x/term v0.29.0 h1:L6pJp37ocefwRRtYPKSWOWzOtWSxVajvz2ldH/xi3iU=

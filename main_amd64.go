@@ -12,7 +12,8 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/usbarmory/efi-boot/cmd"
+	"github.com/usbarmory/go-boot/cmd"
+	"github.com/usbarmory/go-boot/efi"
 )
 
 func init() {
@@ -27,8 +28,8 @@ func main() {
 	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
 
 	console := &cmd.Interface{
-		CPU: AMD64,
-		UART: UART0,
+		CPU: efi.AMD64,
+		UART: efi.UART0,
 		Log: logFile,
 	}
 

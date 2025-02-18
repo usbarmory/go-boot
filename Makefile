@@ -3,13 +3,14 @@
 # Use of this source code is governed by the license
 # that can be found in the LICENSE file.
 
-BUILD_TAGS = linkramsize,linkramstart,linkprintk
+BUILD_TAGS = linkcpuinit,linkramsize,linkramstart,linkprintk
 SHELL = /bin/bash
 APP ?= go-boot
 
 # FIXME
-TEXT_START := 0x05c61b00 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
-TAMAGOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -R 0x1000"
+TEXT_START := 0x05009000 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
+#TEXT_START := 0x10010000 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
+GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000"
 GOENV := GOOS=tamago GOARCH=amd64
 
 OVMFCODE ?= OVMF_CODE.fd
@@ -60,14 +61,17 @@ clean:
 #### dependencies ####
 
 $(APP): check_tamago
-	$(GOENV) $(TAMAGO) build $(TAMAGOFLAGS) -o ${APP}
+	$(GOENV) $(TAMAGO) build $(GOFLAGS) -o ${APP}
+
+# --image-base 0x0500e000
+# --image-base 0x1000e000 \
 
 $(APP).efi: $(APP)
 	objcopy \
 		--strip-debug \
-		--image-base 0x0500e000 \
 		--target efi-app-x86_64 \
 		--subsystem=efi-app \
+		--image-base 0x05008000 \
 		--stack=0x10000 \
 		${APP} ${APP}.efi
 	printf '\x26\x02' | dd of=${APP}.efi bs=1 seek=150 count=2 conv=notrunc,fsync # ajust Characteristics

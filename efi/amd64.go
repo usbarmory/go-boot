@@ -5,7 +5,7 @@
 
 //go:build amd64
 
-package main
+package efi
 
 import (
 	"runtime"
@@ -40,11 +40,14 @@ var (
 	}
 )
 
+// set in amd64.s
+var SystemTable uintptr
+
 //go:linkname ramStart runtime.ramStart
 var ramStart uint64 = 0x10000000
 
 //go:linkname ramSize runtime.ramSize
-var ramSize uint64 = 0x40000000
+var ramSize uint64 = 0x10000000 // 256MB
 
 //go:linkname nanotime1 runtime.nanotime1
 func nanotime1() int64 {
