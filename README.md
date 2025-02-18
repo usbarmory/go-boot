@@ -51,9 +51,8 @@ cd tamago-go-latest/src && ./all.bash
 cd ../bin && export TAMAGO=`pwd`/go
 ```
 
-> :warning: this PoC currently requires two workaround:
+> :warning: this PoC currently requires one workaround:
 >   * `TEXT_START` must be adjusted to reflect the actual EntryPoint from qemu logs
->   * `MOVL DI, CR3` must be commented aout in tamago/amd64/init.s
 
 Build the `go-boot.efi` application executable:
 
