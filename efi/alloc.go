@@ -5,10 +5,6 @@
 
 package efi
 
-import (
-	"fmt"
-)
-
 // EFI Boot Services offset
 const allocatePages = 0x28
 
@@ -50,9 +46,5 @@ func (s *BootServices) AllocatePages(allocateType int, memoryType int, size int,
 		&physicalAddress,
 	)
 
-	if status != 0 {
-		return fmt.Errorf("EFI_STATUS error %x", status)
-	}
-
-	return nil
+	return parseStatus(status)
 }

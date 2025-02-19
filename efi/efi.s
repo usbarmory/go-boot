@@ -5,7 +5,7 @@
 
 #include "textflag.h"
 
-// func callService(fn uintptr, a1 uint64, a2 uint64, a3 uint64, a4 *uint64) uint64
+// func callService(fn uintptr, a1 uint64, a2 uint64, a3 uint64, a4 *uint64) (status uint64)
 TEXT ·callService(SB),$0-48
 	MOVQ	fn+0(FP), DI
 
@@ -17,6 +17,6 @@ TEXT ·callService(SB),$0-48
 	MOVQ	a4+32(FP), R9
 
 	CALL	(DI)
-	MOVQ	AX, ret+40(FP)
+	MOVQ	AX, status+40(FP)
 
 	RET

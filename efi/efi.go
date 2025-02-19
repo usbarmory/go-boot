@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 
 	"github.com/usbarmory/tamago/dma"
 )
@@ -25,7 +26,16 @@ import (
 const signature = 0x5453595320494249 // TSYS IBI
 
 // EFI Boot Service function prototype
-func callService(fn uintptr, a1 uint64, a2 uint64, a3 uint64, a4 *uint64) uint64
+func callService(fn uintptr, a1 uint64, a2 uint64, a3 uint64, a4 *uint64) (status uint64)
+
+func parseStatus(status uint64) (err error) {
+	switch {
+	case status > 0:
+		return fmt.Errorf("EFI_STATUS error %#x (%d)", status, status & 0xff)
+	default:
+		return
+	}
+}
 
 // BootServices represents an EFI Boot Services instance.
 type BootServices struct {
