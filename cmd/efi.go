@@ -77,11 +77,15 @@ func memmapCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err e
 		return
 	}
 
-	fmt.Fprintf(&buf, "Type\tPhysicalStart\t\tVirtualStart\t\tPages\tAttributes\t\n")
+	fmt.Fprintf(&buf, "Type\tStart\t\tEnd\t\tPages\tAttributes\t\n")
 
 	for _, desc := range mmap {
+		start := desc.PhysicalStart
+		pages := desc.NumberOfPages
+		end := start + (pages * 4096) - 1
+
 		fmt.Fprintf(&buf, "%02d\t%#016x\t%#016x\t%d\t%016x\n",
-			desc.Type, desc.PhysicalStart, desc.VirtualStart, desc.NumberOfPages, desc.Attribute)
+			desc.Type, start, end, pages, desc.Attribute)
 	}
 
 	fmt.Fprintf(&buf, "\nEntries: %d\n", len(mmap))
