@@ -17,12 +17,6 @@ import (
 	"github.com/usbarmory/tamago/dma"
 )
 
-const (
-	runs      = 9
-	chunksMax = 50
-	fillSize  = 160 * 1024 * 1024
-)
-
 func init() {
 	Add(Cmd{
 		Name:    "peek",
