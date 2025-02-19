@@ -25,7 +25,7 @@ import (
 const signature = 0x5453595320494249 // TSYS IBI
 
 // EFI Boot Service function prototype
-func callService(fn uintptr, a1 uint64, a2 uint64, a3 uint64, a4 uint64) uint64
+func callService(fn uintptr, a1 uint64, a2 uint64, a3 uint64, a4 *uint64) uint64
 
 // BootServices represents an EFI Boot Services instance.
 type BootServices struct {

@@ -47,7 +47,7 @@ func (s *BootServices) AllocatePages(allocateType int, memoryType int, size int,
 		uint64(allocateType),
 		uint64(memoryType),
 		uint64(size)/4096,
-		uint64(physicalAddress),
+		&physicalAddress,
 	)
 
 	if status != 0 {

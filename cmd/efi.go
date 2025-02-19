@@ -20,6 +20,8 @@ import (
 var systemTable *efi.SystemTable
 
 func init() {
+	systemTable, _ = efi.GetSystemTable()
+
 	Add(Cmd{
 		Name: "uefi",
 		Help: "UEFI information",
@@ -34,14 +36,15 @@ func init() {
 		Help:    "allocate pages via UEFI boot services",
 		Fn:      allocCmd,
 	})
-
 }
 
 func uefiCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err error) {
 	var buf bytes.Buffer
 
-	if systemTable, err = efi.GetSystemTable(); err != nil {
-		return
+	if systemTable == nil {
+		if systemTable, err = efi.GetSystemTable(); err != nil {
+			return
+		}
 	}
 
 	fmt.Fprintf(&buf, "Firmware Revision .: %x\n", systemTable.FirmwareRevision)
@@ -53,13 +56,13 @@ func uefiCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err err
 }
 
 func allocCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err error) {
-	addr, err := strconv.ParseUint(arg[0], 16, 32)
+	addr, err := strconv.ParseUint(arg[0], 16, 64)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid address, %v", err)
 	}
 
-	size, err := strconv.ParseUint(arg[1], 10, 32)
+	size, err := strconv.ParseUint(arg[1], 10, 64)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid size, %v", err)
@@ -70,7 +73,7 @@ func allocCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err err
 	}
 
 	if systemTable == nil {
-		return "", errors.New("run `uefi` first")
+		return "", errors.New("EFI System Table unavailable")
 	}
 
 	b, err := systemTable.GetBootServices()
@@ -81,7 +84,7 @@ func allocCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err err
 
 	err = b.AllocatePages(
 		efi.AllocateAddress,
-		efi.EfiLoaderData,
+		efi.EfiReservedMemoryType,
 		int(size),
 		addr,
 	)

@@ -64,20 +64,20 @@ func memCopy(start uint, size int, w []byte) (b []byte) {
 }
 
 func memReadCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err error) {
-	addr, err := strconv.ParseUint(arg[0], 16, 32)
+	addr, err := strconv.ParseUint(arg[0], 16, 64)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid address, %v", err)
 	}
 
-	size, err := strconv.ParseUint(arg[1], 10, 32)
+	size, err := strconv.ParseUint(arg[1], 10, 64)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid size, %v", err)
 	}
 
-	if (addr%4) != 0 || (size%4) != 0 {
-		return "", fmt.Errorf("only 32-bit aligned accesses are supported")
+	if (addr%8) != 0 || (size%8) != 0 {
+		return "", fmt.Errorf("only 64-bit aligned accesses are supported")
 	}
 
 	if size > maxBufferSize {
@@ -88,22 +88,22 @@ func memReadCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err e
 }
 
 func memWriteCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err error) {
-	addr, err := strconv.ParseUint(arg[0], 16, 32)
+	addr, err := strconv.ParseUint(arg[0], 16, 64)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid address, %v", err)
 	}
 
-	val, err := strconv.ParseUint(arg[1], 16, 32)
+	val, err := strconv.ParseUint(arg[1], 16, 64)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid data, %v", err)
 	}
 
-	buf := make([]byte, 4)
+	buf := make([]byte, 8)
 	binary.BigEndian.PutUint32(buf, uint32(val))
 
-	mem(uint(addr), 4, buf)
+	mem(uint(addr), 8, buf)
 
 	return
 }
