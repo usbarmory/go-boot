@@ -2,7 +2,7 @@
 Introduction
 ============
 
-> :warning: this is a Work in Progress
+> :warning: this is a Work in Progress not meant for production use
 
 This [TamaGo](https://github.com/usbarmory/tamago) based unikernel acts as a
 primary UEFI boot loader for AMD64 platforms, allowing boot of kernel images
