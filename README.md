@@ -16,7 +16,7 @@ Shell> go-boot.efi
 
 tamago/amd64 (go1.24.0) • UEFI
 
-alloc           <hex offset> <size>      # allocate pages via UEFI boot services
+alloc           <hex offset> <size>      # EFI_BOOT_SERVICES.AllocatePages()
 build                                    # build information
 date            (time in RFC339 format)? # show/change runtime date and time
 dma             (free|used)?             # show allocation of default DMA region
@@ -24,6 +24,7 @@ exit, quit                               # close session
 halt                                     # halt the machine
 help                                     # this help
 info                                     # device information
+linux           (path)?                  # boot Linux kernel bzImage
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
 reboot                                   # reset device

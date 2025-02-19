@@ -7,9 +7,7 @@ BUILD_TAGS = linkcpuinit,linkramsize,linkramstart,linkprintk
 SHELL = /bin/bash
 APP ?= go-boot
 
-# FIXME
-TEXT_START := 0x05009000 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
-#TEXT_START := 0x10010000 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
+TEXT_START := 0x10010000 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
 GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000"
 GOENV := GOOS=tamago GOARCH=amd64
 
@@ -63,15 +61,12 @@ clean:
 $(APP): check_tamago
 	$(GOENV) $(TAMAGO) build $(GOFLAGS) -o ${APP}
 
-# --image-base 0x0500e000
-# --image-base 0x1000e000 \
-
 $(APP).efi: $(APP)
 	objcopy \
 		--strip-debug \
 		--target efi-app-x86_64 \
 		--subsystem=efi-app \
-		--image-base 0x05008000 \
+		--image-base $(subst 1000,0000,$(TEXT_START)) \
 		--stack=0x10000 \
 		${APP} ${APP}.efi
-	printf '\x26\x02' | dd of=${APP}.efi bs=1 seek=150 count=2 conv=notrunc,fsync # ajust Characteristics
+	printf '\x26\x02' | dd of=${APP}.efi bs=1 seek=150 count=2 conv=notrunc,fsync # adjust Characteristics

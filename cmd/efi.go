@@ -17,10 +17,15 @@ import (
 	"github.com/usbarmory/go-boot/efi"
 )
 
-var systemTable *efi.SystemTable
+var (
+	systemTable  *efi.SystemTable
+	bootServices *efi.BootServices
+)
 
 func init() {
-	systemTable, _ = efi.GetSystemTable()
+	if systemTable, _ = efi.GetSystemTable(); systemTable != nil {
+		bootServices, _ = systemTable.GetBootServices()
+	}
 
 	Add(Cmd{
 		Name: "uefi",
@@ -33,7 +38,7 @@ func init() {
 		Args:    2,
 		Pattern: regexp.MustCompile(`^alloc ([[:xdigit:]]+) (\d+)$`),
 		Syntax:  "<hex offset> <size>",
-		Help:    "allocate pages via UEFI boot services",
+		Help:    "EFI_BOOT_SERVICES.AllocatePages()",
 		Fn:      allocCmd,
 	})
 }
@@ -42,9 +47,7 @@ func uefiCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err err
 	var buf bytes.Buffer
 
 	if systemTable == nil {
-		if systemTable, err = efi.GetSystemTable(); err != nil {
-			return
-		}
+		return "", errors.New("EFI System Table unavailable")
 	}
 
 	fmt.Fprintf(&buf, "Firmware Revision .: %x\n", systemTable.FirmwareRevision)
@@ -72,17 +75,11 @@ func allocCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err err
 		return "", fmt.Errorf("only 64-bit aligned accesses are supported")
 	}
 
-	if systemTable == nil {
-		return "", errors.New("EFI System Table unavailable")
+	if bootServices == nil {
+		return "", errors.New("EFI Boot Services unavailable")
 	}
 
-	b, err := systemTable.GetBootServices()
-
-	if err != nil {
-		return "", err
-	}
-
-	err = b.AllocatePages(
+	err = bootServices.AllocatePages(
 		efi.AllocateAddress,
 		efi.EfiLoaderData,
 		int(size),
