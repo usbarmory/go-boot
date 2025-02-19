@@ -25,6 +25,7 @@ halt                                     # halt the machine
 help                                     # this help
 info                                     # device information
 linux           (path)?                  # boot Linux kernel bzImage
+memmap                                   # EFI_BOOT_SERVICES.GetMemoryMap()
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
 reboot                                   # reset device

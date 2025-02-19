@@ -5,7 +5,7 @@
 
 package efi
 
-// EFI Boot Services offset
+// EFI Boot Services offset for AllocatePages
 const allocatePages = 0x28
 
 // EFI_ALLOCATE_TYPE
@@ -39,11 +39,12 @@ const (
 
 // AllocatePages calls EFI_BOOT_SERVICES.AllocatePages().
 func (s *BootServices) AllocatePages(allocateType int, memoryType int, size int, physicalAddress uint64) error {
-	status := callService(s.base+allocatePages,
+	status := callService(
+		s.base+allocatePages,
 		uint64(allocateType),
 		uint64(memoryType),
 		uint64(size)/4096,
-		&physicalAddress,
+		ptrval(&physicalAddress),
 	)
 
 	return parseStatus(status)

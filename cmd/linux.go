@@ -65,8 +65,9 @@ func init() {
 	})
 }
 
-func linuxCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err error) {
+func linuxCmd(_ *Interface, term *term.Terminal, arg []string) (res string, err error) {
 	var mem *dma.Region
+	var key uint64
 
 	path := strings.TrimSpace(arg[0])
 
@@ -80,6 +81,19 @@ func linuxCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err err
 		return "", errors.New("EFI Boot Services unavailable")
 	}
 
+	// exit EFI Boot Services
+
+	if _, key, err = bootServices.GetMemoryMap(); err != nil {
+		return
+	}
+
+	if err = bootServices.Exit(0, key); err != nil {
+		// FIXME: error 0x8000000000000002, set first argument
+		// return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
+	}
+
+	// allocate target kernel memory
+
 	if err = bootServices.AllocatePages(
 		efi.AllocateAddress,
 		efi.EfiLoaderData,
@@ -89,11 +103,14 @@ func linuxCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err err
 		return
 	}
 
+	// load kernel
+
 	if mem, err = dma.NewRegion(memoryStart, memorySize, false); err != nil {
 		return
 	}
 
-	mem.Reserve(memorySize, 0)
+	addr, _ := mem.Reserve(memorySize, 0)
+	defer mem.Release(addr)
 
 	image := &exec.LinuxImage{
 		Memory:  memoryMap,

@@ -18,6 +18,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"unsafe"
 
 	"github.com/usbarmory/tamago/dma"
 )
@@ -25,13 +26,17 @@ import (
 // EFI Table Header Signature
 const signature = 0x5453595320494249 // TSYS IBI
 
-// EFI Boot Service function prototype
-func callService(fn uintptr, a1 uint64, a2 uint64, a3 uint64, a4 *uint64) (status uint64)
+// defined in efi.s
+func callService(fn uintptr, a1, a2, a3, a4 uint64) (status uint64)
+
+func ptrval(ptr *uint64) (val uint64) {
+	return uint64(uintptr(unsafe.Pointer(ptr)))
+}
 
 func parseStatus(status uint64) (err error) {
 	switch {
 	case status > 0:
-		return fmt.Errorf("EFI_STATUS error %#x (%d)", status, status & 0xff)
+		return fmt.Errorf("EFI_STATUS error %#x (%d)", status, status&0xff)
 	default:
 		return
 	}
@@ -100,7 +105,8 @@ func GetSystemTable() (t *SystemTable, err error) {
 		return
 	}
 
-	_, buf = r.Reserve(len(buf), 0)
+	addr, buf := r.Reserve(len(buf), 0)
+	defer dma.Release(addr)
 
 	if err = t.UnmarshalBinary(buf); err != nil {
 		return

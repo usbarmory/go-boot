@@ -34,6 +34,12 @@ func init() {
 	})
 
 	Add(Cmd{
+		Name: "memmap",
+		Help: "EFI_BOOT_SERVICES.GetMemoryMap()",
+		Fn:   memmapCmd,
+	})
+
+	Add(Cmd{
 		Name:    "alloc",
 		Args:    2,
 		Pattern: regexp.MustCompile(`^alloc ([[:xdigit:]]+) (\d+)$`),
@@ -54,6 +60,32 @@ func uefiCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err err
 	fmt.Fprintf(&buf, "Runtime Services  .: %#x\n", systemTable.RuntimeServices)
 	fmt.Fprintf(&buf, "Boot Services .....: %#x\n", systemTable.BootServices)
 	fmt.Fprintf(&buf, "Table Entries .....: %d\n", systemTable.NumberOfTableEntries)
+
+	return buf.String(), err
+}
+
+func memmapCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err error) {
+	var buf bytes.Buffer
+	var mmap []*efi.MemoryMap
+	var key uint64
+
+	if bootServices == nil {
+		return "", errors.New("EFI Boot Services unavailable")
+	}
+
+	if mmap, key, err = bootServices.GetMemoryMap(); err != nil {
+		return
+	}
+
+	fmt.Fprintf(&buf, "Type\tPhysicalStart\t\tVirtualStart\t\tPages\tAttributes\t\n")
+
+	for _, desc := range mmap {
+		fmt.Fprintf(&buf, "%02d\t%#016x\t%#016x\t%d\t%016x\n",
+			desc.Type, desc.PhysicalStart, desc.VirtualStart, desc.NumberOfPages, desc.Attribute)
+	}
+
+	fmt.Fprintf(&buf, "\nEntries: %d\n", len(mmap))
+	fmt.Fprintf(&buf, "Map Key: %d\n", key)
 
 	return buf.String(), err
 }
