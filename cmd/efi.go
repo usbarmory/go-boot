@@ -84,7 +84,7 @@ func allocCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err err
 
 	err = b.AllocatePages(
 		efi.AllocateAddress,
-		efi.EfiReservedMemoryType,
+		efi.EfiLoaderData,
 		int(size),
 		addr,
 	)

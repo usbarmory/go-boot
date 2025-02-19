@@ -15,10 +15,10 @@ GOENV := GOOS=tamago GOARCH=amd64
 
 OVMFCODE ?= OVMF_CODE.fd
 OVMFVARS ?= OVMF_VARS.fd
-LOG ?= go-boot-qemu.log
+LOG ?= qemu.log
 
 QEMU ?= qemu-system-x86_64 \
-        -enable-kvm -cpu host,invtsc=on \
+        -enable-kvm -cpu host,invtsc=on -m 4G \
         -drive file=fat:rw:$(CURDIR) \
         -drive if=pflash,format=raw,readonly,file=$(OVMFCODE) \
         -drive if=pflash,format=raw,file=$(OVMFVARS) \
