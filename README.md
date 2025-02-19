@@ -65,8 +65,7 @@ Build the `go-boot.efi` application executable:
 
 ```
 git clone https://github.com/usbarmory/go-boot && cd go-boot
-# WiP: TEXT_START must be adjusted to reflect the actual EntryPoint from qemu logs
-make efi TEXT_START=0x05c61b00
+make efi
 ```
 
 Debugging
