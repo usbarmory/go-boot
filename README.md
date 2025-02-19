@@ -39,6 +39,13 @@ Firmware Revision .: 10000
 Runtime Services  .: 0x79ecb98
 Boot Services .....: 0x7ea5720
 Table Entries .....: 10
+
+> alloc 80000000 4096
+
+> memmap
+Type    Start                   End                     Pages   Attributes
+02      0x0000000080000000      0x0000000080000fff      1       000000000000000f
+...
 ```
 
 Compiling

@@ -39,6 +39,11 @@ func (d *MemoryMap) UnmarshalBinary(data []byte) (err error) {
 	return
 }
 
+// End returns the descriptor physical end address.
+func (d *MemoryMap) PhysicalEnd() uint64 {
+	return d.PhysicalStart + (d.NumberOfPages * 4096)
+}
+
 // GetMemoryMap calls EFI_BOOT_SERVICES.GetMemoryMap().
 func (s *BootServices) GetMemoryMap() (m []*MemoryMap, mapKey uint64, err error) {
 	d := &MemoryMap{}
