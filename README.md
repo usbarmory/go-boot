@@ -50,7 +50,7 @@ Type    Start                   End                     Pages   Attributes
 allocated memory range 0x80000000 - 0x90000000
 exit from EFI boot services
 starting kernel@81000000
-Linux version 5.10.233 (root@tamago) (gcc (GCC) 14.2.1 20250128, GNU ld (GNU Binutils) 2.43.1) #4 Thu Feb 6 09:06:17 CET 2025
+Linux version 5.10.233 (root@tamago) (gcc (GCC) 14.2.1 20250128, GNU ld (GNU Binutils) 2.43.1)
 ...
 ```
 
