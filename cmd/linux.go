@@ -17,10 +17,10 @@ import (
 	"strings"
 
 	"github.com/u-root/u-root/pkg/boot/bzimage"
-	"golang.org/x/term"
 
 	"github.com/usbarmory/armory-boot/exec"
 	"github.com/usbarmory/go-boot/efi"
+	"github.com/usbarmory/go-boot/shell"
 	"github.com/usbarmory/tamago/dma"
 )
 
@@ -57,7 +57,7 @@ var memoryMap = []bzimage.E820Entry{
 }
 
 func init() {
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name:    "linux",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^linux(.*)`),
@@ -67,7 +67,7 @@ func init() {
 	})
 }
 
-func linuxCmd(_ *Interface, term *term.Terminal, arg []string) (res string, err error) {
+func linuxCmd(arg []string) (res string, err error) {
 	var mem *dma.Region
 
 	path := strings.TrimSpace(arg[0])

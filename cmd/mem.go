@@ -12,15 +12,14 @@ import (
 	"regexp"
 	"strconv"
 
-	"golang.org/x/term"
-
 	"github.com/usbarmory/tamago/dma"
+	"github.com/usbarmory/go-boot/shell"
 )
 
 const maxBufferSize = 102400
 
 func init() {
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name:    "peek",
 		Args:    2,
 		Pattern: regexp.MustCompile(`^peek ([[:xdigit:]]+) (\d+)$`),
@@ -29,7 +28,7 @@ func init() {
 		Fn:      memReadCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name:    "poke",
 		Args:    2,
 		Pattern: regexp.MustCompile(`^poke ([[:xdigit:]]+) ([[:xdigit:]]+)$`),
@@ -59,7 +58,7 @@ func memCopy(start uint, size int, w []byte) (b []byte) {
 	return
 }
 
-func memReadCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err error) {
+func memReadCmd(arg []string) (res string, err error) {
 	addr, err := strconv.ParseUint(arg[0], 16, 64)
 
 	if err != nil {
@@ -83,7 +82,7 @@ func memReadCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err e
 	return hex.Dump(mem(uint(addr), int(size), nil)), nil
 }
 
-func memWriteCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err error) {
+func memWriteCmd(arg []string) (res string, err error) {
 	addr, err := strconv.ParseUint(arg[0], 16, 64)
 
 	if err != nil {

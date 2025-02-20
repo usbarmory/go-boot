@@ -12,9 +12,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"golang.org/x/term"
-
 	"github.com/usbarmory/go-boot/efi"
+	"github.com/usbarmory/go-boot/shell"
 )
 
 var (
@@ -27,19 +26,19 @@ func init() {
 		bootServices, _ = systemTable.GetBootServices()
 	}
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name: "uefi",
 		Help: "UEFI information",
 		Fn:   uefiCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name: "memmap",
 		Help: "EFI_BOOT_SERVICES.GetMemoryMap()",
 		Fn:   memmapCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name:    "alloc",
 		Args:    2,
 		Pattern: regexp.MustCompile(`^alloc ([[:xdigit:]]+) (\d+)$`),
@@ -49,7 +48,7 @@ func init() {
 	})
 }
 
-func uefiCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err error) {
+func uefiCmd(_ []string) (res string, err error) {
 	var buf bytes.Buffer
 
 	if systemTable == nil {
@@ -64,7 +63,7 @@ func uefiCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err err
 	return buf.String(), err
 }
 
-func memmapCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err error) {
+func memmapCmd(_ []string) (res string, err error) {
 	var buf bytes.Buffer
 	var mmap []*efi.MemoryMap
 
@@ -86,7 +85,7 @@ func memmapCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err e
 	return buf.String(), err
 }
 
-func allocCmd(_ *Interface, _ *term.Terminal, arg []string) (res string, err error) {
+func allocCmd(arg []string) (res string, err error) {
 	addr, err := strconv.ParseUint(arg[0], 16, 64)
 
 	if err != nil {

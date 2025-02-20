@@ -91,12 +91,9 @@ func (c *Console) Read(buf []byte) (n int, err error) {
 // Write data from buffer to console.
 func (c *Console) Write(buf []byte) (n int, err error) {
 	for n = 0; n < len(buf); n++ {
-		if false {
-			UART0.Tx(buf[n])
-			continue
-		}
+		c := buf[n]
 
-		if status := consoleOutput(&buf[n]); status != EFI_SUCCESS {
+		if status := consoleOutput(&c); status != EFI_SUCCESS {
 			return n, parseStatus(status)
 		}
 	}

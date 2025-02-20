@@ -17,29 +17,22 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/term"
+	"github.com/hako/durafmt"
 
 	"github.com/usbarmory/tamago/dma"
-
-	"github.com/hako/durafmt"
+	"github.com/usbarmory/go-boot/shell"
 )
 
 const testDiversifier = "\xde\xad\xbe\xef"
 
 func init() {
-	Add(Cmd{
-		Name: "help",
-		Help: "this help",
-		Fn:   helpCmd,
-	})
-
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name: "build",
 		Help: "build information",
 		Fn:   buildInfoCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name:    "exit, quit",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^(exit|quit)$`),
@@ -47,25 +40,25 @@ func init() {
 		Fn:      exitCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name: "halt",
 		Help: "halt the machine",
 		Fn:   haltCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name: "stack",
 		Help: "goroutine stack trace (current)",
 		Fn:   stackCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name: "stackall",
 		Help: "goroutine stack trace (all)",
 		Fn:   stackallCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name:    "dma",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^dma(?:(?: )(free|used))?$`),
@@ -74,7 +67,7 @@ func init() {
 		Fn:      dmaCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name:    "date",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^date(.*)`),
@@ -83,7 +76,7 @@ func init() {
 		Fn:      dateCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name: "uptime",
 		Help: "show how long the system has been running",
 		Fn:   uptimeCmd,
@@ -92,54 +85,57 @@ func init() {
 	// The following commands are board specific, therefore their Fn
 	// pointers are defined elsewhere in the respective target files.
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name: "info",
 		Help: "device information",
 		Fn:   infoCmd,
 	})
 
-	Add(Cmd{
+	shell.Add(shell.Cmd{
 		Name: "reboot",
 		Help: "reset device",
 		Fn:   rebootCmd,
 	})
 }
 
-func helpCmd(_ *Interface, term *term.Terminal, _ []string) (string, error) {
-	return Help(term), nil
-}
+func buildInfoCmd(_ []string) (res string, err error) {
+	buf := new(bytes.Buffer)
 
-func buildInfoCmd(_ *Interface, term *term.Terminal, _ []string) (string, error) {
 	if bi, ok := debug.ReadBuildInfo(); ok {
-		fmt.Fprintf(term, bi.String())
+		buf.WriteString(bi.String())
 	}
 
-	return "", nil
+	return buf.String(), nil
 }
 
-func exitCmd(_ *Interface, term *term.Terminal, _ []string) (string, error) {
-	fmt.Fprintf(term, "Goodbye from %s/%s\n", runtime.GOOS, runtime.GOARCH)
-	return "logout", io.EOF
+func exitCmd(_ []string) (res string, err error) {
+	res = fmt.Sprintf("Goodbye from %s/%s\n", runtime.GOOS, runtime.GOARCH)
+	err = io.EOF
+
+	return
 }
 
-func haltCmd(_ *Interface, term *term.Terminal, _ []string) (string, error) {
-	fmt.Fprintf(term, "Goodbye from %s/%s\n", runtime.GOOS, runtime.GOARCH)
+func haltCmd(_ []string) (res string, err error) {
+	res = fmt.Sprintf("Goodbye from %s/%s\n", runtime.GOOS, runtime.GOARCH)
+	err = io.EOF
+
 	go runtime.Exit(0)
-	return "halted", io.EOF
+
+	return
 }
 
-func stackCmd(_ *Interface, _ *term.Terminal, _ []string) (string, error) {
+func stackCmd(_ []string) (string, error) {
 	return string(debug.Stack()), nil
 }
 
-func stackallCmd(_ *Interface, _ *term.Terminal, _ []string) (string, error) {
+func stackallCmd(_ []string) (string, error) {
 	buf := new(bytes.Buffer)
 	pprof.Lookup("goroutine").WriteTo(buf, 1)
 
 	return buf.String(), nil
 }
 
-func dmaCmd(_ *Interface, term *term.Terminal, arg []string) (string, error) {
+func dmaCmd(arg []string) (string, error) {
 	var res []string
 
 	if dma.Default() == nil {
@@ -176,7 +172,7 @@ func dmaCmd(_ *Interface, term *term.Terminal, arg []string) (string, error) {
 	return strings.Join(res, "\n"), nil
 }
 
-func dateCmd(iface *Interface, _ *term.Terminal, arg []string) (res string, err error) {
+func dateCmd(arg []string) (res string, err error) {
 	if len(arg[0]) > 1 {
 		t, err := time.Parse(time.RFC3339, arg[0][1:])
 
@@ -184,13 +180,13 @@ func dateCmd(iface *Interface, _ *term.Terminal, arg []string) (res string, err 
 			return "", err
 		}
 
-		date(iface, t.UnixNano())
+		date(t.UnixNano())
 	}
 
 	return fmt.Sprintf("%s", time.Now().Format(time.RFC3339)), nil
 }
 
-func uptimeCmd(iface *Interface, term *term.Terminal, _ []string) (string, error) {
-	ns := uptime(iface)
+func uptimeCmd(_ []string) (string, error) {
+	ns := uptime()
 	return fmt.Sprintf("%s", durafmt.Parse(time.Duration(ns)*time.Nanosecond)), nil
 }
