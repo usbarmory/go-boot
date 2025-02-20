@@ -18,7 +18,12 @@ import (
 	"github.com/usbarmory/go-boot/efi"
 )
 
+// Decide whether to allocate output on console or serial port.
+var useUART = true
+
 func init() {
+	print("go-boot initializing\n")
+
 	log.SetFlags(0)
 
 	logFile, _ := os.OpenFile("/go-boot.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
@@ -29,13 +34,18 @@ func main() {
 	banner := fmt.Sprintf("%s/%s (%s) • UEFI",
 		runtime.GOOS, runtime.GOARCH, runtime.Version())
 
-	console := &cmd.Interface{
-		CPU:    efi.AMD64,
-		UART:   efi.UART0,
-		Banner: banner,
+	iface := &cmd.Interface{
+		CPU:      efi.AMD64,
+		Banner:   banner,
 	}
 
-	cmd.StartTerminal(console)
+	if useUART {
+		iface.Terminal = efi.UART0
+		cmd.StartTerminal(iface)
+	} else {
+		iface.Terminal = efi.CONSOLE
+		cmd.StartConsole(iface)
+	}
 
 	runtime.Exit(0)
 }

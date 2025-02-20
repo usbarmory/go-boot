@@ -30,6 +30,9 @@ var (
 	// AMD64 core
 	AMD64 = &amd64.CPU{}
 
+	// EFI Console I/O
+	CONSOLE = &Console{}
+
 	// Real-Time Clock
 	RTC = &rtc.RTC{}
 
@@ -55,11 +58,6 @@ var RamSize uint64 = 0x10000000 // 256MB
 //go:linkname nanotime1 runtime.nanotime1
 func nanotime1() int64 {
 	return int64(float64(AMD64.TimerFn())*AMD64.TimerMultiplier) + AMD64.TimerOffset
-}
-
-//go:linkname printk runtime.printk
-func printk(c byte) {
-	UART0.Tx(c)
 }
 
 // Init takes care of the lower level initialization triggered early in runtime

@@ -32,7 +32,8 @@ const (
 )
 
 // remove trailing space below to embed
-//go:embed bzImage
+//
+// go:embed bzImage
 var bzImage []byte
 
 var memoryMap = []bzimage.E820Entry{
@@ -90,13 +91,12 @@ func linuxCmd(_ *Interface, term *term.Terminal, arg []string) (res string, err 
 		return
 	}
 
-	log.Printf("allocated memory range %#08x - %#08x", memoryStart, memoryStart + memorySize)
+	log.Printf("allocated memory range %#08x - %#08x", memoryStart, memoryStart+memorySize)
+	log.Printf("exiting EFI boot services")
 
 	if err = bootServices.Exit(); err != nil {
 		return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
 	}
-
-	log.Printf("exit from EFI boot services")
 
 	if mem, err = dma.NewRegion(memoryStart, memorySize, false); err != nil {
 		return
@@ -115,8 +115,6 @@ func linuxCmd(_ *Interface, term *term.Terminal, arg []string) (res string, err 
 	if err = image.Load(); err != nil {
 		return "", fmt.Errorf("could not load kernel, %v", err)
 	}
-
-	log.Printf("starting kernel@%0.8x", image.Entry())
 
 	return "", image.Boot(nil)
 }

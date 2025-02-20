@@ -17,7 +17,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"unsafe"
 
 	"github.com/usbarmory/tamago/dma"
@@ -45,19 +44,10 @@ func ptrval(ptr any) uint64 {
 	case *byte:
 		p = unsafe.Pointer(v)
 	default:
-		print("warning, invalid ptrval argument\n")
+		panic("internal error, invalid ptrval")
 	}
 
 	return uint64(uintptr(p))
-}
-
-func parseStatus(status uint64) (err error) {
-	switch {
-	case status > 0:
-		return fmt.Errorf("EFI_STATUS error %#x (%d)", status, status&0xff)
-	default:
-		return
-	}
 }
 
 // BootServices represents an EFI Boot Services instance.

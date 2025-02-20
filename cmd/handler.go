@@ -36,10 +36,9 @@ type Cmd struct {
 var cmds = make(map[string]*Cmd)
 
 type Interface struct {
-	CPU  *amd64.CPU
-	UART io.ReadWriter
-
-	Banner string
+	CPU      *amd64.CPU
+	Terminal io.ReadWriter
+	Banner   string
 }
 
 func Add(cmd Cmd) {
@@ -104,7 +103,7 @@ func (iface *Interface) Exec(term *term.Terminal, cmd []byte) {
 	}
 }
 
-func (iface *Interface) Terminal(term *term.Terminal) {
+func (iface *Interface) start(term *term.Terminal) {
 	term.SetPrompt(string(term.Escape.Red) + "> " + string(term.Escape.Reset))
 
 	fmt.Fprintf(term, "\n%s\n\n", iface.Banner)
@@ -133,8 +132,10 @@ func (iface *Interface) Terminal(term *term.Terminal) {
 }
 
 func StartTerminal(iface *Interface) {
-	term := term.NewTerminal(iface.UART, "")
-	term.SetPrompt(string(term.Escape.Red) + "> " + string(term.Escape.Reset))
+	term := term.NewTerminal(iface.Terminal, "")
+	iface.start(term)
+}
 
-	iface.Terminal(term)
+func StartConsole(iface *Interface) {
+	panic("TODO")
 }
