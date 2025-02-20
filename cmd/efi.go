@@ -67,13 +67,12 @@ func uefiCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err err
 func memmapCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err error) {
 	var buf bytes.Buffer
 	var mmap []*efi.MemoryMap
-	var key uint64
 
 	if bootServices == nil {
 		return "", errors.New("EFI Boot Services unavailable")
 	}
 
-	if mmap, key, err = bootServices.GetMemoryMap(); err != nil {
+	if mmap, _, err = bootServices.GetMemoryMap(); err != nil {
 		return
 	}
 
@@ -83,9 +82,6 @@ func memmapCmd(_ *Interface, term *term.Terminal, _ []string) (res string, err e
 		fmt.Fprintf(&buf, "%02d\t%#016x\t%#016x\t%d\t%016x\n",
 			desc.Type, desc.PhysicalStart, desc.PhysicalEnd()-1, desc.NumberOfPages, desc.Attribute)
 	}
-
-	fmt.Fprintf(&buf, "\nEntries: %d\n", len(mmap))
-	fmt.Fprintf(&buf, "Map Key: %d\n", key)
 
 	return buf.String(), err
 }

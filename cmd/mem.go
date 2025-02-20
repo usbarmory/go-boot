@@ -17,6 +17,8 @@ import (
 	"github.com/usbarmory/tamago/dma"
 )
 
+const maxBufferSize = 102400
+
 func init() {
 	Add(Cmd{
 		Name:    "peek",

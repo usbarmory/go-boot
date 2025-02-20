@@ -21,18 +21,18 @@ import (
 func init() {
 	log.SetFlags(0)
 
-	cmd.Banner = fmt.Sprintf("%s/%s (%s) • UEFI",
-		runtime.GOOS, runtime.GOARCH, runtime.Version())
+	logFile, _ := os.OpenFile("/go-boot.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
 }
 
 func main() {
-	logFile, _ := os.OpenFile("/runtime.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
+	banner := fmt.Sprintf("%s/%s (%s) • UEFI",
+		runtime.GOOS, runtime.GOARCH, runtime.Version())
 
 	console := &cmd.Interface{
-		CPU: efi.AMD64,
-		UART: efi.UART0,
-		Log: logFile,
+		CPU:    efi.AMD64,
+		UART:   efi.UART0,
+		Banner: banner,
 	}
 
 	cmd.StartTerminal(console)

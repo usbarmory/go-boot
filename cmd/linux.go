@@ -27,11 +27,12 @@ import (
 const (
 	memoryStart = 0x80000000
 	memorySize  = 0x10000000
+
 	commandLine = "console=ttyS0,115200,8n1 mem=4G\x00"
 )
 
 // remove trailing space below to embed
-// go:embed bzImage
+//go:embed bzImage
 var bzImage []byte
 
 var memoryMap = []bzimage.E820Entry{
@@ -67,7 +68,6 @@ func init() {
 
 func linuxCmd(_ *Interface, term *term.Terminal, arg []string) (res string, err error) {
 	var mem *dma.Region
-	var key uint64
 
 	path := strings.TrimSpace(arg[0])
 
@@ -81,19 +81,6 @@ func linuxCmd(_ *Interface, term *term.Terminal, arg []string) (res string, err 
 		return "", errors.New("EFI Boot Services unavailable")
 	}
 
-	// exit EFI Boot Services
-
-	if _, key, err = bootServices.GetMemoryMap(); err != nil {
-		return
-	}
-
-	if err = bootServices.Exit(0, key); err != nil {
-		// FIXME: error 0x8000000000000002, set first argument
-		// return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
-	}
-
-	// allocate target kernel memory
-
 	if err = bootServices.AllocatePages(
 		efi.AllocateAddress,
 		efi.EfiLoaderData,
@@ -103,7 +90,13 @@ func linuxCmd(_ *Interface, term *term.Terminal, arg []string) (res string, err 
 		return
 	}
 
-	// load kernel
+	log.Printf("allocated memory range %#08x - %#08x", memoryStart, memoryStart + memorySize)
+
+	if err = bootServices.Exit(); err != nil {
+		return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
+	}
+
+	log.Printf("exit from EFI boot services")
 
 	if mem, err = dma.NewRegion(memoryStart, memorySize, false); err != nil {
 		return
@@ -123,7 +116,7 @@ func linuxCmd(_ *Interface, term *term.Terminal, arg []string) (res string, err 
 		return "", fmt.Errorf("could not load kernel, %v", err)
 	}
 
-	log.Printf("starting kernel@%0.8x\n", image.Entry())
+	log.Printf("starting kernel@%0.8x", image.Entry())
 
 	return "", image.Boot(nil)
 }

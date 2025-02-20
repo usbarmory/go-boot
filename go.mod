@@ -20,3 +20,5 @@ require (
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 )
+
+replace github.com/usbarmory/tamago => /mnt/git/public/tamago

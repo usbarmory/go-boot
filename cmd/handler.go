@@ -13,23 +13,13 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"regexp"
 	"sort"
-	"strings"
-	"sync"
 	"text/tabwriter"
 
 	"golang.org/x/term"
 
 	"github.com/usbarmory/tamago/amd64"
-)
-
-const maxBufferSize = 102400
-
-const (
-	separator     = "-"
-	separatorSize = 80
 )
 
 type CmdFn func(iface *Interface, term *term.Terminal, arg []string) (res string, err error)
@@ -46,29 +36,14 @@ type Cmd struct {
 var cmds = make(map[string]*Cmd)
 
 type Interface struct {
-	sync.Mutex
-
 	CPU  *amd64.CPU
 	UART io.ReadWriter
 
-	Log *os.File
-
-	exit chan bool
-	gr   int
+	Banner string
 }
-
-var Banner string
 
 func Add(cmd Cmd) {
 	cmds[cmd.Name] = &cmd
-}
-
-func msg(format string, args ...interface{}) {
-	s := strings.Repeat(separator, 2) + " "
-	s += fmt.Sprintf(format, args...)
-	s += " " + strings.Repeat(separator, separatorSize-len(s))
-
-	log.Println(s)
 }
 
 func Help(term *term.Terminal) string {
@@ -123,10 +98,6 @@ func (iface *Interface) handle(term *term.Terminal, line string) (err error) {
 	return
 }
 
-func (iface *Interface) LogFile() *os.File {
-	return iface.Log
-}
-
 func (iface *Interface) Exec(term *term.Terminal, cmd []byte) {
 	if err := iface.handle(term, string(cmd)); err != nil {
 		fmt.Fprintf(term, "command error (%s), %v\n", cmd, err)
@@ -136,7 +107,7 @@ func (iface *Interface) Exec(term *term.Terminal, cmd []byte) {
 func (iface *Interface) Terminal(term *term.Terminal) {
 	term.SetPrompt(string(term.Escape.Red) + "> " + string(term.Escape.Reset))
 
-	fmt.Fprintf(term, "\n%s\n\n", Banner)
+	fmt.Fprintf(term, "\n%s\n\n", iface.Banner)
 	fmt.Fprintf(term, "%s\n", Help(term))
 
 	for {

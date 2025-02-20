@@ -40,11 +40,17 @@ Runtime Services  .: 0x79ecb98
 Boot Services .....: 0x7ea5720
 Table Entries .....: 10
 
-> alloc 80000000 4096
+> alloc 90000000 4096
 
 > memmap
 Type    Start                   End                     Pages   Attributes
 02      0x0000000080000000      0x0000000080000fff      1       000000000000000f
+
+> linux
+allocated memory range 0x80000000 - 0x90000000
+exit from EFI boot services
+starting kernel@81000000
+Linux version 5.10.233 (root@tamago) (gcc (GCC) 14.2.1 20250128, GNU ld (GNU Binutils) 2.43.1) #4 Thu Feb 6 09:06:17 CET 2025
 ...
 ```
 

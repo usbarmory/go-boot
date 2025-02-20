@@ -8,12 +8,16 @@ package efi
 import (
 	"bytes"
 	"encoding/binary"
-	"unsafe"
 )
 
-// EFI Boot Services offset for GetMemoryMap
-const getMemoryMap = 0x38
-const maxEntries = 1000
+const (
+	// EFI Boot Services offset for GetMemoryMap
+	getMemoryMap = 0x38
+	maxEntries   = 1000
+)
+
+// PageSize represents the EFI page size in bytes
+const PageSize = 4096 //  4 KiB
 
 // MemoryMap represents an EFI Memory Descriptor
 type MemoryMap struct {
@@ -41,7 +45,7 @@ func (d *MemoryMap) UnmarshalBinary(data []byte) (err error) {
 
 // End returns the descriptor physical end address.
 func (d *MemoryMap) PhysicalEnd() uint64 {
-	return d.PhysicalStart + (d.NumberOfPages * 4096)
+	return d.PhysicalStart + (d.NumberOfPages * PageSize)
 }
 
 // GetMemoryMap calls EFI_BOOT_SERVICES.GetMemoryMap().
@@ -50,25 +54,23 @@ func (s *BootServices) GetMemoryMap() (m []*MemoryMap, mapKey uint64, err error)
 	t, _ := d.MarshalBinary()
 
 	buf := make([]byte, len(t)*maxEntries)
-	mmap := uint64(uintptr(unsafe.Pointer(&buf[0])))
 	size := uint64(len(buf))
 
 	status := callService(
 		s.base+getMemoryMap,
 		ptrval(&size),
-		mmap,
+		ptrval(&buf[0]),
 		ptrval(&mapKey),
 		0,
 	)
 
 	for i := 0; i < int(size); i += len(t) {
-		d = &MemoryMap{}
-
 		if err = d.UnmarshalBinary(buf[i:]); err != nil {
 			break
 		}
 
 		m = append(m, d)
+		d = &MemoryMap{}
 	}
 
 	err = parseStatus(status)

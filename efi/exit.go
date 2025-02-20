@@ -9,11 +9,17 @@ package efi
 const exitBootServices = 0xe8
 
 // Exit calls EFI_BOOT_SERVICES.ExitBootServices().
-func (s *BootServices) Exit(imageHandle uint64, mapKey uint64) error {
+func (s *BootServices) Exit() (err error) {
+	_, mapKey, err := s.GetMemoryMap()
+
+	if err != nil {
+		return
+	}
+
 	status := callService(
 		s.base+exitBootServices,
-		imageHandle,
-		ptrval(&mapKey),
+		uint64(imageHandle),
+		mapKey,
 		0,
 		0,
 	)

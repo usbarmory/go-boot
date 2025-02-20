@@ -43,7 +43,7 @@ func (s *BootServices) AllocatePages(allocateType int, memoryType int, size int,
 		s.base+allocatePages,
 		uint64(allocateType),
 		uint64(memoryType),
-		uint64(size)/4096,
+		uint64(size)/PageSize,
 		ptrval(&physicalAddress),
 	)
 

@@ -29,8 +29,26 @@ const signature = 0x5453595320494249 // TSYS IBI
 // defined in efi.s
 func callService(fn uintptr, a1, a2, a3, a4 uint64) (status uint64)
 
-func ptrval(ptr *uint64) (val uint64) {
-	return uint64(uintptr(unsafe.Pointer(ptr)))
+// This function helps preparing callService arguments, allowing a single call
+// for all EFI services with 4 or less arguments.
+//
+// Obtaining a pointer in this fashion is typically unsafe and tamago/dma
+// package would be best to handle this. However, as arguments are prepared
+// right before invoking Go assembly, it is considered safe as it is identical
+// as having *uint64 as callService prototype.
+func ptrval(ptr any) uint64 {
+	var p unsafe.Pointer
+
+	switch v := ptr.(type) {
+	case *uint64:
+		p = unsafe.Pointer(v)
+	case *byte:
+		p = unsafe.Pointer(v)
+	default:
+		print("warning, invalid ptrval argument\n")
+	}
+
+	return uint64(uintptr(p))
 }
 
 func parseStatus(status uint64) (err error) {
