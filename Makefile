@@ -8,7 +8,7 @@ SHELL = /bin/bash
 APP ?= go-boot
 CONSOLE ?= com1
 
-TEXT_START := 0x10010000 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
+TEXT_START := 0x40010000 # RamStart (defined in efi/amd64.go) + 0x10000
 GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOLE}'"
 GOENV := GOOS=tamago GOARCH=amd64
 
@@ -17,7 +17,7 @@ OVMFVARS ?= OVMF_VARS.fd
 LOG ?= qemu.log
 
 QEMU ?= qemu-system-x86_64 \
-        -enable-kvm -cpu host,invtsc=on -m 4G \
+        -enable-kvm -cpu host,invtsc=on -m 8G \
         -drive file=fat:rw:$(CURDIR) \
         -drive if=pflash,format=raw,readonly,file=$(OVMFCODE) \
         -drive if=pflash,format=raw,file=$(OVMFVARS) \
@@ -67,7 +67,7 @@ $(APP).efi: $(APP)
 		--strip-debug \
 		--target efi-app-x86_64 \
 		--subsystem=efi-app \
-		--image-base $(subst 1000,0000,$(TEXT_START)) \
+		--image-base $(subst 10000 ,00000 ,$(TEXT_START)) \
 		--stack=0x10000 \
 		${APP} ${APP}.efi
 	printf '\x26\x02' | dd of=${APP}.efi bs=1 seek=150 count=2 conv=notrunc,fsync # adjust Characteristics
