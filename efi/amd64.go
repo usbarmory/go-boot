@@ -50,7 +50,7 @@ var (
 )
 
 //go:linkname RamStart runtime.ramStart
-var RamStart uint64 = 0x10000000
+var RamStart uint64 = 0x40000000
 
 //go:linkname RamSize runtime.ramSize
 var RamSize uint64 = 0x10000000 // 256MB
