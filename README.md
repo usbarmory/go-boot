@@ -14,6 +14,8 @@ Operation
 ```
 Shell> go-boot.efi
 
+go-boot initializing (console=com1)
+
 tamago/amd64 (go1.24.0) • UEFI
 
 alloc           <hex offset> <size>      # EFI_BOOT_SERVICES.AllocatePages()
@@ -47,9 +49,8 @@ Type    Start                   End                     Pages   Attributes
 02      0x0000000080000000      0x0000000080000fff      1       000000000000000f
 
 > linux
-allocated memory range 0x80000000 - 0x90000000
-exit from EFI boot services
-starting kernel@81000000
+allocating memory range 0x80000000 - 0x90000000
+exiting from EFI boot services
 Linux version 5.10.233 (root@tamago) (gcc (GCC) 14.2.1 20250128, GNU ld (GNU Binutils) 2.43.1)
 ...
 ```
