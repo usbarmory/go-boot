@@ -36,7 +36,7 @@ func init() {
 
 	shell.Add(shell.Cmd{
 		Name: "log",
-		Help: "display log",
+		Help: "show runtime log",
 		Fn:   logCmd,
 	})
 
