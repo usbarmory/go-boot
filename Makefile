@@ -6,9 +6,10 @@
 BUILD_TAGS = linkcpuinit,linkramsize,linkramstart,linkprintk
 SHELL = /bin/bash
 APP ?= go-boot
+CONSOLE ?= com1
 
 TEXT_START := 0x10010000 # ramStart (defined in mem.go under tamago/amd64 package) + 0x10000
-GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000"
+GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOLE}'"
 GOENV := GOOS=tamago GOARCH=amd64
 
 OVMFCODE ?= OVMF_CODE.fd
@@ -33,7 +34,7 @@ elf: $(APP)
 
 efi: $(APP).efi
 
-qemu: efi
+qemu: $(APP).efi
 	@if [ "${QEMU}" == "" ]; then \
 		echo 'qemu not available for this target'; \
 		exit 1; \

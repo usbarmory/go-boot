@@ -14,20 +14,20 @@ import (
 	"os"
 	"runtime"
 
-	_ "github.com/usbarmory/go-boot/cmd"
+	"github.com/usbarmory/go-boot/cmd"
 	"github.com/usbarmory/go-boot/efi"
 	"github.com/usbarmory/go-boot/shell"
 )
 
-// Decide whether to allocate output on console or serial port.
-var useUART = false
+// Build time variable
+var Console string
 
 func init() {
-	print("go-boot initializing\n")
+	fmt.Printf("go-boot initializing (console=%s)\n", Console)
 
 	log.SetFlags(0)
 
-	logFile, _ := os.OpenFile("/go-boot.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	logFile, _ := os.OpenFile(cmd.LogPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
 }
 
@@ -39,13 +39,13 @@ func main() {
 		Banner:   banner,
 	}
 
-	if useUART {
+	switch Console {
+	case "COM1", "com1", "":
 		iface.ReadWriter = efi.UART0
-		iface.VT100 = true
-		iface.Start()
-	} else {
+		iface.Start(true)
+	case "TEXT", "text":
 		iface.ReadWriter = efi.CONSOLE
-		iface.Start()
+		iface.Start(false)
 	}
 
 	runtime.Exit(0)

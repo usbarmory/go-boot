@@ -66,5 +66,9 @@ func (iface *Interface) Help(_ []string) (res string, _ error) {
 	_ = t.Flush()
 	res = help.String()
 
+	if iface.vt100 != nil {
+		res = string(iface.vt100.Escape.Cyan) + res + string(iface.vt100.Escape.Reset)
+	}
+
 	return
 }

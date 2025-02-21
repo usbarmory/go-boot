@@ -82,6 +82,8 @@ func linuxCmd(arg []string) (res string, err error) {
 		return "", errors.New("EFI Boot Services unavailable")
 	}
 
+	log.Printf("allocating memory range %#08x - %#08x", memoryStart, memoryStart+memorySize)
+
 	if err = bootServices.AllocatePages(
 		efi.AllocateAddress,
 		efi.EfiLoaderData,
@@ -91,7 +93,6 @@ func linuxCmd(arg []string) (res string, err error) {
 		return
 	}
 
-	log.Printf("allocated memory range %#08x - %#08x", memoryStart, memoryStart+memorySize)
 	log.Printf("exiting EFI boot services")
 
 	if err = bootServices.Exit(); err != nil {

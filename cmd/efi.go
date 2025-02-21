@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 
@@ -105,6 +106,8 @@ func allocCmd(arg []string) (res string, err error) {
 	if bootServices == nil {
 		return "", errors.New("EFI Boot Services unavailable")
 	}
+
+	log.Printf("allocating memory range %#08x - %#08x", addr, addr+size)
 
 	err = bootServices.AllocatePages(
 		efi.AllocateAddress,

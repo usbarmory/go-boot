@@ -17,8 +17,7 @@ import (
 	"golang.org/x/term"
 )
 
-func init() {
-}
+var Prompt = "> "
 
 // Interface represents a terminal interface.
 type Interface struct {
@@ -31,7 +30,7 @@ type Interface struct {
 	// ReadWriter represents the terminal connection
 	ReadWriter io.ReadWriter
 
-	VT100 bool
+	vt100 *term.Terminal
 }
 
 func (iface *Interface) handleLine(line string, w io.Writer) (err error) {
@@ -66,6 +65,10 @@ func (iface *Interface) handleLine(line string, w io.Writer) (err error) {
 }
 
 func (iface *Interface) readLine(t *term.Terminal, w io.Writer) (error) {
+	if iface.vt100 == nil {
+		fmt.Fprint(w, Prompt)
+	}
+
 	s, err := t.ReadLine()
 
 	if err == io.EOF {
@@ -90,15 +93,17 @@ func (iface *Interface) readLine(t *term.Terminal, w io.Writer) (error) {
 }
 
 // Start handles registered commands over the interface ReadWriter.
-func (iface *Interface) Start() {
+func (iface *Interface) Start(vt100 bool) {
 	var w io.Writer
 
 	t := term.NewTerminal(iface.ReadWriter, "")
-	w = iface.ReadWriter
 
-	if iface.VT100 {
-		t.SetPrompt(string(t.Escape.Red) + "> " + string(t.Escape.Reset))
-		w = t
+	if vt100 {
+		t.SetPrompt(string(t.Escape.Red) + Prompt + string(t.Escape.Reset))
+		iface.vt100 = t
+		w = iface.vt100
+	} else {
+		w = iface.ReadWriter
 	}
 
 	help, _  := iface.Help(nil)

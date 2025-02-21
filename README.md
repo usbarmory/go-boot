@@ -67,11 +67,14 @@ cd tamago-go-latest/src && ./all.bash
 cd ../bin && export TAMAGO=`pwd`/go
 ```
 
+The `CONSOLE` environment variable must be set to either `com1` or `text` to
+configure the output console to serial port or UEFI console.
+
 Build the `go-boot.efi` application executable:
 
 ```
 git clone https://github.com/usbarmory/go-boot && cd go-boot
-make efi
+make efi CONSOLE=com1
 ```
 
 Debugging
@@ -82,7 +85,7 @@ QEMU supported targets can be executed under emulation, using the
 as follows:
 
 ```
-make qemu OVMFCODE=<path to OVMF_CODE.fd> OVMFVARS=<path to OVMF_VARS.fd>
+make qemu CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd> OVMFVARS=<path to OVMF_VARS.fd>
 ```
 
 The emulation run will provide an interactive console.
