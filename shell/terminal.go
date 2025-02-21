@@ -17,10 +17,14 @@ import (
 	"golang.org/x/term"
 )
 
-var Prompt = "> "
+// DefaultPrompt represents the command prompt when none is set for the
+// Interface instance.
+var DefaultPrompt = "> "
 
 // Interface represents a terminal interface.
 type Interface struct {
+	// Prompt represents the command prompt
+	Prompt string
 	// Banner represents the welcome message
 	Banner string
 
@@ -66,7 +70,7 @@ func (iface *Interface) handleLine(line string, w io.Writer) (err error) {
 
 func (iface *Interface) readLine(t *term.Terminal, w io.Writer) (error) {
 	if iface.vt100 == nil {
-		fmt.Fprint(w, Prompt)
+		fmt.Fprint(w, iface.Prompt)
 	}
 
 	s, err := t.ReadLine()
@@ -98,8 +102,12 @@ func (iface *Interface) Start(vt100 bool) {
 
 	t := term.NewTerminal(iface.ReadWriter, "")
 
+	if len(iface.Prompt) == 0 {
+		iface.Prompt = DefaultPrompt
+	}
+
 	if vt100 {
-		t.SetPrompt(string(t.Escape.Red) + Prompt + string(t.Escape.Reset))
+		t.SetPrompt(string(t.Escape.Red) + iface.Prompt + string(t.Escape.Reset))
 		iface.vt100 = t
 		w = iface.vt100
 	} else {

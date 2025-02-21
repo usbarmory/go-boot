@@ -7,6 +7,7 @@ package efi
 
 import (
 	"io"
+	"unicode/utf16"
 	_ "unsafe"
 )
 
@@ -69,15 +70,15 @@ func printk(c byte) {
 }
 
 // Read available data to buffer from console.
-func (c *Console) Read(buf []byte) (n int, err error) {
+func (c *Console) Read(p []byte) (n int, err error) {
 	k := &InputKey{}
 
-	for n = 0; n < len(buf); n += 2 {
+	for n = 0; n < len(p); n += 2 {
 		status := consoleInput(k)
 
 		switch {
 		case status == EFI_SUCCESS:
-			copy(buf[n:], k.UnicodeChar[:])
+			copy(p[n:], k.UnicodeChar[:])
 		case status&0xff == EFI_NOT_READY:
 			return
 		default:
@@ -89,11 +90,17 @@ func (c *Console) Read(buf []byte) (n int, err error) {
 }
 
 // Write data from buffer to console.
-func (c *Console) Write(buf []byte) (n int, err error) {
-	for n = 0; n < len(buf); n++ {
-		c := buf[n]
+func (c *Console) Write(p []byte) (n int, err error) {
+	b := utf16.Encode([]rune(string(p)))
+	buf := make([]byte, 2)
 
-		if status := consoleOutput(&c); status != EFI_SUCCESS {
+	// We receive an UTF-8 string but we can output only UTF-16 ones.
+
+	for _, r := range b {
+		buf[1] = byte(r >> 8)
+		buf[0] = byte(r & 0xff)
+
+		if status := consoleOutput(&buf[0]); status != EFI_SUCCESS {
 			return n, parseStatus(status)
 		}
 	}

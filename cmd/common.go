@@ -20,8 +20,8 @@ import (
 
 	"github.com/hako/durafmt"
 
-	"github.com/usbarmory/tamago/dma"
 	"github.com/usbarmory/go-boot/shell"
+	"github.com/usbarmory/tamago/dma"
 )
 
 const testDiversifier = "\xde\xad\xbe\xef"
