@@ -26,7 +26,7 @@ import (
 const signature = 0x5453595320494249 // TSYS IBI
 
 // defined in efi.s
-func callService(fn uintptr, a1, a2, a3, a4 uint64) (status uint64)
+func callService(fn uint64, a1, a2, a3, a4 uint64) (status uint64)
 
 // This function helps preparing callService arguments, allowing a single call
 // for all EFI services with 4 or less arguments.
@@ -54,7 +54,7 @@ func ptrval(ptr any) uint64 {
 
 // BootServices represents an EFI Boot Services instance.
 type BootServices struct {
-	base uintptr
+	base uint64
 }
 
 // TableHeader represents the data structure that precedes all of the standard
@@ -136,7 +136,7 @@ func (d *SystemTable) GetBootServices() (b *BootServices, err error) {
 	}
 
 	b = &BootServices{
-		base: uintptr(d.BootServices),
+		base: d.BootServices,
 	}
 
 	return

@@ -20,8 +20,8 @@ const (
 
 // set in amd64.s
 var (
-	conIn         uintptr
-	conOut       uintptr
+	conIn  uint64
+	conOut uint64
 )
 
 // SimpleTextInput represents an EFI Simple Text Input Protocol descriptor.
@@ -46,7 +46,7 @@ type Console struct {
 func consoleInput(k *InputKey) (status uint64) {
 	return callService(
 		conIn+readKeyStroke,
-		uint64(conIn),
+		conIn,
 		ptrval(k),
 		0,
 		0,
@@ -54,17 +54,13 @@ func consoleInput(k *InputKey) (status uint64) {
 }
 
 func consoleOutput(p []byte) (status uint64) {
-	if len(p) == 0 {
-		return
-	}
-
 	if p[len(p)-1] != 0x00 {
 		p = append(p, 0x00)
 	}
 
 	return callService(
 		conOut+outputString,
-		uint64(conOut),
+		conOut,
 		ptrval(&p[0]),
 		0,
 		0,
@@ -100,13 +96,17 @@ func (c *Console) Read(p []byte) (n int, err error) {
 func (c *Console) Write(p []byte) (n int, err error) {
 	var s []byte
 
+	if len(p) == 0 {
+		return
+	}
+
 	b := utf16.Encode([]rune(string(p)))
 
 	// We receive an UTF-8 string but we can output only UTF-16 ones.
 
 	for _, r := range b {
-		s = append(s, byte(r & 0xff))
-		s = append(s, byte(r >> 8))
+		s = append(s, byte(r&0xff))
+		s = append(s, byte(r>>8))
 	}
 
 	if status := consoleOutput(s); status != EFI_SUCCESS {
