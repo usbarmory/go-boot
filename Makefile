@@ -6,7 +6,7 @@
 BUILD_TAGS = linkcpuinit,linkramsize,linkramstart,linkprintk
 SHELL = /bin/bash
 APP ?= go-boot
-CONSOLE ?= com1
+CONSOLE ?= text
 
 TEXT_START := 0x40010000 # RamStart (defined in efi/amd64.go) + 0x10000
 GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOLE}'"
