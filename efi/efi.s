@@ -17,7 +17,6 @@ TEXT ·callService(SB),$0-48
 	MOVQ	a4+32(FP), R9
 
 	// TODO: investigate if a shadow stack is needed
-
 	CALL	(DI)
 	MOVQ	AX, status+40(FP)
 

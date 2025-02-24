@@ -43,6 +43,8 @@ func ptrval(ptr any) uint64 {
 		p = unsafe.Pointer(v)
 	case *byte:
 		p = unsafe.Pointer(v)
+	case *InputKey:
+		p = unsafe.Pointer(v)
 	default:
 		panic("internal error, invalid ptrval")
 	}
