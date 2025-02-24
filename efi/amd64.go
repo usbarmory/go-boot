@@ -45,8 +45,8 @@ var (
 
 // set in amd64.s
 var (
-	imageHandle uintptr
-	systemTable uintptr
+	imageHandle uint64
+	systemTable uint64
 )
 
 //go:linkname RamStart runtime.ramStart

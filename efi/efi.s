@@ -5,7 +5,7 @@
 
 #include "textflag.h"
 
-// func callService(fn uintptr, a1, a2, a3, a4 uint64) (status uint64)
+// func callService(fn uint64, a1, a2, a3, a4 uint64) (status uint64)
 TEXT ·callService(SB),$0-48
 	MOVQ	fn+0(FP), DI
 
@@ -16,7 +16,7 @@ TEXT ·callService(SB),$0-48
 	MOVQ	a3+24(FP), R8
 	MOVQ	a4+32(FP), R9
 
-	// TODO: investigate if a shadow stack is needed
+	// TODO: implement shadow stack and alignment
 	CALL	(DI)
 	MOVQ	AX, status+40(FP)
 
