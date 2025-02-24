@@ -67,6 +67,16 @@ func init() {
 	})
 }
 
+func exitBootServices() {
+	log.Printf("exiting EFI boot services")
+
+	if err := bootServices.Exit(); err != nil {
+		log.Printf("could not exit EFI boot services, %v\n", err)
+	}
+
+	bootServices = nil
+}
+
 func linuxCmd(arg []string) (res string, err error) {
 	var mem *dma.Region
 
@@ -93,11 +103,11 @@ func linuxCmd(arg []string) (res string, err error) {
 		return
 	}
 
-	log.Printf("exiting EFI boot services")
-
-	if err = bootServices.Exit(); err != nil {
-		return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
-	}
+	// free allocated pages in case of error
+	defer bootServices.FreePages(
+		memoryStart,
+		memorySize,
+	)
 
 	if mem, err = dma.NewRegion(memoryStart, memorySize, false); err != nil {
 		return
@@ -113,9 +123,14 @@ func linuxCmd(arg []string) (res string, err error) {
 		CmdLine: commandLine,
 	}
 
+	log.Printf("loading kernel@%0.8x", memoryStart)
+
 	if err = image.Load(); err != nil {
 		return "", fmt.Errorf("could not load kernel, %v", err)
 	}
 
-	return "", image.Boot(nil)
+	log.Printf("starting kernel@%0.8x", image.Entry())
+
+	// does not return if boot is successful
+	return "", image.Boot(exitBootServices)
 }
