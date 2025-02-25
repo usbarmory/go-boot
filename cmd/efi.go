@@ -18,19 +18,16 @@ import (
 )
 
 var (
-	systemTable  *efi.SystemTable
-	bootServices *efi.BootServices
+	systemTable     *efi.SystemTable
+	bootServices    *efi.BootServices
+	runtimeServices *efi.RuntimeServices
 )
 
 func init() {
-	if systemTable, _ = efi.GetSystemTable(); systemTable != nil {
-		bootServices, _ = systemTable.GetBootServices()
-	}
-
 	shell.Add(shell.Cmd{
-		Name: "uefi",
-		Help: "UEFI information",
-		Fn:   uefiCmd,
+		Name: "init",
+		Help: "init UEFI services",
+		Fn:   initCmd,
 	})
 
 	shell.Add(shell.Cmd{
@@ -47,13 +44,29 @@ func init() {
 		Help:    "EFI_BOOT_SERVICES.AllocatePages()",
 		Fn:      allocCmd,
 	})
+
+	shell.Add(shell.Cmd{
+		Name:    "reset",
+		Args:    1,
+		Pattern: regexp.MustCompile(`reset(?: (cold|warm))?$`),
+		Help:    "reset system",
+		Syntax:  "(cold|warm)?",
+		Fn:      resetCmd,
+	})
+
+	shell.Add(shell.Cmd{
+		Name: "shutdown",
+		Help: "shutdown system",
+		Fn:   shutdownCmd,
+	})
 }
 
-func uefiCmd(_ []string) (res string, err error) {
+func initCmd(_ []string) (res string, err error) {
 	var buf bytes.Buffer
 
-	if systemTable == nil {
-		return "", errors.New("EFI System Table unavailable")
+	if systemTable, _ = efi.GetSystemTable(); systemTable != nil {
+		bootServices, _ = systemTable.GetBootServices()
+		runtimeServices, _ = systemTable.GetRuntimeServices()
 	}
 
 	fmt.Fprintf(&buf, "Firmware Revision .: %x\n", systemTable.FirmwareRevision)
@@ -69,17 +82,17 @@ func memmapCmd(_ []string) (res string, err error) {
 	var mmap []*efi.MemoryMap
 
 	if bootServices == nil {
-		return "", errors.New("EFI Boot Services unavailable")
+		return "", errors.New("EFI Boot Services unavailable (forgot `init`?)")
 	}
 
 	if mmap, _, err = bootServices.GetMemoryMap(); err != nil {
 		return
 	}
 
-	fmt.Fprintf(&buf, "Type\tStart\t\t\tEnd\t\t\tPages\tAttributes\t\n")
+	fmt.Fprintf(&buf, "Type Start            End              Pages            Attributes\n")
 
 	for _, desc := range mmap {
-		fmt.Fprintf(&buf, "%02d\t%#016x\t%#016x\t%d\t%016x\n",
+		fmt.Fprintf(&buf, "%02d   %016x %016x %016x %016x\n",
 			desc.Type, desc.PhysicalStart, desc.PhysicalEnd()-1, desc.NumberOfPages, desc.Attribute)
 	}
 
@@ -104,7 +117,7 @@ func allocCmd(arg []string) (res string, err error) {
 	}
 
 	if bootServices == nil {
-		return "", errors.New("EFI Boot Services unavailable")
+		return "", errors.New("EFI Boot Services unavailable (forgot `init`?)")
 	}
 
 	log.Printf("allocating memory range %#08x - %#08x", addr, addr+size)
@@ -117,4 +130,31 @@ func allocCmd(arg []string) (res string, err error) {
 	)
 
 	return "", err
+}
+
+func resetCmd(arg []string) (_ string, err error) {
+	var resetType int
+
+	if runtimeServices == nil {
+		return "", errors.New("EFI Runtime Services unavailable (forgot `init`?)")
+	}
+
+	switch arg[0] {
+	case "", "cold":
+		resetType = efi.EfiResetCold
+	case "warm":
+		resetType = efi.EfiResetWarm
+	case "shutdown":
+		resetType = efi.EfiResetShutdown
+	}
+
+	log.Printf("performing system reset type %d", resetType)
+
+	err = runtimeServices.ResetSystem(resetType)
+
+	return
+}
+
+func shutdownCmd(_ []string) (_ string, err error) {
+	return resetCmd([]string{"shutdown"})
 }

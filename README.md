@@ -24,34 +24,37 @@ date            (time in RFC339 format)? # show/change runtime date and time
 dma             (free|used)?             # show allocation of default DMA region
 exit, quit                               # close session
 halt                                     # halt the machine
-help                                     # this help
 info                                     # device information
+init                                     # init UEFI services
 linux           (path)?                  # boot Linux kernel bzImage
 log                                      # show runtime log
 memmap                                   # EFI_BOOT_SERVICES.GetMemoryMap()
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
-reboot                                   # reset device
+reset           (cold|warm)?             # reset system
+shutdown                                 # shutdown system
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
-uefi                                     # UEFI information
 uptime                                   # show how long the system has been running
 
-> uefi
+> init
 Firmware Revision .: 10000
 Runtime Services  .: 0x79ecb98
 Boot Services .....: 0x7ea5720
 Table Entries .....: 10
 
 > alloc 90000000 4096
+allocating memory range 0x90000000 - 0x90001000
 
 > memmap
-Type    Start                   End                     Pages   Attributes
-02      0x0000000080000000      0x0000000080000fff      1       000000000000000f
+Type Start            End              Pages            Attributes
+02   0000000090000000 0000000090000fff 0000000000000001 000000000000000f
 
 > linux
 allocating memory range 0x80000000 - 0x90000000
-exiting from EFI boot services
+loading kernel@80000000
+starting kernel@81000000
+exiting EFI boot services
 Linux version 5.10.233 (root@tamago) (gcc (GCC) 14.2.1 20250128, GNU ld (GNU Binutils) 2.43.1)
 ...
 ```

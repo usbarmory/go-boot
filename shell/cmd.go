@@ -51,7 +51,7 @@ func (iface *Interface) Help(_ []string) (res string, _ error) {
 	var help bytes.Buffer
 	var names []string
 
-	t := tabwriter.NewWriter(&help, 16, 8, 0, '\t', tabwriter.TabIndent)
+	t := tabwriter.NewWriter(&help, 16, 8, 0, ' ', tabwriter.TabIndent)
 
 	for name, _ := range cmds {
 		names = append(names, name)

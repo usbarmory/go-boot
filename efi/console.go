@@ -112,7 +112,7 @@ func (c *Console) Write(p []byte) (n int, err error) {
 		// on real hardware LF moves to  next line maintaining position
 		if r == 0x0a {
 			// CR moves cursor to left marging of the current line
-			s = append(s, []byte{0x00, 0x0d}...)
+			s = append(s, []byte{0x0d, 0x00}...)
 		}
 	}
 

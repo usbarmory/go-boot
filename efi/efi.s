@@ -16,8 +16,12 @@ TEXT ·callService(SB),$0-48
 	MOVQ	a3+24(FP), R8
 	MOVQ	a4+32(FP), R9
 
-	// TODO: implement shadow stack and alignment
+	MOVQ	SP, BX		// callee-saved
+	ANDQ	$~15, SP	// alignment for x86_64 ABI
+	ADJSP	$16
 	CALL	(DI)
-	MOVQ	AX, status+40(FP)
+	ADJSP	$-16
+	MOVQ	BX, SP
 
+	MOVQ	AX, status+40(FP)
 	RET

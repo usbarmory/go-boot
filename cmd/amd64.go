@@ -38,8 +38,3 @@ func date(epoch int64) {
 func uptime() (ns int64) {
 	return int64(float64(efi.AMD64.TimerFn()) * efi.AMD64.TimerMultiplier)
 }
-
-func rebootCmd(_ []string) (_ string, err error) {
-	runtime.Exit(0)
-	return
-}

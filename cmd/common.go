@@ -11,7 +11,6 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"runtime"
 	"runtime/debug"
 	"runtime/pprof"
 	"sort"
@@ -69,7 +68,7 @@ func init() {
 	shell.Add(shell.Cmd{
 		Name:    "dma",
 		Args:    1,
-		Pattern: regexp.MustCompile(`^dma(?:(?: )(free|used))?$`),
+		Pattern: regexp.MustCompile(`^dma(?: (free|used))?$`),
 		Help:    "show allocation of default DMA region",
 		Syntax:  "(free|used)?",
 		Fn:      dmaCmd,
@@ -98,12 +97,6 @@ func init() {
 		Help: "device information",
 		Fn:   infoCmd,
 	})
-
-	shell.Add(shell.Cmd{
-		Name: "reboot",
-		Help: "reset device",
-		Fn:   rebootCmd,
-	})
 }
 
 func buildInfoCmd(_ []string) (res string, err error) {
@@ -122,19 +115,11 @@ func logCmd(_ []string) (string, error) {
 }
 
 func exitCmd(_ []string) (res string, err error) {
-	res = fmt.Sprintf("Goodbye from %s/%s\n", runtime.GOOS, runtime.GOARCH)
-	err = io.EOF
-
-	return
+	return "", io.EOF
 }
 
 func haltCmd(_ []string) (res string, err error) {
-	res = fmt.Sprintf("Goodbye from %s/%s\n", runtime.GOOS, runtime.GOARCH)
-	err = io.EOF
-
-	go runtime.Exit(0)
-
-	return
+	return "", io.EOF
 }
 
 func stackCmd(_ []string) (string, error) {

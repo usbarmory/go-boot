@@ -48,5 +48,7 @@ func main() {
 		iface.Start(false)
 	}
 
+	log.Print("halting")
+
 	runtime.Exit(0)
 }

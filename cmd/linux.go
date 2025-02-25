@@ -89,7 +89,7 @@ func linuxCmd(arg []string) (res string, err error) {
 	}
 
 	if bootServices == nil {
-		return "", errors.New("EFI Boot Services unavailable")
+		return "", errors.New("EFI Boot Services unavailable (forgot `init`?)")
 	}
 
 	log.Printf("allocating memory range %#08x - %#08x", memoryStart, memoryStart+memorySize)
