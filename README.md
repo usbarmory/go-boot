@@ -64,9 +64,9 @@ Hardware Compatibility List
 ===========================
 
 The list of supported hardware is available in the
-[project wiki](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list).
+project wiki [HCL](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list).
 
-The list includes a safe `IMAGE_BASE` value to pass while _Compiling_.
+The list provides test `IMAGE_BASE` values to pass while _Compiling_.
 
 Compiling
 =========
