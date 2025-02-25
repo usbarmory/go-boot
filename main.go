@@ -44,6 +44,9 @@ func main() {
 		iface.ReadWriter = efi.UART0
 		iface.Start(true)
 	case "TEXT", "text":
+		efi.ForceLine = true
+		efi.ReplaceTabs = 8
+
 		iface.ReadWriter = efi.CONSOLE
 		iface.Start(false)
 	}

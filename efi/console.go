@@ -24,6 +24,16 @@ var (
 	conOut uint64
 )
 
+var (
+	// ForceLine controls whether line feeds (LF) should be supplemented
+	// with a carriage return (CR).
+	ForceLine bool
+
+	// ReplaceTabs controls whether Console I/O output should have Tab
+	// characters replaced with a number of spaces.
+	ReplaceTabs int = 0
+)
+
 // InputKey represents an EFI Input Key descriptor.
 type InputKey struct {
 	ScanCode    uint16
@@ -66,10 +76,8 @@ func printk(c byte) {
 
 	// TODO: implement BufferedStdoutLog or similar
 
-	// on real hardware LF moves to  next line maintaining position
-	if c == 0x0a {
-		// CR moves cursor to left marging of the current line
-		consoleOutput([]byte{0x0d})
+	if c == 0x0a && ForceLine { // LF
+		consoleOutput([]byte{0x0d}) // CR
 	}
 }
 
@@ -106,13 +114,18 @@ func (c *Console) Write(p []byte) (n int, err error) {
 	// We receive an UTF-8 string but we can output only UTF-16 ones.
 
 	for _, r := range b {
+		if r == 0x09 && ReplaceTabs > 0 { // Tab
+			for i := 0; i < ReplaceTabs; i++ {
+				s = append(s, []byte{0x20, 0x00}...) // Space
+			}
+			continue
+		}
+
 		s = append(s, byte(r&0xff))
 		s = append(s, byte(r>>8))
 
-		// on real hardware LF moves to  next line maintaining position
-		if r == 0x0a {
-			// CR moves cursor to left marging of the current line
-			s = append(s, []byte{0x0d, 0x00}...)
+		if r == 0x0a && ForceLine { // LF
+			s = append(s, []byte{0x0d, 0x00}...) // CR
 		}
 	}
 
