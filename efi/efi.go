@@ -57,6 +57,11 @@ type BootServices struct {
 	base uint64
 }
 
+// RuntimeServices represents an EFI Runtime Services instance.
+type RuntimeServices struct {
+	base uint64
+}
+
 // TableHeader represents the data structure that precedes all of the standard
 // EFI table types.
 type TableHeader struct {
@@ -130,14 +135,23 @@ func GetSystemTable() (t *SystemTable, err error) {
 }
 
 // GetBootServices returns an EFI Boot Services instance.
-func (d *SystemTable) GetBootServices() (b *BootServices, err error) {
+func (d *SystemTable) GetBootServices() (*BootServices, error) {
 	if d.BootServices == 0 {
-		return nil, errors.New("EFI Boot Servies pointer is nil")
+		return nil, errors.New("EFI Boot Services pointer is nil")
 	}
 
-	b = &BootServices{
+	return &BootServices{
 		base: d.BootServices,
+	}, nil
+}
+
+// GetRuntimeServices returns an EFI Runtime Services instance.
+func (d *SystemTable) GetRuntimeServices() (*RuntimeServices, error) {
+	if d.RuntimeServices == 0 {
+		return nil, errors.New("EFI Runtime Services pointer is nil")
 	}
 
-	return
+	return &RuntimeServices{
+		base: d.RuntimeServices,
+	}, nil
 }

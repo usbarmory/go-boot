@@ -64,7 +64,9 @@ func consoleOutput(p []byte) (status uint64) {
 func printk(c byte) {
 	consoleOutput([]byte{c})
 
-	// LF moves cursor to the next line
+	// TODO: implement BufferedStdoutLog or similar
+
+	// on real hardware LF moves to  next line maintaining position
 	if c == 0x0a {
 		// CR moves cursor to left marging of the current line
 		consoleOutput([]byte{0x0d})
@@ -106,6 +108,12 @@ func (c *Console) Write(p []byte) (n int, err error) {
 	for _, r := range b {
 		s = append(s, byte(r&0xff))
 		s = append(s, byte(r>>8))
+
+		// on real hardware LF moves to  next line maintaining position
+		if r == 0x0a {
+			// CR moves cursor to left marging of the current line
+			s = append(s, []byte{0x00, 0x0d}...)
+		}
 	}
 
 	if status := consoleOutput(s); status != EFI_SUCCESS {

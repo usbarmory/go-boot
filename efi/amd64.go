@@ -8,7 +8,6 @@
 package efi
 
 import (
-	"runtime"
 	_ "unsafe"
 
 	"github.com/usbarmory/tamago/amd64"
@@ -70,10 +69,6 @@ func Init() {
 
 	// initialize serial console
 	UART0.Init()
-
-	runtime.Exit = func(_ int32) {
-		AMD64.Reset()
-	}
 }
 
 func init() {
