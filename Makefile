@@ -10,7 +10,7 @@ CONSOLE ?= text
 
 IMAGE_BASE := 40000000
 TEXT_START := $(shell echo $$((16#$(IMAGE_BASE) + 16#10000)))
-GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOLE}' -X 'cmd.ImageBase=${IMAGE_BASE}'"
+GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOLE}' -X 'cmd.ImageBase=${IMAGE_BASE}'"
 GOENV := GOOS=tamago GOARCH=amd64
 
 OVMFCODE ?= OVMF_CODE.fd
