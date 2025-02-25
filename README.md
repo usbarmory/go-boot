@@ -8,6 +8,12 @@ The [go-boot](https://github.com/usbarmory/go-boot) project is a
 Shell and primary boot loader for AMD64 platforms, allowing boot of kernel
 images (e.g. Linux) and UEFI API interaction.
 
+Authors
+=======
+
+Andrea Barisani  
+andrea@inversepath.com  
+
 Operation
 =========
 
@@ -95,8 +101,21 @@ git clone https://github.com/usbarmory/go-boot && cd go-boot
 make efi IMAGE_BASE=40000000 CONSOLE=com1
 ```
 
-Debugging
-=========
+Executing as UEFI application
+=============================
+
+The `go-boot.efi` application executable, built after _Compiling_, can be
+loaded from an UEFI shell or boot manager, the following example shows an
+entry for [systemd-boot](https://www.freedesktop.org/wiki/Software/systemd/systemd-boot/):
+
+```
+# /boot/loader/entries/go-boot.conf
+title Go Boot
+efi /EFI/Linux/go-boot.efi
+```
+
+Emulated hardware with QEMU
+===========================
 
 QEMU supported targets can be executed under emulation, using the
 [Open Virtual Machine Firmware](https://github.com/tianocore/tianocore.github.io/wiki/OVMF)
@@ -122,12 +141,6 @@ Breakpoints can be set in the usual way:
 b CoreStartImage
 continue
 ```
-
-Authors
-=======
-
-Andrea Barisani  
-andrea@inversepath.com  
 
 License
 =======
