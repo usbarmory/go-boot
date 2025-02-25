@@ -49,13 +49,15 @@ func init() {
 		Name:    "reset",
 		Args:    1,
 		Pattern: regexp.MustCompile(`reset(?: (cold|warm))?$`),
-		Help:    "reset system",
+		Help: "EFI_RUNTIME_SERVICES.ResetSystem()",
 		Syntax:  "(cold|warm)?",
 		Fn:      resetCmd,
 	})
 
 	shell.Add(shell.Cmd{
-		Name: "shutdown",
+		Name: "halt, shutdown",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^(halt|shutdown)$`),
 		Help: "shutdown system",
 		Fn:   shutdownCmd,
 	})

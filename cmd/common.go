@@ -43,14 +43,8 @@ func init() {
 		Name:    "exit, quit",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^(exit|quit)$`),
-		Help:    "close session",
+		Help:    "close session and halt the processor",
 		Fn:      exitCmd,
-	})
-
-	shell.Add(shell.Cmd{
-		Name: "halt",
-		Help: "halt the machine",
-		Fn:   haltCmd,
 	})
 
 	shell.Add(shell.Cmd{
@@ -115,10 +109,6 @@ func logCmd(_ []string) (string, error) {
 }
 
 func exitCmd(_ []string) (res string, err error) {
-	return "", io.EOF
-}
-
-func haltCmd(_ []string) (res string, err error) {
 	return "", io.EOF
 }
 

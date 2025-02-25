@@ -1,12 +1,12 @@
-
 Introduction
 ============
 
 > :warning: this is a Work in Progress not meant for production use
 
-This [TamaGo](https://github.com/usbarmory/tamago) based unikernel acts as a
-primary UEFI boot loader for AMD64 platforms, allowing boot of kernel images
-(e.g. Linux) and UEFI API interaction.
+The [GoBoot](https://github.com/usbarmory/go-boot) project is a
+[TamaGo](https://github.com/usbarmory/tamago) unikernel implementing a UEFI
+Shell and primary boot loader for AMD64 platforms, allowing boot of kernel
+images (e.g. Linux) and UEFI API interaction.
 
 Operation
 =========
@@ -22,7 +22,8 @@ alloc           <hex offset> <size>      # EFI_BOOT_SERVICES.AllocatePages()
 build                                    # build information
 date            (time in RFC339 format)? # show/change runtime date and time
 dma             (free|used)?             # show allocation of default DMA region
-exit, quit                               # close session
+exit, quit                               # close session and halt the processor
+halt, shutdown                           # shutdown system
 halt                                     # halt the machine
 info                                     # device information
 init                                     # init UEFI services
@@ -31,7 +32,7 @@ log                                      # show runtime log
 memmap                                   # EFI_BOOT_SERVICES.GetMemoryMap()
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
-reset           (cold|warm)?             # reset system
+reset           (cold|warm)?             # EFI_RUNTIME_SERVICES.ResetSystem()
 shutdown                                 # shutdown system
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
@@ -59,6 +60,14 @@ Linux version 5.10.233 (root@tamago) (gcc (GCC) 14.2.1 20250128, GNU ld (GNU Bin
 ...
 ```
 
+Hardware Compatibility List
+===========================
+
+The list of supported hardware is available in the
+[project wiki](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list).
+
+The list includes a safe `IMAGE_BASE` value to pass while _Compiling_.
+
 Compiling
 =========
 
@@ -75,11 +84,17 @@ cd ../bin && export TAMAGO=`pwd`/go
 The `CONSOLE` environment variable must be set to either `com1` or `text` to
 configure the output console to serial port or UEFI console.
 
+The `IMAGE_BASE` environment variable must be set within a memory range (in
+hex) Available in the target UEFI environment for the unikernel allocation
+(64MB), the [HCL](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list)
+or `memmap` command from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
+can provide such value.
+
 Build the `go-boot.efi` application executable:
 
 ```
 git clone https://github.com/usbarmory/go-boot && cd go-boot
-make efi CONSOLE=com1
+make efi IMAGE_BASE=40000000 CONSOLE=com1
 ```
 
 Debugging

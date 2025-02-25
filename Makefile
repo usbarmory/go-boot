@@ -8,8 +8,9 @@ SHELL = /bin/bash
 APP ?= go-boot
 CONSOLE ?= text
 
-TEXT_START := 0x40010000 # RamStart (defined in efi/amd64.go) + 0x10000
-GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOLE}'"
+IMAGE_BASE := 40000000
+TEXT_START := $(shell echo $$((16#$(IMAGE_BASE) + 16#10000)))
+GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOLE}' -X 'cmd.ImageBase=${IMAGE_BASE}'"
 GOENV := GOOS=tamago GOARCH=amd64
 
 OVMFCODE ?= OVMF_CODE.fd
@@ -67,7 +68,7 @@ $(APP).efi: $(APP)
 		--strip-debug \
 		--target efi-app-x86_64 \
 		--subsystem=efi-app \
-		--image-base $(subst 10000 ,00000 ,$(TEXT_START)) \
+		--image-base 0x$(IMAGE_BASE) \
 		--stack=0x10000 \
 		${APP} ${APP}.efi
 	printf '\x26\x02' | dd of=${APP}.efi bs=1 seek=150 count=2 conv=notrunc,fsync # adjust Characteristics

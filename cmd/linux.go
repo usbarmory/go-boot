@@ -36,24 +36,31 @@ const (
 // go:embed bzImage
 var bzImage []byte
 
-var memoryMap = []bzimage.E820Entry{
-	// should always be usable (?)
-	bzimage.E820Entry{
+func buildMemoryMap() (m []bzimage.E820Entry, err error) {
+	var ramStart uint64
+
+	// TODO: use GetMemoryMap()
+	m = append(m, bzimage.E820Entry{
 		Addr:    uint64(0x00000000),
 		Size:    uint64(0x0009f000),
 		MemType: bzimage.RAM,
-	},
-	// amd64.ramStart, microvm.ramSize
-	bzimage.E820Entry{
-		Addr:    efi.RamStart,
-		Size:    efi.RamSize,
+	})
+
+	ramStart, ramSize := memRegion()
+
+	m = append(m, bzimage.E820Entry{
+		Addr:    ramStart,
+		Size:    ramSize,
 		MemType: bzimage.RAM,
-	},
-	bzimage.E820Entry{
+	})
+
+	m = append(m, bzimage.E820Entry{
 		Addr:    memoryStart,
 		Size:    memorySize,
 		MemType: bzimage.RAM,
-	},
+	})
+
+	return
 }
 
 func init() {
@@ -67,7 +74,7 @@ func init() {
 	})
 }
 
-func exitBootServices() {
+func cleanup() {
 	log.Printf("exiting EFI boot services")
 
 	if err := bootServices.Exit(); err != nil {
@@ -79,6 +86,7 @@ func exitBootServices() {
 
 func linuxCmd(arg []string) (res string, err error) {
 	var mem *dma.Region
+	var memmap []bzimage.E820Entry
 
 	path := strings.TrimSpace(arg[0])
 
@@ -91,6 +99,8 @@ func linuxCmd(arg []string) (res string, err error) {
 	if bootServices == nil {
 		return "", errors.New("EFI Boot Services unavailable (forgot `init`?)")
 	}
+
+	// allocate memory for kernel loading
 
 	log.Printf("allocating memory range %#08x - %#08x", memoryStart, memoryStart+memorySize)
 
@@ -116,12 +126,20 @@ func linuxCmd(arg []string) (res string, err error) {
 	addr, _ := mem.Reserve(memorySize, 0)
 	defer mem.Release(addr)
 
+	// get available memory
+
+	if memmap, err = buildMemoryMap(); err != nil {
+		return
+	}
+
 	image := &exec.LinuxImage{
-		Memory:  memoryMap,
+		Memory:  memmap,
 		Region:  mem,
 		Kernel:  bzImage,
 		CmdLine: commandLine,
 	}
+
+	// load kernel
 
 	log.Printf("loading kernel@%0.8x", memoryStart)
 
@@ -129,8 +147,10 @@ func linuxCmd(arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not load kernel, %v", err)
 	}
 
+	// boot kernel
+
 	log.Printf("starting kernel@%0.8x", image.Entry())
 
-	// does not return if boot is successful
-	return "", image.Boot(exitBootServices)
+	// does not return on success
+	return "", image.Boot(cleanup)
 }

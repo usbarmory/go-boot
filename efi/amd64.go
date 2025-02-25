@@ -48,11 +48,11 @@ var (
 	systemTable uint64
 )
 
-//go:linkname RamStart runtime.ramStart
-var RamStart uint64 = 0x40000000
+//go:linkname ramStart runtime.ramStart
+var ramStart uint64 = 0x40000000
 
 //go:linkname RamSize runtime.ramSize
-var RamSize uint64 = 0x10000000 // 256MB
+var RamSize uint64 = 0x04000000 // 64MB
 
 //go:linkname nanotime1 runtime.nanotime1
 func nanotime1() int64 {
