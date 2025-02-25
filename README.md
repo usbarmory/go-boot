@@ -3,7 +3,7 @@ Introduction
 
 > :warning: this is a Work in Progress not meant for production use
 
-The [GoBoot](https://github.com/usbarmory/go-boot) project is a
+The [go-boot](https://github.com/usbarmory/go-boot) project is a
 [TamaGo](https://github.com/usbarmory/tamago) unikernel implementing a UEFI
 Shell and primary boot loader for AMD64 platforms, allowing boot of kernel
 images (e.g. Linux) and UEFI API interaction.
