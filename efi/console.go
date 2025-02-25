@@ -24,13 +24,6 @@ var (
 	conOut uint64
 )
 
-// SimpleTextInput represents an EFI Simple Text Input Protocol descriptor.
-type SimpleTextInput struct {
-	Reset         uint64
-	ReadKeyStroke uint64
-	WaitForKey    uint64
-}
-
 // InputKey represents an EFI Input Key descriptor.
 type InputKey struct {
 	ScanCode    uint16
