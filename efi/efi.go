@@ -121,7 +121,7 @@ func GetSystemTable() (t *SystemTable, err error) {
 	}
 
 	addr, buf := r.Reserve(len(buf), 0)
-	defer dma.Release(addr)
+	defer r.Release(addr)
 
 	if err = t.UnmarshalBinary(buf); err != nil {
 		return
