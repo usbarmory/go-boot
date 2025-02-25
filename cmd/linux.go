@@ -97,7 +97,7 @@ func linuxCmd(arg []string) (res string, err error) {
 	}
 
 	if bootServices == nil {
-		return "", errors.New("EFI Boot Services unavailable (forgot `init`?)")
+		return "", errors.New("EFI Boot Services unavailable")
 	}
 
 	// allocate memory for kernel loading

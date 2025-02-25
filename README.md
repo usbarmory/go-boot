@@ -24,21 +24,19 @@ date            (time in RFC339 format)? # show/change runtime date and time
 dma             (free|used)?             # show allocation of default DMA region
 exit, quit                               # close session and halt the processor
 halt, shutdown                           # shutdown system
-halt                                     # halt the machine
 info                                     # device information
-init                                     # init UEFI services
 linux           (path)?                  # boot Linux kernel bzImage
 log                                      # show runtime log
 memmap                                   # EFI_BOOT_SERVICES.GetMemoryMap()
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
 reset           (cold|warm)?             # EFI_RUNTIME_SERVICES.ResetSystem()
-shutdown                                 # shutdown system
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
+uefi                                     # UEFI information
 uptime                                   # show how long the system has been running
 
-> init
+> uefi
 Firmware Revision .: 10000
 Runtime Services  .: 0x79ecb98
 Boot Services .....: 0x7ea5720

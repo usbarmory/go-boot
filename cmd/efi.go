@@ -24,10 +24,15 @@ var (
 )
 
 func init() {
+	if systemTable, _ = efi.GetSystemTable(); systemTable != nil {
+		bootServices, _ = systemTable.GetBootServices()
+		runtimeServices, _ = systemTable.GetRuntimeServices()
+	}
+
 	shell.Add(shell.Cmd{
-		Name: "init",
-		Help: "init UEFI services",
-		Fn:   initCmd,
+		Name: "uefi",
+		Help: "UEFI information",
+		Fn:   uefiCmd,
 	})
 
 	shell.Add(shell.Cmd{
@@ -49,27 +54,22 @@ func init() {
 		Name:    "reset",
 		Args:    1,
 		Pattern: regexp.MustCompile(`reset(?: (cold|warm))?$`),
-		Help: "EFI_RUNTIME_SERVICES.ResetSystem()",
+		Help:    "EFI_RUNTIME_SERVICES.ResetSystem()",
 		Syntax:  "(cold|warm)?",
 		Fn:      resetCmd,
 	})
 
 	shell.Add(shell.Cmd{
-		Name: "halt, shutdown",
+		Name:    "halt, shutdown",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^(halt|shutdown)$`),
-		Help: "shutdown system",
-		Fn:   shutdownCmd,
+		Help:    "shutdown system",
+		Fn:      shutdownCmd,
 	})
 }
 
-func initCmd(_ []string) (res string, err error) {
+func uefiCmd(_ []string) (res string, err error) {
 	var buf bytes.Buffer
-
-	if systemTable, _ = efi.GetSystemTable(); systemTable != nil {
-		bootServices, _ = systemTable.GetBootServices()
-		runtimeServices, _ = systemTable.GetRuntimeServices()
-	}
 
 	fmt.Fprintf(&buf, "Firmware Revision .: %x\n", systemTable.FirmwareRevision)
 	fmt.Fprintf(&buf, "Runtime Services  .: %#x\n", systemTable.RuntimeServices)
@@ -84,7 +84,7 @@ func memmapCmd(_ []string) (res string, err error) {
 	var mmap []*efi.MemoryMap
 
 	if bootServices == nil {
-		return "", errors.New("EFI Boot Services unavailable (forgot `init`?)")
+		return "", errors.New("EFI Boot Services unavailable")
 	}
 
 	if mmap, _, err = bootServices.GetMemoryMap(); err != nil {
@@ -119,7 +119,7 @@ func allocCmd(arg []string) (res string, err error) {
 	}
 
 	if bootServices == nil {
-		return "", errors.New("EFI Boot Services unavailable (forgot `init`?)")
+		return "", errors.New("EFI Boot Services unavailable")
 	}
 
 	log.Printf("allocating memory range %#08x - %#08x", addr, addr+size)
@@ -138,7 +138,7 @@ func resetCmd(arg []string) (_ string, err error) {
 	var resetType int
 
 	if runtimeServices == nil {
-		return "", errors.New("EFI Runtime Services unavailable (forgot `init`?)")
+		return "", errors.New("EFI Runtime Services unavailable")
 	}
 
 	switch arg[0] {
