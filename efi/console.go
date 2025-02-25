@@ -63,6 +63,12 @@ func consoleOutput(p []byte) (status uint64) {
 //go:linkname printk runtime.printk
 func printk(c byte) {
 	consoleOutput([]byte{c})
+
+	// LF moves cursor to the next line
+	if c == 0x0a {
+		// CR moves cursor to left marging of the current line
+		consoleOutput([]byte{0x0d})
+	}
 }
 
 // Read available data to buffer from console.
