@@ -20,7 +20,8 @@ Operation
 ```
 Shell> go-boot.efi
 
-go-boot initializing (console=com1)
+initializing EFI services
+initializing console (com1)
 
 tamago/amd64 (go1.24.0) • UEFI
 

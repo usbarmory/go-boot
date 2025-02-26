@@ -84,7 +84,7 @@ func cleanup() {
 	bootServices = nil
 }
 
-func linuxCmd(arg []string) (res string, err error) {
+func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	var mem *dma.Region
 	var memmap []bzimage.E820Entry
 

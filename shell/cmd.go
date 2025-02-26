@@ -14,7 +14,7 @@ import (
 )
 
 // CmdFn represents a command handler.
-type CmdFn func(arg []string) (res string, err error)
+type CmdFn func(c *Interface, arg []string) (res string, err error)
 
 // Cmd represents a shell command.
 type Cmd struct {
@@ -47,7 +47,7 @@ func Add(cmd Cmd) {
 
 // Help returns a formatted string with instructions for all registered
 // commands.
-func (iface *Interface) Help(_ []string) (res string, _ error) {
+func (c *Interface) Help(_ *Interface, _ []string) (res string, _ error) {
 	var help bytes.Buffer
 	var names []string
 
@@ -66,8 +66,8 @@ func (iface *Interface) Help(_ []string) (res string, _ error) {
 	_ = t.Flush()
 	res = help.String()
 
-	if iface.vt100 != nil {
-		res = string(iface.vt100.Escape.Cyan) + res + string(iface.vt100.Escape.Reset)
+	if c.Terminal != nil {
+		res = string(c.Terminal.Escape.Cyan) + res + string(c.Terminal.Escape.Reset)
 	}
 
 	return

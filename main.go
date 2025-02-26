@@ -23,7 +23,7 @@ import (
 var Console string
 
 func init() {
-	fmt.Printf("go-boot initializing (console=%s)\n", Console)
+	fmt.Printf("initializing console (%s)\n", Console)
 
 	log.SetFlags(0)
 
@@ -44,9 +44,6 @@ func main() {
 		iface.ReadWriter = efi.UART0
 		iface.Start(true)
 	case "TEXT", "text":
-		efi.ForceLine = true
-		efi.ReplaceTabs = 8
-
 		iface.ReadWriter = efi.CONSOLE
 		iface.Start(false)
 	}

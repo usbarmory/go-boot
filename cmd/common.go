@@ -93,37 +93,37 @@ func init() {
 	})
 }
 
-func buildInfoCmd(_ []string) (res string, err error) {
-	buf := new(bytes.Buffer)
+func buildInfoCmd(_ *shell.Interface, _ []string) (string, error) {
+	res := new(bytes.Buffer)
 
 	if bi, ok := debug.ReadBuildInfo(); ok {
-		buf.WriteString(bi.String())
+		res.WriteString(bi.String())
 	}
 
-	return buf.String(), nil
+	return res.String(), nil
 }
 
-func logCmd(_ []string) (string, error) {
+func logCmd(_ *shell.Interface, _ []string) (string, error) {
 	res, err := os.ReadFile(LogPath)
 	return string(res), err
 }
 
-func exitCmd(_ []string) (res string, err error) {
+func exitCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	return "", io.EOF
 }
 
-func stackCmd(_ []string) (string, error) {
+func stackCmd(_ *shell.Interface, _ []string) (string, error) {
 	return string(debug.Stack()), nil
 }
 
-func stackallCmd(_ []string) (string, error) {
+func stackallCmd(_ *shell.Interface, _ []string) (string, error) {
 	buf := new(bytes.Buffer)
 	pprof.Lookup("goroutine").WriteTo(buf, 1)
 
 	return buf.String(), nil
 }
 
-func dmaCmd(arg []string) (string, error) {
+func dmaCmd(_ *shell.Interface, arg []string) (string, error) {
 	var res []string
 
 	if dma.Default() == nil {
@@ -160,7 +160,7 @@ func dmaCmd(arg []string) (string, error) {
 	return strings.Join(res, "\n"), nil
 }
 
-func dateCmd(arg []string) (res string, err error) {
+func dateCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	if len(arg[0]) > 1 {
 		t, err := time.Parse(time.RFC3339, arg[0][1:])
 
@@ -174,7 +174,7 @@ func dateCmd(arg []string) (res string, err error) {
 	return fmt.Sprintf("%s", time.Now().Format(time.RFC3339)), nil
 }
 
-func uptimeCmd(_ []string) (string, error) {
+func uptimeCmd(_ *shell.Interface, _ []string) (string, error) {
 	ns := uptime()
 	return fmt.Sprintf("%s", durafmt.Parse(time.Duration(ns)*time.Nanosecond)), nil
 }

@@ -13,6 +13,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sync"
 
 	"golang.org/x/term"
 )
@@ -34,10 +35,15 @@ type Interface struct {
 	// ReadWriter represents the terminal connection
 	ReadWriter io.ReadWriter
 
-	vt100 *term.Terminal
+	// Output represents the interface output
+	Output io.Writer
+	// Terminal represents the VT100 terminal output
+	Terminal *term.Terminal
+
+	once sync.Once
 }
 
-func (iface *Interface) handleLine(line string, w io.Writer) (err error) {
+func (c *Interface) handleLine(line string) (err error) {
 	var match *Cmd
 	var arg []string
 	var res string
@@ -59,18 +65,18 @@ func (iface *Interface) handleLine(line string, w io.Writer) (err error) {
 		return errors.New("unknown command, type `help`")
 	}
 
-	if res, err = match.Fn(arg); err != nil {
+	if res, err = match.Fn(c, arg); err != nil {
 		return
 	}
 
-	fmt.Fprintln(w, res)
+	fmt.Fprintln(c.Output, res)
 
 	return
 }
 
-func (iface *Interface) readLine(t *term.Terminal, w io.Writer) (error) {
-	if iface.vt100 == nil {
-		fmt.Fprint(w, iface.Prompt)
+func (c *Interface) readLine(t *term.Terminal) error {
+	if c.Terminal == nil {
+		fmt.Fprint(c.Output, c.Prompt)
 	}
 
 	s, err := t.ReadLine()
@@ -84,50 +90,70 @@ func (iface *Interface) readLine(t *term.Terminal, w io.Writer) (error) {
 		return nil
 	}
 
-	if err = iface.handleLine(s, w); err != nil {
+	if err = c.handleLine(s); err != nil {
 		if err == io.EOF {
 			return err
 		}
 
-		fmt.Fprintf(w, "command error, %v\n", err)
+		fmt.Fprintf(c.Output, "command error, %v\n", err)
 		return nil
 	}
 
 	return nil
 }
 
-// Start handles registered commands over the interface ReadWriter.
-func (iface *Interface) Start(vt100 bool) {
-	var w io.Writer
+// Exec executes an individual command.
+func (c *Interface) Exec(cmd []byte) {
+	if err := c.handleLine(string(cmd)); err != nil {
+		fmt.Fprintf(c.Output, "command error (%s), %v\n", cmd, err)
+	}
+}
 
-	t := term.NewTerminal(iface.ReadWriter, "")
-
-	if len(iface.Prompt) == 0 {
-		iface.Prompt = DefaultPrompt
+func (c *Interface) handle(t *term.Terminal) {
+	if len(c.Prompt) == 0 {
+		c.Prompt = DefaultPrompt
 	}
 
-	if vt100 {
-		t.SetPrompt(string(t.Escape.Red) + iface.Prompt + string(t.Escape.Reset))
-		iface.vt100 = t
-		w = iface.vt100
+	if c.Terminal != nil {
+		t.SetPrompt(string(t.Escape.Red) + c.Prompt + string(t.Escape.Reset))
+		c.Output = c.Terminal
 	} else {
-		w = iface.ReadWriter
+		c.Output = c.ReadWriter
 	}
 
-	help, _  := iface.Help(nil)
+	help, _ := c.Help(nil, nil)
 
-	fmt.Fprintf(t, "\n%s\n\n", iface.Banner)
+	fmt.Fprintf(t, "\n%s\n\n", c.Banner)
 	fmt.Fprintf(t, "%s\n", help)
 
-	Add(Cmd{
-		Name: "help",
-		Help: "this help",
-		Fn:   iface.Help,
+	c.once.Do(func() {
+		Add(Cmd{
+			Name: "help",
+			Help: "this help",
+			Fn:   c.Help,
+		})
 	})
 
 	for {
-		if err := iface.readLine(t, w); err != nil {
+		if err := c.readLine(t); err != nil {
 			return
 		}
+	}
+}
+
+// Start handles registered commands over the interface Terminal or ReadWriter,
+// the argument specifies whether ReadWriter is VT100 compatible.
+func (c *Interface) Start(vt100 bool) {
+	switch {
+	case c.Terminal != nil:
+		c.handle(c.Terminal)
+	case c.ReadWriter != nil:
+		t := term.NewTerminal(c.ReadWriter, "")
+
+		if vt100 {
+			c.Terminal = t
+		}
+
+		c.handle(t)
 	}
 }

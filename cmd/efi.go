@@ -24,6 +24,11 @@ var (
 )
 
 func init() {
+	efi.ForceLine = true
+	efi.ReplaceTabs = 8
+
+	print("initializing EFI services\n")
+
 	if systemTable, _ = efi.GetSystemTable(); systemTable != nil {
 		bootServices, _ = systemTable.GetBootServices()
 		runtimeServices, _ = systemTable.GetRuntimeServices()
@@ -68,7 +73,7 @@ func init() {
 	})
 }
 
-func uefiCmd(_ []string) (res string, err error) {
+func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var buf bytes.Buffer
 
 	fmt.Fprintf(&buf, "Firmware Revision .: %x\n", systemTable.FirmwareRevision)
@@ -79,7 +84,7 @@ func uefiCmd(_ []string) (res string, err error) {
 	return buf.String(), err
 }
 
-func memmapCmd(_ []string) (res string, err error) {
+func memmapCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var buf bytes.Buffer
 	var mmap []*efi.MemoryMap
 
@@ -101,7 +106,7 @@ func memmapCmd(_ []string) (res string, err error) {
 	return buf.String(), err
 }
 
-func allocCmd(arg []string) (res string, err error) {
+func allocCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	addr, err := strconv.ParseUint(arg[0], 16, 64)
 
 	if err != nil {
@@ -134,7 +139,7 @@ func allocCmd(arg []string) (res string, err error) {
 	return "", err
 }
 
-func resetCmd(arg []string) (_ string, err error) {
+func resetCmd(_ *shell.Interface, arg []string) (_ string, err error) {
 	var resetType int
 
 	if runtimeServices == nil {
@@ -142,9 +147,9 @@ func resetCmd(arg []string) (_ string, err error) {
 	}
 
 	switch arg[0] {
-	case "", "cold":
+	case "cold":
 		resetType = efi.EfiResetCold
-	case "warm":
+	case "warm", "":
 		resetType = efi.EfiResetWarm
 	case "shutdown":
 		resetType = efi.EfiResetShutdown
@@ -157,6 +162,6 @@ func resetCmd(arg []string) (_ string, err error) {
 	return
 }
 
-func shutdownCmd(_ []string) (_ string, err error) {
-	return resetCmd([]string{"shutdown"})
+func shutdownCmd(_ *shell.Interface, _ []string) (_ string, err error) {
+	return resetCmd(nil, []string{"shutdown"})
 }

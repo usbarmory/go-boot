@@ -58,7 +58,7 @@ func memCopy(start uint, size int, w []byte) (b []byte) {
 	return
 }
 
-func memReadCmd(arg []string) (res string, err error) {
+func memReadCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	addr, err := strconv.ParseUint(arg[0], 16, 64)
 
 	if err != nil {
@@ -82,7 +82,7 @@ func memReadCmd(arg []string) (res string, err error) {
 	return hex.Dump(mem(uint(addr), int(size), nil)), nil
 }
 
-func memWriteCmd(arg []string) (res string, err error) {
+func memWriteCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	addr, err := strconv.ParseUint(arg[0], 16, 64)
 
 	if err != nil {

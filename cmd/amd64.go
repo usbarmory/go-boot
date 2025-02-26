@@ -13,6 +13,7 @@ import (
 	"runtime"
 
 	"github.com/usbarmory/go-boot/efi"
+	"github.com/usbarmory/go-boot/shell"
 )
 
 // This unikernel is reallocated based on build time variable IMAGE_BASE, for
@@ -31,7 +32,7 @@ func mem(start uint, size int, w []byte) (b []byte) {
 	return memCopy(start, size, w)
 }
 
-func infoCmd(_ []string) (string, error) {
+func infoCmd(_ *shell.Interface, _ []string) (string, error) {
 	var res bytes.Buffer
 
 	ramStart, ramEnd := memRegion()
