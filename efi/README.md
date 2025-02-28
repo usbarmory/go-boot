@@ -6,7 +6,7 @@ applications on bare metal AMD64/ARM/RISC-V processors.
 
 The [efi](https://github.com/usbarmory/go-boot/tree/master/efi) package
 provides support for unikernels running under the Unified Extensible Firmware
-Interface ([UEFI](https://uefi.org) on
+Interface ([UEFI](https://uefi.org)) on
 [amd64](https://github.com/usbarmory/tamago/tree/master/amd64) CPUs.
 
 Authors
