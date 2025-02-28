@@ -22,4 +22,7 @@ TEXT cpuinit(SB),NOSPLIT|NOFRAME,$0
 	MOVQ	SystemTable_ConOut(DX), AX
 	MOVQ	AX, ·conOut(SB)
 
+	// Enable SSE
+	CALL	sse_enable(SB)
+
 	JMP	runtime·rt0_amd64_tamago(SB)
