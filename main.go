@@ -32,7 +32,7 @@ func init() {
 }
 
 func main() {
-	banner := fmt.Sprintf("%s/%s (%s) • UEFI",
+	banner := fmt.Sprintf("go-boot • %s/%s (%s) • UEFI",
 		runtime.GOOS, runtime.GOARCH, runtime.Version())
 
 	iface := &shell.Interface{

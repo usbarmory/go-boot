@@ -49,7 +49,7 @@ var (
 )
 
 //go:linkname ramStart runtime.ramStart
-var ramStart uint64 = 0x40000000
+var ramStart uint64 = 0x40000000 // unused under EFI
 
 //go:linkname RamSize runtime.ramSize
 var RamSize uint64 = 0x04000000 // 64MB

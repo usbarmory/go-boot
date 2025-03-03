@@ -23,10 +23,11 @@ Shell> go-boot.efi
 initializing EFI services
 initializing console (com1)
 
-tamago/amd64 (go1.24.0) • UEFI
+go-boot • tamago/amd64 (go1.24.0) • UEFI
 
 alloc           <hex offset> <size>      # EFI_BOOT_SERVICES.AllocatePages()
 build                                    # build information
+cpuid           <leaf> <subleaf>         # display CPU capabilities
 date            (time in RFC339 format)? # show/change runtime date and time
 dma             (free|used)?             # show allocation of default DMA region
 exit, quit                               # close session and halt the processor
@@ -44,9 +45,10 @@ uefi                                     # UEFI information
 uptime                                   # show how long the system has been running
 
 > uefi
-Firmware Revision .: 10000
-Runtime Services  .: 0x79ecb98
-Boot Services .....: 0x7ea5720
+Firmware Vendor ...: 0xbf940b98
+Firmware Revision .: 0x10000
+Runtime Services  .: 0xbf9ecb98
+Boot Services .....: 0xbfea5720
 Table Entries .....: 10
 
 > alloc 90000000 4096

@@ -76,7 +76,8 @@ func init() {
 func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var buf bytes.Buffer
 
-	fmt.Fprintf(&buf, "Firmware Revision .: %x\n", systemTable.FirmwareRevision)
+	fmt.Fprintf(&buf, "Firmware Vendor ...: %#x\n", systemTable.FirmwareVendor)
+	fmt.Fprintf(&buf, "Firmware Revision .: %#x\n", systemTable.FirmwareRevision)
 	fmt.Fprintf(&buf, "Runtime Services  .: %#x\n", systemTable.RuntimeServices)
 	fmt.Fprintf(&buf, "Boot Services .....: %#x\n", systemTable.BootServices)
 	fmt.Fprintf(&buf, "Table Entries .....: %d\n", systemTable.NumberOfTableEntries)
