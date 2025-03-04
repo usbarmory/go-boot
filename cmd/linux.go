@@ -71,11 +71,10 @@ func buildMemoryMap() (m []bzimage.E820Entry, err error) {
 
 func findMemory(m []bzimage.E820Entry, start int, size int) (mem *dma.Region, err error) {
 	for _, e := range m {
-		if e.MemType != bzimage.RAM || e.Size < uint64(size) {
-			continue
-		}
-
-		if uint64(start) < e.Addr || uint64(start) >= e.Addr+e.Size {
+		if e.MemType != bzimage.RAM ||
+			e.Size < uint64(size) ||
+			uint64(start) < e.Addr ||
+			uint64(start) >= e.Addr+e.Size {
 			continue
 		}
 
@@ -123,13 +122,11 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	// build E820 memory map
-
 	if mmap, err = buildMemoryMap(); err != nil {
 		return
 	}
 
 	// find and reserve memory for kernel loading
-
 	if mem, err = findMemory(mmap, memoryStart, memorySize); err != nil {
 		return
 	}
@@ -159,15 +156,11 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		CmdLine: CommandLine,
 	}
 
-	// load kernel
-
 	log.Printf("loading kernel@%0.8x", mem.Start())
 
 	if err = image.Load(); err != nil {
 		return "", fmt.Errorf("could not load kernel, %v", err)
 	}
-
-	// boot kernel
 
 	log.Printf("starting kernel@%0.8x", image.Entry())
 
