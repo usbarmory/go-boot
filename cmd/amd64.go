@@ -11,8 +11,8 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
-	"strconv"
 	"runtime"
+	"strconv"
 
 	"github.com/usbarmory/go-boot/efi"
 	"github.com/usbarmory/go-boot/shell"
@@ -20,7 +20,7 @@ import (
 
 func init() {
 	shell.Add(shell.Cmd{
-		Name: "cpuid",
+		Name:    "cpuid",
 		Args:    2,
 		Pattern: regexp.MustCompile(`^cpuid\s+([[:xdigit:]]+) ([[:xdigit:]]+)$`),
 		Syntax:  "<leaf> <subleaf>",
@@ -57,7 +57,6 @@ func infoCmd(_ *shell.Interface, _ []string) (string, error) {
 
 	return res.String(), nil
 }
-
 
 func cpuidCmd(_ *shell.Interface, arg []string) (string, error) {
 	var res bytes.Buffer

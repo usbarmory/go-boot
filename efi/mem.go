@@ -8,6 +8,8 @@ package efi
 import (
 	"bytes"
 	"encoding/binary"
+
+	"github.com/u-root/u-root/pkg/boot/bzimage"
 )
 
 const (
@@ -46,6 +48,30 @@ func (d *MemoryMap) UnmarshalBinary(data []byte) (err error) {
 // End returns the descriptor physical end address.
 func (d *MemoryMap) PhysicalEnd() uint64 {
 	return d.PhysicalStart + (d.NumberOfPages * PageSize)
+}
+
+// E820() converts an EFI Memory Map entry to an x86 E820 one suitable for use
+// after exiting EFI Boot Services.
+func (d *MemoryMap) E820() (bzimage.E820Entry, error) {
+	e := bzimage.E820Entry{
+		Addr: d.PhysicalStart,
+		Size: d.NumberOfPages * PageSize,
+	}
+
+	// Unified Extensible Firmware Interface (UEFI) Specification
+	// Version 2.10 - Table 7.10: Memory Type Usage after ExitBootServices()
+	switch d.Type {
+	case EfiLoaderCode, EfiLoaderData, EfiBootServicesCode, EfiBootServicesData, EfiConventionalMemory, EfiPersistentMemory:
+		e.MemType = bzimage.RAM
+	case EfiRuntimeServicesCode, EfiRuntimeServicesData, EfiACPIReclaimMemory:
+		e.MemType = bzimage.ACPI
+	case EfiACPIMemoryNVS:
+		e.MemType = bzimage.NVS
+	default:
+		e.MemType = bzimage.Reserved
+	}
+
+	return e, nil
 }
 
 // GetMemoryMap calls EFI_BOOT_SERVICES.GetMemoryMap().

@@ -24,44 +24,19 @@ import (
 	"github.com/usbarmory/tamago/dma"
 )
 
+// TODO: calculate from exec.LinuxImage.Region()
 const (
 	memoryStart = 0x80000000
 	memorySize  = 0x10000000
-
-	commandLine = "console=ttyS0,115200,8n1 mem=4G\x00"
 )
+
+// CommandLine represents the Linux kernel boot parameters
+var CommandLine = "console=ttyS0,115200,8n1\x00"
 
 // remove trailing space below to embed
 //
 // go:embed bzImage
 var bzImage []byte
-
-func buildMemoryMap() (m []bzimage.E820Entry, err error) {
-	var ramStart uint64
-
-	// TODO: use GetMemoryMap()
-	m = append(m, bzimage.E820Entry{
-		Addr:    uint64(0x00000000),
-		Size:    uint64(0x0009f000),
-		MemType: bzimage.RAM,
-	})
-
-	ramStart, ramSize := memRegion()
-
-	m = append(m, bzimage.E820Entry{
-		Addr:    ramStart,
-		Size:    ramSize,
-		MemType: bzimage.RAM,
-	})
-
-	m = append(m, bzimage.E820Entry{
-		Addr:    memoryStart,
-		Size:    memorySize,
-		MemType: bzimage.RAM,
-	})
-
-	return
-}
 
 func init() {
 	shell.Add(shell.Cmd{
@@ -72,6 +47,53 @@ func init() {
 		Help:    "boot Linux kernel bzImage",
 		Fn:      linuxCmd,
 	})
+}
+
+func buildMemoryMap() (m []bzimage.E820Entry, err error) {
+	var mmap []*efi.MemoryMap
+
+	if mmap, _, err = bootServices.GetMemoryMap(); err != nil {
+		return
+	}
+
+	for _, desc := range mmap {
+		e, err := desc.E820()
+
+		if err != nil {
+			return nil, err
+		}
+
+		m = append(m, e)
+	}
+
+	return
+}
+
+func findMemory(m []bzimage.E820Entry, start int, size int) (mem *dma.Region, err error) {
+	for _, e := range m {
+		if e.MemType != bzimage.RAM || e.Size < uint64(size) {
+			continue
+		}
+
+		if uint64(start) < e.Addr || uint64(start) >= e.Addr+e.Size {
+			continue
+		}
+
+		if mem, err = dma.NewRegion(uint(start), size, false); err != nil {
+			return
+		}
+
+		log.Printf("allocating memory range %#08x - %#08x", start, start+size)
+		mem.Reserve(size, 0)
+
+		break
+	}
+
+	if mem == nil {
+		err = errors.New("could not find memory for kernel loading")
+	}
+
+	return
 }
 
 func cleanup() {
@@ -86,7 +108,7 @@ func cleanup() {
 
 func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	var mem *dma.Region
-	var memmap []bzimage.E820Entry
+	var mmap []bzimage.E820Entry
 
 	path := strings.TrimSpace(arg[0])
 
@@ -100,48 +122,46 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", errors.New("EFI Boot Services unavailable")
 	}
 
-	// allocate memory for kernel loading
+	// build E820 memory map
 
-	log.Printf("allocating memory range %#08x - %#08x", memoryStart, memoryStart+memorySize)
+	if mmap, err = buildMemoryMap(); err != nil {
+		return
+	}
+
+	// find and reserve memory for kernel loading
+
+	if mem, err = findMemory(mmap, memoryStart, memorySize); err != nil {
+		return
+	}
+
+	// free reserved memory in case of error
+	defer mem.Release(mem.Start())
 
 	if err = bootServices.AllocatePages(
 		efi.AllocateAddress,
 		efi.EfiLoaderData,
-		memorySize,
-		memoryStart,
+		int(mem.Size()),
+		uint64(mem.Start()),
 	); err != nil {
 		return
 	}
 
 	// free allocated pages in case of error
 	defer bootServices.FreePages(
-		memoryStart,
-		memorySize,
+		uint64(mem.Start()),
+		int(mem.Size()),
 	)
 
-	if mem, err = dma.NewRegion(memoryStart, memorySize, false); err != nil {
-		return
-	}
-
-	addr, _ := mem.Reserve(memorySize, 0)
-	defer mem.Release(addr)
-
-	// get available memory
-
-	if memmap, err = buildMemoryMap(); err != nil {
-		return
-	}
-
 	image := &exec.LinuxImage{
-		Memory:  memmap,
+		Memory:  mmap,
 		Region:  mem,
 		Kernel:  bzImage,
-		CmdLine: commandLine,
+		CmdLine: CommandLine,
 	}
 
 	// load kernel
 
-	log.Printf("loading kernel@%0.8x", memoryStart)
+	log.Printf("loading kernel@%0.8x", mem.Start())
 
 	if err = image.Load(); err != nil {
 		return "", fmt.Errorf("could not load kernel, %v", err)
