@@ -45,11 +45,11 @@ uefi                                     # UEFI information
 uptime                                   # show how long the system has been running
 
 > uefi
-Firmware Vendor ...: 0xbf940b98
-Firmware Revision .: 0x10000
-Runtime Services  .: 0xbf9ecb98
-Boot Services .....: 0xbfea5720
-Table Entries .....: 10
+Firmware Vendor ...: Lenovo
+Firmware Revision .: 0x1320
+Runtime Services  .: 0x9cc85b98
+Boot Services .....: 0x77da6d90
+Table Entries .....: 18
 
 > alloc 90000000 4096
 allocating memory range 0x90000000 - 0x90001000

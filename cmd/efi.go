@@ -7,15 +7,19 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"log"
 	"regexp"
 	"strconv"
+	"unicode/utf16"
 
 	"github.com/usbarmory/go-boot/efi"
 	"github.com/usbarmory/go-boot/shell"
 )
+
+const maxVendorSize = 32
 
 var (
 	systemTable     *efi.SystemTable
@@ -75,8 +79,19 @@ func init() {
 
 func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var buf bytes.Buffer
+	var s []uint16
 
-	fmt.Fprintf(&buf, "Firmware Vendor ...: %#x\n", systemTable.FirmwareVendor)
+	b := mem(uint(systemTable.FirmwareVendor), maxVendorSize, nil)
+
+	for i := 0; i < maxVendorSize; i += 2 {
+		if b[i] == 0x00 && b[i+1] == 0 {
+			break
+		}
+
+		s = append(s, binary.LittleEndian.Uint16(b[i:i+2]))
+	}
+
+	fmt.Fprintf(&buf, "Firmware Vendor ...: %s\n", string(utf16.Decode(s)))
 	fmt.Fprintf(&buf, "Firmware Revision .: %#x\n", systemTable.FirmwareRevision)
 	fmt.Fprintf(&buf, "Runtime Services  .: %#x\n", systemTable.RuntimeServices)
 	fmt.Fprintf(&buf, "Boot Services .....: %#x\n", systemTable.BootServices)
