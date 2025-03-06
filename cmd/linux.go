@@ -16,18 +16,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/u-root/u-root/pkg/boot/bzimage"
-
 	"github.com/usbarmory/armory-boot/exec"
 	"github.com/usbarmory/go-boot/efi"
 	"github.com/usbarmory/go-boot/shell"
 	"github.com/usbarmory/tamago/dma"
-)
-
-// TODO: calculate from exec.LinuxImage.Region()
-const (
-	memoryStart = 0x80000000
-	memorySize  = 0x10000000
 )
 
 // CommandLine represents the Linux kernel boot parameters
@@ -35,7 +27,7 @@ var CommandLine = "console=ttyS0,115200,8n1\x00"
 
 // remove trailing space below to embed
 //
-// go:embed bzImage
+//go:embed bzImage
 var bzImage []byte
 
 func init() {
@@ -49,48 +41,57 @@ func init() {
 	})
 }
 
-func buildMemoryMap() (m []bzimage.E820Entry, err error) {
-	var mmap []*efi.MemoryMap
+func reserveMemory(image *exec.LinuxImage) (err error) {
+	mmap, _, err := bootServices.GetMemoryMap()
 
-	if mmap, _, err = bootServices.GetMemoryMap(); err != nil {
+	if err != nil {
 		return
 	}
 
-	for _, desc := range mmap {
-		e, err := desc.E820()
+	start, end, err := image.Parse()
 
-		if err != nil {
-			return nil, err
-		}
-
-		m = append(m, e)
+	if err != nil {
+		return
 	}
 
-	return
-}
+	log.Printf("loading kernel sections %#08x - %#08x", start, end)
 
-func findMemory(m []bzimage.E820Entry, start int, size int) (mem *dma.Region, err error) {
-	for _, e := range m {
-		if e.MemType != bzimage.RAM ||
-			e.Size < uint64(size) ||
-			uint64(start) < e.Addr ||
-			uint64(start) >= e.Addr+e.Size {
+	size := int(end - start)
+
+	// ensure kernel sections can be allocated outside EFI
+	for _, e := range mmap {
+		if e.Type != efi.EfiConventionalMemory ||
+			size > e.Size() ||
+			start < e.PhysicalStart ||
+			end > e.PhysicalEnd() {
 			continue
 		}
 
-		if mem, err = dma.NewRegion(uint(start), size, false); err != nil {
+		log.Printf("found UEFI memory range %#08x - %#08x", e.PhysicalStart, e.PhysicalEnd())
+
+		if image.Region, err = dma.NewRegion(uint(start), size, false); err != nil {
 			return
 		}
-
-		log.Printf("allocating memory range %#08x - %#08x", start, start+size)
-		mem.Reserve(size, 0)
 
 		break
 	}
 
-	if mem == nil {
-		err = errors.New("could not find memory for kernel loading")
+	if image.Region == nil {
+		return errors.New("could not find memory for kernel loading")
 	}
+
+	// build E820 memory map
+	for _, desc := range mmap {
+		e, err := desc.E820()
+
+		if err != nil {
+			return err
+		}
+
+		image.Memory = append(image.Memory, e)
+	}
+
+	image.Region.Reserve(size, 0)
 
 	return
 }
@@ -106,64 +107,59 @@ func cleanup() {
 }
 
 func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	var mem *dma.Region
-	var mmap []bzimage.E820Entry
-
 	path := strings.TrimSpace(arg[0])
 
 	if len(path) != 0 {
 		if bzImage, err = os.ReadFile(path); err != nil {
 			return
 		}
+	} else if len(bzImage) == 0 {
+		return "", errors.New("bzImage not embedded")
 	}
 
 	if bootServices == nil {
 		return "", errors.New("EFI Boot Services unavailable")
 	}
 
-	// build E820 memory map
-	if mmap, err = buildMemoryMap(); err != nil {
-		return
-	}
-
-	// find and reserve memory for kernel loading
-	if mem, err = findMemory(mmap, memoryStart, memorySize); err != nil {
-		return
-	}
-
-	// free reserved memory in case of error
-	defer mem.Release(mem.Start())
-
-	if err = bootServices.AllocatePages(
-		efi.AllocateAddress,
-		efi.EfiLoaderData,
-		int(mem.Size()),
-		uint64(mem.Start()),
-	); err != nil {
-		return
-	}
-
-	// free allocated pages in case of error
-	defer bootServices.FreePages(
-		uint64(mem.Start()),
-		int(mem.Size()),
-	)
-
 	image := &exec.LinuxImage{
-		Memory:  mmap,
-		Region:  mem,
 		Kernel:  bzImage,
 		CmdLine: CommandLine,
 	}
 
-	log.Printf("loading kernel@%0.8x", mem.Start())
+	// reserve runtime memory for kernel loading
+	if err = reserveMemory(image); err != nil {
+		return
+	}
 
+	// release in case of error
+	defer image.Region.Release(image.Region.Start())
+
+	start := uint64(image.Region.Start())
+	size := int(image.Region.Size())
+
+	// reserve UEFI memory for kernel loading
+	if err = bootServices.AllocatePages(
+		efi.AllocateAddress,
+		efi.EfiLoaderData,
+		size,
+		start,
+	); err != nil {
+		return
+	}
+
+	// free in case of error
+	defer bootServices.FreePages(
+		start,
+		size,
+	)
+
+	// load kernel in reserved memory
 	if err = image.Load(); err != nil {
 		return "", fmt.Errorf("could not load kernel, %v", err)
 	}
 
-	log.Printf("starting kernel@%0.8x", image.Entry())
+	log.Printf("jumping to kernel entry %#08x", image.Entry())
+	err = image.Boot(cleanup)
 
-	// does not return on success
-	return "", image.Boot(cleanup)
+	return
 }

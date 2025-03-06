@@ -47,7 +47,12 @@ func (d *MemoryMap) UnmarshalBinary(data []byte) (err error) {
 
 // End returns the descriptor physical end address.
 func (d *MemoryMap) PhysicalEnd() uint64 {
-	return d.PhysicalStart + (d.NumberOfPages * PageSize)
+	return d.PhysicalStart + d.NumberOfPages * PageSize
+}
+
+// Size returns the descriptor size.
+func (d *MemoryMap) Size() int {
+	return int(d.NumberOfPages * PageSize)
 }
 
 // E820() converts an EFI Memory Map entry to an x86 E820 one suitable for use

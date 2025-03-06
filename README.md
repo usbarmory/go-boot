@@ -59,9 +59,9 @@ Type Start            End              Pages            Attributes
 02   0000000090000000 0000000090000fff 0000000000000001 000000000000000f
 
 > linux
-allocating memory range 0x80000000 - 0x90000000
-loading kernel@80000000
-starting kernel@81000000
+loading kernel sections 0x80000000 - 0x81c50a4a
+found UEFI memory range 0x405b2000 - 0xbbf6d000
+jumping to kernel entry 0x81000000
 exiting EFI boot services
 Linux version 5.10.233 (root@tamago) (gcc (GCC) 14.2.1 20250128, GNU ld (GNU Binutils) 2.43.1)
 ...
