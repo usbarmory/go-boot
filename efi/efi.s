@@ -18,9 +18,9 @@ TEXT ·callService(SB),$0-48
 
 	MOVQ	SP, BX		// callee-saved
 	ANDQ	$~15, SP	// alignment for x86_64 ABI
-	ADJSP	$24
+	ADJSP	$16
 	CALL	(DI)
-	ADJSP	$-24
+	ADJSP	$-16
 	MOVQ	BX, SP
 
 	MOVQ	AX, status+40(FP)
