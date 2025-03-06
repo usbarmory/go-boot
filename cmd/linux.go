@@ -27,7 +27,7 @@ var CommandLine = "console=ttyS0,115200,8n1\x00"
 
 // remove trailing space below to embed
 //
-//go:embed bzImage
+// go:embed bzImage
 var bzImage []byte
 
 func init() {
