@@ -29,15 +29,11 @@ const (
 )
 
 // CommandLine represents the Linux kernel boot parameters
-var CommandLine = "earlyprintk=ttyS0,115200,8n1 console=ttyS0,115200,8n1 debug\x00"
+var CommandLine = "rootfstype=ext4 rootflags=rw audit=0 earlyprintk=ttyS0,115200,8n1 console=ttyS0,115200,8n1 debug\x00"
 
-// remove trailing space below to embed
-//
 //go:embed bzImage
 var bzImage []byte
 
-// remove trailing space below to embed
-//
 //go:embed initrd
 var initrd []byte
 
