@@ -29,7 +29,7 @@ const (
 )
 
 // CommandLine represents the Linux kernel boot parameters
-var CommandLine = "console=ttyS0,115200,8n1\x00"
+var CommandLine = "earlyprintk=ttyS0,115200,8n1 console=ttyS0,115200,8n1 debug\x00"
 
 // remove trailing space below to embed
 //
