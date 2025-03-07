@@ -22,13 +22,24 @@ import (
 	"github.com/usbarmory/tamago/dma"
 )
 
+const (
+	// require at least 256MB for kernel and ramdisk loading
+	memorySize = 0x10000000
+	paramsSize = 0x1000
+)
+
 // CommandLine represents the Linux kernel boot parameters
 var CommandLine = "console=ttyS0,115200,8n1\x00"
 
 // remove trailing space below to embed
 //
-// go:embed bzImage
+//go:embed bzImage
 var bzImage []byte
+
+// remove trailing space below to embed
+//
+//go:embed initrd
+var initrd []byte
 
 func init() {
 	shell.Add(shell.Cmd{
@@ -41,39 +52,31 @@ func init() {
 	})
 }
 
-func reserveMemory(image *exec.LinuxImage) (err error) {
+func reserveMemory(image *exec.LinuxImage, size int) (err error) {
 	mmap, _, err := bootServices.GetMemoryMap()
 
 	if err != nil {
 		return
 	}
 
-	start, end, err := image.Parse()
-
-	if err != nil {
-		return
-	}
-
-	log.Printf("loading kernel sections %#08x - %#08x", start, end)
-
-	size := int(end - start)
-
-	// ensure kernel sections can be allocated outside EFI
+	// find unallocated UEFI memory for kernel and ramdisk loading
 	for _, e := range mmap {
 		if e.Type != efi.EfiConventionalMemory ||
-			size > e.Size() ||
-			start < e.PhysicalStart ||
-			end > e.PhysicalEnd() {
+			e.Size() < size {
 			continue
 		}
 
-		log.Printf("found UEFI memory range %#08x - %#08x", e.PhysicalStart, e.PhysicalEnd())
+		// opportunistic size increase
+		size = e.Size()
 
-		if image.Region, err = dma.NewRegion(uint(start), size, false); err != nil {
+		// reserve unallocated UEFI memory for our runtime DMA
+		if image.Region, err = dma.NewRegion(uint(e.PhysicalStart), size, false); err != nil {
 			return
 		}
 
+		image.Region.Reserve(size, 0)
 		break
+
 	}
 
 	if image.Region == nil {
@@ -91,7 +94,19 @@ func reserveMemory(image *exec.LinuxImage) (err error) {
 		image.Memory = append(image.Memory, e)
 	}
 
-	image.Region.Reserve(size, 0)
+	// enforce required kernel alignment on kernel and ramdisk offsets
+	align := int(image.BzImage.Header.Kernelalignment)
+	base := int(image.Region.Start())
+
+	image.InitialRamDiskOffset = 0
+	image.InitialRamDiskOffset += -(base + image.InitialRamDiskOffset) & (align - 1)
+
+	image.KernelOffset = image.InitialRamDiskOffset + len(initrd)
+	image.KernelOffset += -(base + image.KernelOffset) & (align - 1)
+
+	// place boot parameters at the far end
+	image.CmdLineOffset = size - int(image.BzImage.Header.CmdLineSize)
+	image.ParamsOffset = size - image.CmdLineOffset - paramsSize
 
 	return
 }
@@ -122,12 +137,17 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	image := &exec.LinuxImage{
-		Kernel:  bzImage,
-		CmdLine: CommandLine,
+		Kernel:         bzImage,
+		InitialRamDisk: initrd,
+		CmdLine:        CommandLine,
+	}
+
+	if err = image.Parse(); err != nil {
+		return
 	}
 
 	// reserve runtime memory for kernel loading
-	if err = reserveMemory(image); err != nil {
+	if err = reserveMemory(image, memorySize); err != nil {
 		return
 	}
 
@@ -136,6 +156,8 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	start := uint64(image.Region.Start())
 	size := int(image.Region.Size())
+
+	log.Printf("allocating memory pages %#08x - %#08x", start, int(start)+size)
 
 	// reserve UEFI memory for kernel loading
 	if err = bootServices.AllocatePages(
