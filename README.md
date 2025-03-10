@@ -45,11 +45,14 @@ uefi                                     # UEFI information
 uptime                                   # show how long the system has been running
 
 > uefi
-Firmware Vendor ...: Lenovo
-Firmware Revision .: 0x1320
-Runtime Services  .: 0x9cc85b98
-Boot Services .....: 0x77da6d90
-Table Entries .....: 18
+Firmware Vendor ....: Lenovo
+Firmware Revision ..: 0x1560
+Runtime Services  ..: 0x90e2eb98
+Boot Services ......: 0x6bd17690
+Configuration Tables: 0x8f426018
+  ee4e5898-3914-4259-9d6e-dc7bd79403cf (0x8db6dc98)
+  dcfa911d-26eb-469f-a220-38b7dc461220 (0x8b037018)
+...
 
 > alloc 90000000 4096
 allocating memory range 0x90000000 - 0x90001000
@@ -57,6 +60,7 @@ allocating memory range 0x90000000 - 0x90001000
 > memmap
 Type Start            End              Pages            Attributes
 02   0000000090000000 0000000090000fff 0000000000000001 000000000000000f
+...
 
 > linux
 allocating memory pages 0x01780000 - 0x40000000
