@@ -66,9 +66,11 @@ func (d *MemoryMap) E820() (bzimage.E820Entry, error) {
 	// Unified Extensible Firmware Interface (UEFI) Specification
 	// Version 2.10 - Table 7.10: Memory Type Usage after ExitBootServices()
 	switch d.Type {
-	case EfiLoaderCode, EfiLoaderData, EfiBootServicesCode, EfiBootServicesData, EfiConventionalMemory, EfiPersistentMemory:
+	case EfiLoaderCode, EfiLoaderData, EfiBootServicesCode, EfiBootServicesData, EfiConventionalMemory:
 		e.MemType = bzimage.RAM
-	case EfiRuntimeServicesCode, EfiRuntimeServicesData, EfiACPIReclaimMemory:
+	case EfiPersistentMemory:
+		e.MemType = 7; // E820_TYPE_PMEM
+	case EfiACPIReclaimMemory:
 		e.MemType = bzimage.ACPI
 	case EfiACPIMemoryNVS:
 		e.MemType = bzimage.NVS
