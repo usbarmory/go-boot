@@ -91,30 +91,38 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		s = append(s, binary.LittleEndian.Uint16(b[i:i+2]))
 	}
 
-	fmt.Fprintf(&buf, "Firmware Vendor ...: %s\n", string(utf16.Decode(s)))
-	fmt.Fprintf(&buf, "Firmware Revision .: %#x\n", systemTable.FirmwareRevision)
-	fmt.Fprintf(&buf, "Runtime Services  .: %#x\n", systemTable.RuntimeServices)
-	fmt.Fprintf(&buf, "Boot Services .....: %#x\n", systemTable.BootServices)
-	fmt.Fprintf(&buf, "Table Entries .....: %d\n", systemTable.NumberOfTableEntries)
+	fmt.Fprintf(&buf, "Firmware Vendor ....: %s\n", string(utf16.Decode(s)))
+	fmt.Fprintf(&buf, "Firmware Revision ..: %#x\n", systemTable.FirmwareRevision)
+	fmt.Fprintf(&buf, "Runtime Services  ..: %#x\n", systemTable.RuntimeServices)
+	fmt.Fprintf(&buf, "Boot Services ......: %#x\n", systemTable.BootServices)
+	fmt.Fprintf(&buf, "Configuration Tables: %#x\n", systemTable.ConfigurationTable)
+
+	c, err := systemTable.ConfigurationTables()
+
+	if err == nil {
+		for _, t := range c {
+			fmt.Fprintf(&buf, "  %s (%#x)\n", t.RegistryFormat(), t.VendorTable)
+		}
+	}
 
 	return buf.String(), err
 }
 
 func memmapCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var buf bytes.Buffer
-	var mmap []*efi.MemoryMap
+	var memoryMap *efi.MemoryMap
 
 	if bootServices == nil {
 		return "", errors.New("EFI Boot Services unavailable")
 	}
 
-	if mmap, _, err = bootServices.GetMemoryMap(); err != nil {
+	if memoryMap, err = bootServices.GetMemoryMap(); err != nil {
 		return
 	}
 
 	fmt.Fprintf(&buf, "Type Start            End              Pages            Attributes\n")
 
-	for _, desc := range mmap {
+	for _, desc := range memoryMap.Descriptors {
 		fmt.Fprintf(&buf, "%02d   %016x %016x %016x %016x\n",
 			desc.Type, desc.PhysicalStart, desc.PhysicalEnd()-1, desc.NumberOfPages, desc.Attribute)
 	}

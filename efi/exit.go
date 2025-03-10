@@ -10,7 +10,7 @@ const exitBootServices = 0xe8
 
 // Exit calls EFI_BOOT_SERVICES.ExitBootServices().
 func (s *BootServices) Exit() (err error) {
-	_, mapKey, err := s.GetMemoryMap()
+	memoryMap, err := s.GetMemoryMap()
 
 	if err != nil {
 		return
@@ -19,7 +19,7 @@ func (s *BootServices) Exit() (err error) {
 	status := callService(
 		s.base+exitBootServices,
 		uint64(imageHandle),
-		mapKey,
+		memoryMap.MapKey,
 		0,
 		0,
 	)

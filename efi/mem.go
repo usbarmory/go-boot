@@ -19,10 +19,10 @@ const (
 )
 
 // PageSize represents the EFI page size in bytes
-const PageSize = 4096 //  4 KiB
+const PageSize = 4096 // 4 KiB
 
-// MemoryMap represents an EFI Memory Descriptor
-type MemoryMap struct {
+// MemoryDescriptor represents an EFI Memory Descriptor
+type MemoryDescriptor struct {
 	Type          uint32
 	_             uint32
 	PhysicalStart uint64
@@ -33,31 +33,31 @@ type MemoryMap struct {
 }
 
 // MarshalBinary implements the [encoding.BinaryMarshaler] interface.
-func (d *MemoryMap) MarshalBinary() (data []byte, err error) {
+func (d *MemoryDescriptor) MarshalBinary() (data []byte, err error) {
 	buf := new(bytes.Buffer)
 	err = binary.Write(buf, binary.LittleEndian, d)
 	return buf.Bytes(), nil
 }
 
 // UnmarshalBinary implements the [encoding.BinaryUnmarshaler] interface.
-func (d *MemoryMap) UnmarshalBinary(data []byte) (err error) {
+func (d *MemoryDescriptor) UnmarshalBinary(data []byte) (err error) {
 	_, err = binary.Decode(data, binary.LittleEndian, d)
 	return
 }
 
 // End returns the descriptor physical end address.
-func (d *MemoryMap) PhysicalEnd() uint64 {
-	return d.PhysicalStart + d.NumberOfPages * PageSize
+func (d *MemoryDescriptor) PhysicalEnd() uint64 {
+	return d.PhysicalStart + d.NumberOfPages*PageSize
 }
 
 // Size returns the descriptor size.
-func (d *MemoryMap) Size() int {
+func (d *MemoryDescriptor) Size() int {
 	return int(d.NumberOfPages * PageSize)
 }
 
 // E820() converts an EFI Memory Map entry to an x86 E820 one suitable for use
 // after exiting EFI Boot Services.
-func (d *MemoryMap) E820() (bzimage.E820Entry, error) {
+func (d *MemoryDescriptor) E820() (bzimage.E820Entry, error) {
 	e := bzimage.E820Entry{
 		Addr: d.PhysicalStart,
 		Size: d.NumberOfPages * PageSize,
@@ -69,7 +69,7 @@ func (d *MemoryMap) E820() (bzimage.E820Entry, error) {
 	case EfiLoaderCode, EfiLoaderData, EfiBootServicesCode, EfiBootServicesData, EfiConventionalMemory:
 		e.MemType = bzimage.RAM
 	case EfiPersistentMemory:
-		e.MemType = 7; // E820_TYPE_PMEM
+		e.MemType = 7 // E820_TYPE_PMEM
 	case EfiACPIReclaimMemory:
 		e.MemType = bzimage.ACPI
 	case EfiACPIMemoryNVS:
@@ -81,29 +81,49 @@ func (d *MemoryMap) E820() (bzimage.E820Entry, error) {
 	return e, nil
 }
 
-// GetMemoryMap calls EFI_BOOT_SERVICES.GetMemoryMap().
-func (s *BootServices) GetMemoryMap() (m []*MemoryMap, mapKey uint64, err error) {
-	d := &MemoryMap{}
-	t, _ := d.MarshalBinary()
+// MemoryMap represents an EFI Memory Map
+type MemoryMap struct {
+	MapSize           uint64
+	Descriptors       []*MemoryDescriptor
+	MapKey            uint64
+	DescriptorSize    uint64
+	DescriptorVersion uint32
 
-	buf := make([]byte, len(t)*maxEntries)
-	size := uint64(len(buf))
+	buf []byte
+}
+
+// Address returns the EFI Memory Map pointer.
+func (m *MemoryMap) Address() uint64 {
+	return ptrval(&m.buf[0])
+}
+
+// GetMemoryMap calls EFI_BOOT_SERVICES.GetMemoryMap().
+func (s *BootServices) GetMemoryMap() (m *MemoryMap, err error) {
+	d := &MemoryDescriptor{}
+	t, _ := d.MarshalBinary()
+	n := len(t)
+
+	m = &MemoryMap{
+		MapSize:        uint64(n * maxEntries),
+		DescriptorSize: uint64(n),
+		buf:            make([]byte, n*maxEntries),
+	}
 
 	status := callService(
 		s.base+getMemoryMap,
-		ptrval(&size),
-		ptrval(&buf[0]),
-		ptrval(&mapKey),
-		0,
+		ptrval(&m.MapSize),
+		ptrval(&m.buf[0]),
+		ptrval(&m.MapKey),
+		ptrval(&m.DescriptorVersion),
 	)
 
-	for i := 0; i < int(size); i += len(t) {
-		if err = d.UnmarshalBinary(buf[i:]); err != nil {
+	for i := 0; i < int(m.MapSize); i += n {
+		if err = d.UnmarshalBinary(m.buf[i:]); err != nil {
 			break
 		}
 
-		m = append(m, d)
-		d = &MemoryMap{}
+		m.Descriptors = append(m.Descriptors, d)
+		d = &MemoryDescriptor{}
 	}
 
 	err = parseStatus(status)

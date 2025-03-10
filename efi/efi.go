@@ -41,6 +41,8 @@ func ptrval(ptr any) uint64 {
 	switch v := ptr.(type) {
 	case *uint64:
 		p = unsafe.Pointer(v)
+	case *uint32:
+		p = unsafe.Pointer(v)
 	case *byte:
 		p = unsafe.Pointer(v)
 	case *InputKey:
@@ -132,6 +134,11 @@ func GetSystemTable() (t *SystemTable, err error) {
 	}
 
 	return
+}
+
+// Address returns the EFI System Table pointer.
+func (d *SystemTable) Address() uint64 {
+	return systemTable
 }
 
 // GetBootServices returns an EFI Boot Services instance.

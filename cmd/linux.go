@@ -48,25 +48,19 @@ func init() {
 	})
 }
 
-func reserveMemory(image *exec.LinuxImage, size int) (err error) {
-	mmap, _, err := bootServices.GetMemoryMap()
-
-	if err != nil {
-		return
-	}
-
+func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage, size int) (err error) {
 	// find unallocated UEFI memory for kernel and ramdisk loading
-	for _, e := range mmap {
-		if e.Type != efi.EfiConventionalMemory ||
-			e.Size() < size {
+	for _, desc := range memdesc {
+		if desc.Type != efi.EfiConventionalMemory ||
+			desc.Size() < size {
 			continue
 		}
 
 		// opportunistic size increase
-		size = e.Size()
+		size = desc.Size()
 
 		// reserve unallocated UEFI memory for our runtime DMA
-		if image.Region, err = dma.NewRegion(uint(e.PhysicalStart), size, false); err != nil {
+		if image.Region, err = dma.NewRegion(uint(desc.PhysicalStart), size, false); err != nil {
 			return
 		}
 
@@ -80,14 +74,14 @@ func reserveMemory(image *exec.LinuxImage, size int) (err error) {
 	}
 
 	// build E820 memory map
-	for _, desc := range mmap {
-		e, err := desc.E820()
+	for _, desc := range memdesc {
+		e820, err := desc.E820()
 
 		if err != nil {
 			return err
 		}
 
-		image.Memory = append(image.Memory, e)
+		image.Memory = append(image.Memory, e820)
 	}
 
 	// enforce required kernel alignment on kernel and ramdisk offsets
@@ -102,7 +96,7 @@ func reserveMemory(image *exec.LinuxImage, size int) (err error) {
 
 	// place boot parameters at the far end
 	image.CmdLineOffset = size - int(image.BzImage.Header.CmdLineSize)
-	image.ParamsOffset = size - image.CmdLineOffset - paramsSize
+	image.ParamsOffset = image.CmdLineOffset - paramsSize
 
 	return
 }
@@ -132,6 +126,12 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", errors.New("EFI Boot Services unavailable")
 	}
 
+	memoryMap, err := bootServices.GetMemoryMap()
+
+	if err != nil {
+		return
+	}
+
 	image := &exec.LinuxImage{
 		Kernel:         bzImage,
 		InitialRamDisk: initrd,
@@ -143,7 +143,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	// reserve runtime memory for kernel loading
-	if err = reserveMemory(image, memorySize); err != nil {
+	if err = reserveMemory(memoryMap.Descriptors, image, memorySize); err != nil {
 		return
 	}
 
@@ -170,6 +170,18 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		start,
 		size,
 	)
+
+	// fill EFI information in boot parameters
+	image.EFI = &exec.EFI{
+		LoaderSignature:   exec.EFI64LoaderSignature,
+		SystemTable:       uint32(systemTable.Address()),
+		SystemTableHigh:   uint32(systemTable.Address() >> 32),
+		MemoryMapHigh:     uint32(memoryMap.Address() >> 32),
+		MemoryMapSize:     uint32(memoryMap.MapSize),
+		MemoryMap:         uint32(memoryMap.Address()),
+		MemoryDescSize:    uint32(memoryMap.DescriptorSize),
+		MemoryDescVersion: 1, // memoryMap.DescriptorVersion (?)
+	}
 
 	// load kernel in reserved memory
 	if err = image.Load(); err != nil {
