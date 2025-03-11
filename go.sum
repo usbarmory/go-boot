@@ -14,8 +14,8 @@ github.com/u-root/uio v0.0.0-20240209044354-b3d14b93376a h1:BH1SOPEvehD2kVrndDnG
 github.com/u-root/uio v0.0.0-20240209044354-b3d14b93376a/go.mod h1:P3a5rG4X7tI17Nn3aOIAYr5HbIMukwXG0urG0WuL8OA=
 github.com/ulikunitz/xz v0.5.11 h1:kpFauv27b6ynzBNT/Xy+1k+fK4WswhN/6PN5WhFAGw8=
 github.com/ulikunitz/xz v0.5.11/go.mod h1:nbz6k7qbPmH4IRqmfOplQw/tblSgqTqBwxkY0oWt/14=
-github.com/usbarmory/armory-boot v0.0.0-20250307140212-8240c3779d72 h1:4Go+aeJLxrC9gM9zbw2hZHSGgsr9XTfFhH+lHH8JlM0=
-github.com/usbarmory/armory-boot v0.0.0-20250307140212-8240c3779d72/go.mod h1:sImXzIRRKl04CGGrOGFWH2a89G6/Bjxf62L08mg4bdU=
+github.com/usbarmory/armory-boot v0.0.0-20250311161753-e99d72841d6f h1:ydbjyy1R/Ly7KjOaMvDokmCvnxiZbRLubEYVnJMf94E=
+github.com/usbarmory/armory-boot v0.0.0-20250311161753-e99d72841d6f/go.mod h1:sImXzIRRKl04CGGrOGFWH2a89G6/Bjxf62L08mg4bdU=
 github.com/usbarmory/tamago v0.0.0-20250304104809-386821b87ee4 h1:N0569+id3Ud6EGd9fW5xApeoS5GE7asN1kpb8SBwVYc=
 github.com/usbarmory/tamago v0.0.0-20250304104809-386821b87ee4/go.mod h1:NL88q9ZsIPYFzXaosAeKgu1Kr5i1k4Rau3wnbNBL5bY=
 golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 h1:LfspQV/FYTatPTr/3HzIcmiUFH7PGP+OQ6mgDYo3yuQ=
