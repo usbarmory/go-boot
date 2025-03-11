@@ -23,7 +23,7 @@ QEMU ?= qemu-system-x86_64 \
         -drive if=pflash,format=raw,readonly,file=$(OVMFCODE) \
         -drive if=pflash,format=raw,file=$(OVMFVARS) \
         -global isa-debugcon.iobase=0x402 \
-        -serial stdio -nographic -nodefaults -no-reboot \
+        -serial stdio -vga virtio \
         # -debugcon file:$(LOG)
 
 .PHONY: clean
