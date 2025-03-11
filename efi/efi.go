@@ -18,8 +18,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"unsafe"
-
-	"github.com/usbarmory/tamago/dma"
 )
 
 // EFI Table Header Signature
@@ -111,21 +109,7 @@ func (d *SystemTable) UnmarshalBinary(data []byte) (err error) {
 func GetSystemTable() (t *SystemTable, err error) {
 	t = &SystemTable{}
 
-	if systemTable == 0 {
-		return nil, errors.New("EFI System Table pointer is nil")
-	}
-
-	buf, _ := t.MarshalBinary()
-	r, err := dma.NewRegion(uint(systemTable), len(buf), false)
-
-	if err != nil {
-		return
-	}
-
-	addr, buf := r.Reserve(len(buf), 0)
-	defer r.Release(addr)
-
-	if err = t.UnmarshalBinary(buf); err != nil {
+	if err = decode(t, systemTable); err != nil {
 		return
 	}
 
