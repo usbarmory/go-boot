@@ -29,7 +29,7 @@ const (
 )
 
 // CommandLine represents the Linux kernel boot parameters
-var CommandLine = "earlyprintk=ttyS0,115200,8n1 console=ttyS0,115200,8n1 debug drm.debug=0xff\x00"
+var CommandLine = "earlyprintk=ttyS0,115200,8n1,keep debug\x00"
 
 //go:embed bzImage
 var bzImage []byte
@@ -147,7 +147,7 @@ func screenInfo() (screen *exec.Screen, err error) {
 		Lfbheight:      uint16(info.VerticalResolution),
 		Lfbbase:        uint32(mode.FrameBufferBase),
 		Lfbsize:        uint32(mode.FrameBufferSize),
-		Lfblinelength:  uint16(info.PixelsPerScanLine),
+		Lfblinelength:  uint16(info.HorizontalResolution * 4),
 	}, nil
 }
 
