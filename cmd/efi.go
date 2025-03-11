@@ -45,6 +45,15 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
+		Name:    "protocol",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^protocol ([[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12})$`),
+		Syntax:  "<registry format GUID>",
+		Help:    "EFI_BOOT_SERVICES.LocateProtocol()",
+		Fn:      locateCmd,
+	})
+
+	shell.Add(shell.Cmd{
 		Name: "memmap",
 		Help: "EFI_BOOT_SERVICES.GetMemoryMap()",
 		Fn:   memmapCmd,
@@ -95,17 +104,30 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	fmt.Fprintf(&buf, "Firmware Revision ..: %#x\n", systemTable.FirmwareRevision)
 	fmt.Fprintf(&buf, "Runtime Services  ..: %#x\n", systemTable.RuntimeServices)
 	fmt.Fprintf(&buf, "Boot Services ......: %#x\n", systemTable.BootServices)
+
+	if s, err := screenInfo(); err == nil {
+		fmt.Fprintf(&buf, "Frame Buffer .......: %dx%d @ %#08x (%#08x)\n", s.Lfbwidth, s.Lfbheight, s.Lfbbase, s.Lfbsize)
+	}
+
 	fmt.Fprintf(&buf, "Configuration Tables: %#x\n", systemTable.ConfigurationTable)
 
-	c, err := systemTable.ConfigurationTables()
-
-	if err == nil {
+	if c, err := systemTable.ConfigurationTables(); err == nil {
 		for _, t := range c {
 			fmt.Fprintf(&buf, "  %s (%#x)\n", t.RegistryFormat(), t.VendorTable)
 		}
 	}
 
 	return buf.String(), err
+}
+
+func locateCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	if bootServices == nil {
+		return "", errors.New("EFI Boot Services unavailable")
+	}
+
+	addr, err := bootServices.LocateProtocolString(arg[0])
+
+	return fmt.Sprintf("%s: %#08x", arg[0], addr), err
 }
 
 func memmapCmd(_ *shell.Interface, _ []string) (res string, err error) {

@@ -23,7 +23,7 @@ Shell> go-boot.efi
 initializing EFI services
 initializing console (com1)
 
-go-boot • tamago/amd64 (go1.24.0) • UEFI
+go-boot • tamago/amd64 (go1.24.1) • UEFI
 
 alloc           <hex offset> <size>      # EFI_BOOT_SERVICES.AllocatePages()
 build                                    # build information
@@ -38,6 +38,7 @@ log                                      # show runtime log
 memmap                                   # EFI_BOOT_SERVICES.GetMemoryMap()
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
+protocol        <registry format GUID>   # EFI_BOOT_SERVICES.LocateProtocol()
 reset           (cold|warm)?             # EFI_RUNTIME_SERVICES.ResetSystem()
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
