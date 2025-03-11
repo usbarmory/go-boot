@@ -50,6 +50,7 @@ Firmware Vendor ....: Lenovo
 Firmware Revision ..: 0x1560
 Runtime Services  ..: 0x90e2eb98
 Boot Services ......: 0x6bd17690
+Frame Buffer .......: 1920x1200 @ 0x00000000 (0x008ca000)
 Configuration Tables: 0x8f426018
   ee4e5898-3914-4259-9d6e-dc7bd79403cf (0x8db6dc98)
   dcfa911d-26eb-469f-a220-38b7dc461220 (0x8b037018)

@@ -84,7 +84,7 @@ func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage, size
 		image.Memory = append(image.Memory, e820)
 	}
 
-	// enforce required kernel alignment on kernel and ramdisk offsets
+	// enforce required alignment on kernel and ramdisk offsets
 	align := int(image.BzImage.Header.Kernelalignment)
 	base := int(image.Region.Start())
 
