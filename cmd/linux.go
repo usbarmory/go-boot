@@ -29,7 +29,7 @@ const (
 )
 
 // CommandLine represents the Linux kernel boot parameters
-var CommandLine = "rootfstype=ext4 rootflags=rw audit=0 earlyprintk=ttyS0,115200,8n1 console=ttyS0,115200,8n1 debug\x00"
+var CommandLine = "earlyprintk=ttyS0,115200,8n1 console=ttyS0,115200,8n1 debug drm.debug=0xff\x00"
 
 //go:embed bzImage
 var bzImage []byte
@@ -111,6 +111,46 @@ func cleanup() {
 	bootServices = nil
 }
 
+func efiInfo(memoryMap *efi.MemoryMap) (efi *exec.EFI, err error) {
+	return &exec.EFI{
+		LoaderSignature:   exec.EFI64LoaderSignature,
+		SystemTable:       uint32(systemTable.Address()),
+		SystemTableHigh:   uint32(systemTable.Address() >> 32),
+		MemoryMapHigh:     uint32(memoryMap.Address() >> 32),
+		MemoryMapSize:     uint32(memoryMap.MapSize),
+		MemoryMap:         uint32(memoryMap.Address()),
+		MemoryDescSize:    uint32(memoryMap.DescriptorSize),
+		MemoryDescVersion: 1, // Linux only accepts this value
+	}, nil
+}
+
+func screenInfo() (screen *exec.Screen, err error) {
+	var gop *efi.GraphicsOutput
+	var mode *efi.ProtocolMode
+	var info *efi.ModeInformation
+
+	if gop, err = bootServices.GetGraphicsOutput(); err != nil {
+		return
+	}
+
+	if mode, err = gop.GetMode(); err != nil {
+		return
+	}
+
+	if info, err = mode.GetInfo(); err != nil {
+		return
+	}
+
+	return &exec.Screen{
+		OrigVideoIsVGA: 0x70,
+		Lfbwidth:       uint16(info.HorizontalResolution),
+		Lfbheight:      uint16(info.VerticalResolution),
+		Lfbbase:        uint32(mode.FrameBufferBase),
+		Lfbsize:        uint32(mode.FrameBufferSize),
+		Lfblinelength:  uint16(info.PixelsPerScanLine),
+	}, nil
+}
+
 func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	path := strings.TrimSpace(arg[0])
 
@@ -172,15 +212,13 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	)
 
 	// fill EFI information in boot parameters
-	image.EFI = &exec.EFI{
-		LoaderSignature:   exec.EFI64LoaderSignature,
-		SystemTable:       uint32(systemTable.Address()),
-		SystemTableHigh:   uint32(systemTable.Address() >> 32),
-		MemoryMapHigh:     uint32(memoryMap.Address() >> 32),
-		MemoryMapSize:     uint32(memoryMap.MapSize),
-		MemoryMap:         uint32(memoryMap.Address()),
-		MemoryDescSize:    uint32(memoryMap.DescriptorSize),
-		MemoryDescVersion: 1, // memoryMap.DescriptorVersion (?)
+	if image.EFI, err = efiInfo(memoryMap); err != nil {
+		return
+	}
+
+	// fill screen_info
+	if image.Screen, err = screenInfo(); err != nil {
+		return
 	}
 
 	// load kernel in reserved memory
