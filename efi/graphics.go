@@ -5,11 +5,6 @@
 
 package efi
 
-import (
-	"bytes"
-	"encoding/binary"
-)
-
 const EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID = "9042a9de-23dc-4a38-96fb-7aded080516a"
 
 // ModeInformation represents an EFI Graphics Output Mode Information instance.
@@ -25,19 +20,6 @@ type ModeInformation struct {
 	PixelsPerScanLine    uint32
 }
 
-// MarshalBinary implements the [encoding.BinaryMarshaler] interface.
-func (d *ModeInformation) MarshalBinary() (data []byte, err error) {
-	buf := new(bytes.Buffer)
-	err = binary.Write(buf, binary.LittleEndian, d)
-	return buf.Bytes(), nil
-}
-
-// UnmarshalBinary implements the [encoding.BinaryUnmarshaler] interface.
-func (d *ModeInformation) UnmarshalBinary(data []byte) (err error) {
-	_, err = binary.Decode(data, binary.LittleEndian, d)
-	return
-}
-
 // ProtocolMode represents an EFI Graphics Output Protocol Mode instance.
 type ProtocolMode struct {
 	MaxMode         uint32
@@ -46,19 +28,6 @@ type ProtocolMode struct {
 	SizeOfInfo      uint64
 	FrameBufferBase uint64
 	FrameBufferSize uint64
-}
-
-// MarshalBinary implements the [encoding.BinaryMarshaler] interface.
-func (d *ProtocolMode) MarshalBinary() (data []byte, err error) {
-	buf := new(bytes.Buffer)
-	err = binary.Write(buf, binary.LittleEndian, d)
-	return buf.Bytes(), nil
-}
-
-// UnmarshalBinary implements the [encoding.BinaryUnmarshaler] interface.
-func (d *ProtocolMode) UnmarshalBinary(data []byte) (err error) {
-	_, err = binary.Decode(data, binary.LittleEndian, d)
-	return
 }
 
 // GetInfo() returns the EFI Graphics Output Mode information instance.
@@ -74,19 +43,6 @@ type GraphicsOutput struct {
 	SetMode   uint64
 	Blt       uint64
 	Mode      uint64
-}
-
-// MarshalBinary implements the [encoding.BinaryMarshaler] interface.
-func (d *GraphicsOutput) MarshalBinary() (data []byte, err error) {
-	buf := new(bytes.Buffer)
-	err = binary.Write(buf, binary.LittleEndian, d)
-	return buf.Bytes(), nil
-}
-
-// UnmarshalBinary implements the [encoding.BinaryUnmarshaler] interface.
-func (d *GraphicsOutput) UnmarshalBinary(data []byte) (err error) {
-	_, err = binary.Decode(data, binary.LittleEndian, d)
-	return
 }
 
 // GetMode returns the EFI Graphics Output Mode instance.

@@ -50,7 +50,7 @@ Firmware Vendor ....: Lenovo
 Firmware Revision ..: 0x1560
 Runtime Services  ..: 0x90e2eb98
 Boot Services ......: 0x6bd17690
-Frame Buffer .......: 1920x1200 @ 0x00000000 (0x008ca000)
+Frame Buffer .......: 1920x1200 @ 0x4000000000
 Configuration Tables: 0x8f426018
   ee4e5898-3914-4259-9d6e-dc7bd79403cf (0x8db6dc98)
   dcfa911d-26eb-469f-a220-38b7dc461220 (0x8b037018)
@@ -66,9 +66,9 @@ Type Start            End              Pages            Attributes
 
 > linux
 allocating memory pages 0x01780000 - 0x40000000
-jumping to kernel entry 0x05000000
+jumping to kernel entry 0x04600c08
 exiting EFI boot services
-Linux version 5.10.233 (root@tamago) (gcc (GCC) 14.2.1 20250128, GNU ld (GNU Binutils) 2.43.1)
+Linux version 6.13.6-arch1-1 (linux@archlinux) (gcc (GCC) 14.2.1 20250207, GNU ld (GNU Binutils) 2.44)
 ...
 ```
 
@@ -93,20 +93,23 @@ cd tamago-go-latest/src && ./all.bash
 cd ../bin && export TAMAGO=`pwd`/go
 ```
 
-The `CONSOLE` environment variable must be set to either `com1` or `text` to
-configure the output console to serial port or UEFI console.
+The `CONSOLE` environment variable must be set to either `com1` or `text`
+(default) to configure the output console to serial port or UEFI console.
 
 The `IMAGE_BASE` environment variable must be set within a memory range (in
-hex) Available in the target UEFI environment for the unikernel allocation
+hex) available in the target UEFI environment for the unikernel allocation
 (64MB), the [HCL](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list)
 or `memmap` command from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
-can provide such value.
+can provide such value, when empty a common default value (40000000) is set.
+
+The `CMDLINE` environment variable can be set to the desired Linux kernel
+command line parameters.
 
 Build the `go-boot.efi` application executable:
 
 ```
 git clone https://github.com/usbarmory/go-boot && cd go-boot
-make efi IMAGE_BASE=40000000 CONSOLE=com1
+make efi IMAGE_BASE=40000000 CONSOLE=com1 CMDLINE="$(cat /proc/cmdline)"
 ```
 
 Executing as UEFI application

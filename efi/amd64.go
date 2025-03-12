@@ -8,6 +8,7 @@
 package efi
 
 import (
+	"runtime"
 	_ "unsafe"
 
 	"github.com/usbarmory/tamago/amd64"
@@ -23,6 +24,13 @@ const (
 	// Communication port
 	COM1 = 0x3f8
 )
+
+// Services represents the UEFI service instances.
+type Services struct {
+	SystemTable     *SystemTable
+	BootServices    *BootServices
+	RuntimeServices *RuntimeServices
+}
 
 // Peripheral instances
 var (
@@ -40,6 +48,9 @@ var (
 		Index: 1,
 		Base:  COM1,
 	}
+
+	// UEFI services
+	UEFI = &Services{}
 )
 
 // set in amd64.s
@@ -49,7 +60,7 @@ var (
 )
 
 //go:linkname ramStart runtime.ramStart
-var ramStart uint64 = 0x40000000 // unused under EFI
+var ramStart uint64 = 0x40000000 // unused (see MemRegion())
 
 //go:linkname RamSize runtime.ramSize
 var RamSize uint64 = 0x04000000 // 64MB
@@ -71,6 +82,17 @@ func Init() {
 	UART0.Init()
 }
 
+// As this unikernel is relocated based on build time variable IMAGE_BASE,
+// runtime.MemRegion() should be avoided.
+func MemRegion() (start uint64, end uint64) {
+	textStart, _ := runtime.TextRegion()
+
+	start = textStart - 0x10000
+	end = start + RamSize
+
+	return
+}
+
 func init() {
 	// Real-Time Clock
 	RTC = &rtc.RTC{}
@@ -78,4 +100,29 @@ func init() {
 	if t, err := RTC.Now(); err == nil {
 		AMD64.SetTimer(t.UnixNano())
 	}
+
+	// cache UEFI services
+
+	UEFI.SystemTable, _ = GetSystemTable()
+
+	if UEFI.SystemTable != nil {
+		UEFI.BootServices, _ = UEFI.SystemTable.GetBootServices()
+		UEFI.RuntimeServices, _ = UEFI.SystemTable.GetRuntimeServices()
+	}
+
+	// reserve runtime RAM in UEFI memory
+
+	_, ramEnd := MemRegion()
+	_, dataEnd := runtime.DataRegion()
+
+	// force alignment
+	align := uint64(4096)
+	dataEnd += -dataEnd & (align - 1)
+
+	UEFI.BootServices.AllocatePages(
+		AllocateAddress,
+		EfiLoaderData,
+		int(ramEnd-dataEnd),
+		dataEnd,
+	)
 }

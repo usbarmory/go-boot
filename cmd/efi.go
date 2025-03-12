@@ -33,10 +33,9 @@ func init() {
 
 	print("initializing EFI services\n")
 
-	if systemTable, _ = efi.GetSystemTable(); systemTable != nil {
-		bootServices, _ = systemTable.GetBootServices()
-		runtimeServices, _ = systemTable.GetRuntimeServices()
-	}
+	systemTable = efi.UEFI.SystemTable
+	bootServices = efi.UEFI.BootServices
+	runtimeServices = efi.UEFI.RuntimeServices
 
 	shell.Add(shell.Cmd{
 		Name: "uefi",
@@ -106,7 +105,9 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	fmt.Fprintf(&buf, "Boot Services ......: %#x\n", systemTable.BootServices)
 
 	if s, err := screenInfo(); err == nil {
-		fmt.Fprintf(&buf, "Frame Buffer .......: %dx%d @ %#08x (%#08x)\n", s.Lfbwidth, s.Lfbheight, s.Lfbbase, s.Lfbsize)
+		fmt.Fprintf(&buf, "Frame Buffer .......: %dx%d @ %#x\n",
+			s.LfbWidth, s.LfbHeight,
+			uint64(s.ExtLfbBase)<<32|uint64(s.LfbBase))
 	}
 
 	fmt.Fprintf(&buf, "Configuration Tables: %#x\n", systemTable.ConfigurationTable)
@@ -202,7 +203,6 @@ func resetCmd(_ *shell.Interface, arg []string) (_ string, err error) {
 	}
 
 	log.Printf("performing system reset type %d", resetType)
-
 	err = runtimeServices.ResetSystem(resetType)
 
 	return

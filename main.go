@@ -36,7 +36,7 @@ func main() {
 		runtime.GOOS, runtime.GOARCH, runtime.Version())
 
 	iface := &shell.Interface{
-		Banner:   banner,
+		Banner: banner,
 	}
 
 	switch Console {
@@ -49,6 +49,5 @@ func main() {
 	}
 
 	log.Print("halting")
-
-	runtime.Exit(0)
+	efi.UEFI.RuntimeServices.ResetSystem(efi.EfiResetShutdown)
 }

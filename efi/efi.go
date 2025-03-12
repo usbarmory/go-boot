@@ -14,8 +14,6 @@
 package efi
 
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"unsafe"
 )
@@ -89,19 +87,6 @@ type SystemTable struct {
 	BootServices         uint64
 	NumberOfTableEntries uint64
 	ConfigurationTable   uint64
-}
-
-// MarshalBinary implements the [encoding.BinaryMarshaler] interface.
-func (d *SystemTable) MarshalBinary() (data []byte, err error) {
-	buf := new(bytes.Buffer)
-	err = binary.Write(buf, binary.LittleEndian, d)
-	return buf.Bytes(), nil
-}
-
-// UnmarshalBinary implements the [encoding.BinaryUnmarshaler] interface.
-func (d *SystemTable) UnmarshalBinary(data []byte) (err error) {
-	_, err = binary.Decode(data, binary.LittleEndian, d)
-	return
 }
 
 // GetSystemTable returns the EFI System Table if the runtime has been launched

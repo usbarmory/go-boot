@@ -6,7 +6,6 @@
 package efi
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -18,19 +17,6 @@ import (
 type ConfigurationTable struct {
 	GUID        [16]byte
 	VendorTable uint64
-}
-
-// MarshalBinary implements the [encoding.BinaryMarshaler] interface.
-func (d *ConfigurationTable) MarshalBinary() (data []byte, err error) {
-	buf := new(bytes.Buffer)
-	err = binary.Write(buf, binary.LittleEndian, d)
-	return buf.Bytes(), nil
-}
-
-// UnmarshalBinary implements the [encoding.BinaryUnmarshaler] interface.
-func (d *ConfigurationTable) UnmarshalBinary(data []byte) (err error) {
-	_, err = binary.Decode(data, binary.LittleEndian, d)
-	return
 }
 
 // RegistryFormat returns the table EF GUID in registry format.
@@ -52,11 +38,11 @@ func (d *SystemTable) ConfigurationTables() (c []*ConfigurationTable, err error)
 		return nil, errors.New("EFI Configuration Table is invalid")
 	}
 
-	buf, _ := t.MarshalBinary()
+	buf, _ := marshalBinary(t)
 	entrySize := len(buf)
 	tableSize := entrySize * int(d.NumberOfTableEntries)
 
-	r, err := dma.NewRegion(uint(d.ConfigurationTable), tableSize, false)
+	r, err := dma.NewRegion(uint(d.ConfigurationTable), tableSize, true)
 
 	if err != nil {
 		return
@@ -66,7 +52,7 @@ func (d *SystemTable) ConfigurationTables() (c []*ConfigurationTable, err error)
 	defer r.Release(addr)
 
 	for i := 0; i < tableSize; i += entrySize {
-		if err = t.UnmarshalBinary(buf[i : i+entrySize]); err != nil {
+		if err = unmarshalBinary(buf[i:i+entrySize], t); err != nil {
 			return
 		}
 

@@ -29,18 +29,6 @@ func init() {
 	})
 }
 
-// This unikernel is reallocated based on build time variable IMAGE_BASE, for
-// simplicity we do not use it to set runtime.ramStart and therefore we avoid
-// using runtime.MemRegion() here.
-func memRegion() (start uint64, end uint64) {
-	textStart, _ := runtime.TextRegion()
-
-	start = textStart - 0x10000
-	end = start + efi.RamSize
-
-	return
-}
-
 func mem(start uint, size int, w []byte) (b []byte) {
 	return memCopy(start, size, w)
 }
@@ -48,7 +36,7 @@ func mem(start uint, size int, w []byte) (b []byte) {
 func infoCmd(_ *shell.Interface, _ []string) (string, error) {
 	var res bytes.Buffer
 
-	ramStart, ramEnd := memRegion()
+	ramStart, ramEnd := efi.MemRegion()
 
 	fmt.Fprintf(&res, "Runtime ......: %s %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	fmt.Fprintf(&res, "RAM ..........: %#08x-%#08x (%d MiB)\n", ramStart, ramEnd, (ramEnd-ramStart)/(1025*1024))

@@ -26,10 +26,18 @@ const (
 	// require at least 256MB for kernel and ramdisk loading
 	memorySize = 0x10000000
 	paramsSize = 0x1000
+
+	// avoid initial DMA region
+	minLoadAddr = 0x1000000
+
+	// DefaultCommandLine overrides CommandLine when empty
+	DefaultCommandLine = "earlyprintk=ttyS0,115200,8n1,keep debug rootflags=ro"
 )
 
+// TODO: load from EFI partition
+
 // CommandLine represents the Linux kernel boot parameters
-var CommandLine = "earlyprintk=ttyS0,115200,8n1,keep debug\x00"
+var CommandLine string
 
 //go:embed bzImage
 var bzImage []byte
@@ -52,6 +60,7 @@ func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage, size
 	// find unallocated UEFI memory for kernel and ramdisk loading
 	for _, desc := range memdesc {
 		if desc.Type != efi.EfiConventionalMemory ||
+			//desc.PhysicalStart < minLoadAddr || // FIXME
 			desc.Size() < size {
 			continue
 		}
@@ -60,7 +69,7 @@ func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage, size
 		size = desc.Size()
 
 		// reserve unallocated UEFI memory for our runtime DMA
-		if image.Region, err = dma.NewRegion(uint(desc.PhysicalStart), size, false); err != nil {
+		if image.Region, err = dma.NewRegion(uint(desc.PhysicalStart), size, true); err != nil {
 			return
 		}
 
@@ -101,16 +110,6 @@ func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage, size
 	return
 }
 
-func cleanup() {
-	log.Printf("exiting EFI boot services")
-
-	if err := bootServices.Exit(); err != nil {
-		log.Printf("could not exit EFI boot services, %v\n", err)
-	}
-
-	bootServices = nil
-}
-
 func efiInfo(memoryMap *efi.MemoryMap) (efi *exec.EFI, err error) {
 	return &exec.EFI{
 		LoaderSignature:   exec.EFI64LoaderSignature,
@@ -141,14 +140,26 @@ func screenInfo() (screen *exec.Screen, err error) {
 		return
 	}
 
-	return &exec.Screen{
-		OrigVideoIsVGA: 0x70,
-		Lfbwidth:       uint16(info.HorizontalResolution),
-		Lfbheight:      uint16(info.VerticalResolution),
-		Lfbbase:        uint32(mode.FrameBufferBase),
-		Lfbsize:        uint32(mode.FrameBufferSize),
-		Lfblinelength:  uint16(info.HorizontalResolution * 4),
-	}, nil
+	// values for efib selection
+	screen = &exec.Screen{
+		OrigVideoIsVGA: exec.VideoTypeEFI,
+		LfbWidth:       uint16(info.HorizontalResolution),
+		LfbHeight:      uint16(info.VerticalResolution),
+		LfbBase:        uint32(mode.FrameBufferBase),
+		LfbSize:        uint32(mode.FrameBufferSize),
+		LfbLineLength:  uint16(info.HorizontalResolution * 4),
+		ExtLfbBase:     uint32(mode.FrameBufferBase >> 32),
+	}
+
+	if screen.ExtLfbBase > 0 {
+		screen.Capabilities = exec.Video64BitBase
+	}
+
+	return
+}
+
+func cleanup() {
+	bootServices = nil
 }
 
 func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
@@ -175,7 +186,12 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	image := &exec.LinuxImage{
 		Kernel:         bzImage,
 		InitialRamDisk: initrd,
-		CmdLine:        CommandLine,
+	}
+
+	if len(CommandLine) > 0 {
+		image.CmdLine = DefaultCommandLine
+	} else {
+		image.CmdLine = DefaultCommandLine
 	}
 
 	if err = image.Parse(); err != nil {
@@ -226,8 +242,13 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not load kernel, %v", err)
 	}
 
+	// we cannot log after exiting boot services
 	log.Printf("jumping to kernel entry %#08x", image.Entry())
-	err = image.Boot(cleanup)
+	log.Printf("exiting EFI boot services")
 
-	return
+	if err = bootServices.Exit(); err != nil {
+		return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
+	}
+
+	return "", image.Boot(cleanup)
 }

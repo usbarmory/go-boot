@@ -6,9 +6,6 @@
 package efi
 
 import (
-	"bytes"
-	"encoding/binary"
-
 	"github.com/u-root/u-root/pkg/boot/bzimage"
 )
 
@@ -34,19 +31,6 @@ type MemoryDescriptor struct {
 	NumberOfPages uint64
 	Attribute     uint64
 	_             uint64
-}
-
-// MarshalBinary implements the [encoding.BinaryMarshaler] interface.
-func (d *MemoryDescriptor) MarshalBinary() (data []byte, err error) {
-	buf := new(bytes.Buffer)
-	err = binary.Write(buf, binary.LittleEndian, d)
-	return buf.Bytes(), nil
-}
-
-// UnmarshalBinary implements the [encoding.BinaryUnmarshaler] interface.
-func (d *MemoryDescriptor) UnmarshalBinary(data []byte) (err error) {
-	_, err = binary.Decode(data, binary.LittleEndian, d)
-	return
 }
 
 // End returns the descriptor physical end address.
@@ -104,7 +88,7 @@ func (m *MemoryMap) Address() uint64 {
 // GetMemoryMap calls EFI_BOOT_SERVICES.GetMemoryMap().
 func (s *BootServices) GetMemoryMap() (m *MemoryMap, err error) {
 	d := &MemoryDescriptor{}
-	t, _ := d.MarshalBinary()
+	t, _ := marshalBinary(d)
 	n := len(t)
 
 	m = &MemoryMap{
@@ -122,7 +106,7 @@ func (s *BootServices) GetMemoryMap() (m *MemoryMap, err error) {
 	)
 
 	for i := 0; i < int(m.MapSize); i += n {
-		if err = d.UnmarshalBinary(m.buf[i:]); err != nil {
+		if err = unmarshalBinary(m.buf[i:], d); err != nil {
 			break
 		}
 

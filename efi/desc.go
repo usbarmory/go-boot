@@ -6,7 +6,8 @@
 package efi
 
 import (
-	"encoding"
+	"bytes"
+	"encoding/binary"
 	"errors"
 
 	"github.com/usbarmory/tamago/dma"
@@ -14,21 +15,27 @@ import (
 
 const align = 8
 
-type BinaryMarshal interface {
-	encoding.BinaryMarshaler
-	encoding.BinaryUnmarshaler
+func marshalBinary(data any) (buf []byte, err error) {
+	b := new(bytes.Buffer)
+	err = binary.Write(b, binary.LittleEndian, data)
+	return b.Bytes(), nil
+}
+
+func unmarshalBinary(buf []byte, data any) (err error) {
+	_, err = binary.Decode(buf, binary.LittleEndian, data)
+	return
 }
 
 // TODO: expand this to remaining dma.NewRegion uses
-func decode(data BinaryMarshal, addr uint64) (err error) {
+func decode(data any, addr uint64) (err error) {
 	if addr == 0 {
 		return errors.New("invalid address")
 	}
 
-	t, _ := data.MarshalBinary()
+	t, _ := marshalBinary(data)
 	n := len(t) + (len(t) % align)
 
-	r, err := dma.NewRegion(uint(addr), n, false)
+	r, err := dma.NewRegion(uint(addr), n, true)
 
 	if err != nil {
 		return
@@ -37,5 +44,5 @@ func decode(data BinaryMarshal, addr uint64) (err error) {
 	ptr, buf := r.Reserve(len(t), 0)
 	defer r.Release(ptr)
 
-	return data.UnmarshalBinary(buf)
+	return unmarshalBinary(buf, data)
 }
