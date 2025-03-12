@@ -61,6 +61,9 @@ func consoleOutput(p []byte) (status uint64) {
 		p = append(p, 0x00)
 	}
 
+	// TODO: check if bootServices are present just to be sure they haven't
+	// been exited
+
 	return callService(
 		conOut+outputString,
 		conOut,

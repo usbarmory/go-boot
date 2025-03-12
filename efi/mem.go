@@ -18,6 +18,10 @@ const (
 	maxEntries   = 1000
 )
 
+// Advanced Configuration and Power Interface Specification (ACPI)
+// Version 6.0 - Table 15-312 Address Range Types12
+const AddressRangePersistentMemory = 7
+
 // PageSize represents the EFI page size in bytes
 const PageSize = 4096 // 4 KiB
 
@@ -69,7 +73,7 @@ func (d *MemoryDescriptor) E820() (bzimage.E820Entry, error) {
 	case EfiLoaderCode, EfiLoaderData, EfiBootServicesCode, EfiBootServicesData, EfiConventionalMemory:
 		e.MemType = bzimage.RAM
 	case EfiPersistentMemory:
-		e.MemType = 7 // E820_TYPE_PMEM
+		e.MemType = AddressRangePersistentMemory
 	case EfiACPIReclaimMemory:
 		e.MemType = bzimage.ACPI
 	case EfiACPIMemoryNVS:
