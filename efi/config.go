@@ -36,12 +36,12 @@ func (d *ConfigurationTable) UnmarshalBinary(data []byte) (err error) {
 // RegistryFormat returns the table EF GUID in registry format.
 func (d *ConfigurationTable) RegistryFormat() string {
 	// https://uefi.org/specs/UEFI/2.10/Apx_A_GUID_and_Time_Formats.html
-	return fmt.Sprintf("%08x-%04x-%04x-%x-%x (%x)",
+	return fmt.Sprintf("%08x-%04x-%04x-%x-%x",
 		binary.LittleEndian.Uint32(d.GUID[0:4]),
 		binary.LittleEndian.Uint16(d.GUID[4:6]),
 		binary.LittleEndian.Uint16(d.GUID[6:8]),
 		d.GUID[8:10],
-		d.GUID[10:], d.GUID)
+		d.GUID[10:])
 }
 
 // ConfigurationTables returns the EFI Configuration Tables.
