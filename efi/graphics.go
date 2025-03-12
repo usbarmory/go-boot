@@ -89,7 +89,7 @@ func (d *GraphicsOutput) UnmarshalBinary(data []byte) (err error) {
 	return
 }
 
-// Mode returns the EFI Graphics Output Mode instance.
+// GetMode returns the EFI Graphics Output Mode instance.
 func (gop *GraphicsOutput) GetMode() (pm *ProtocolMode, err error) {
 	pm = &ProtocolMode{}
 	err = decode(pm, gop.Mode)
