@@ -23,7 +23,7 @@ Shell> go-boot.efi
 initializing EFI services
 initializing console (com1)
 
-go-boot • tamago/amd64 (go1.24.1) • UEFI
+go-boot • tamago/amd64 (go1.24.1) • UEFI x64
 
 alloc           <hex offset> <size>      # EFI_BOOT_SERVICES.AllocatePages()
 build                                    # build information
@@ -107,7 +107,7 @@ Build the `go-boot.efi` application executable:
 
 ```
 git clone https://github.com/usbarmory/go-boot && cd go-boot
-make efi IMAGE_BASE=40000000 CONSOLE=com1 CMDLINE="$(cat /proc/cmdline)"
+make efi IMAGE_BASE=00100000 CONSOLE=text CMDLINE="$(cat /proc/cmdline)"
 ```
 
 Executing as UEFI application
@@ -132,7 +132,7 @@ QEMU supported targets can be executed under emulation, using the
 as follows:
 
 ```
-make qemu CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd> OVMFVARS=<path to OVMF_VARS.fd>
+make qemu IMAGE_BASE=40000000 CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd> OVMFVARS=<path to OVMF_VARS.fd>
 ```
 
 The emulation run will provide an interactive console.

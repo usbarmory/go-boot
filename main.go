@@ -15,14 +15,18 @@ import (
 	"runtime"
 
 	"github.com/usbarmory/go-boot/cmd"
-	"github.com/usbarmory/go-boot/efi"
 	"github.com/usbarmory/go-boot/shell"
+	"github.com/usbarmory/go-boot/uefi"
+	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
 // Build time variable
 var Console string
 
 func init() {
+	x64.UEFI.Console.ForceLine = true
+	x64.UEFI.Console.ReplaceTabs = 8
+
 	fmt.Printf("initializing console (%s)\n", Console)
 
 	log.SetFlags(0)
@@ -32,7 +36,7 @@ func init() {
 }
 
 func main() {
-	banner := fmt.Sprintf("go-boot • %s/%s (%s) • UEFI",
+	banner := fmt.Sprintf("go-boot • %s/%s (%s) • UEFI x64",
 		runtime.GOOS, runtime.GOARCH, runtime.Version())
 
 	iface := &shell.Interface{
@@ -41,13 +45,13 @@ func main() {
 
 	switch Console {
 	case "COM1", "com1", "":
-		iface.ReadWriter = efi.UART0
+		iface.ReadWriter = x64.UART0
 		iface.Start(true)
 	case "TEXT", "text":
-		iface.ReadWriter = efi.CONSOLE
+		iface.ReadWriter = x64.UEFI.Console
 		iface.Start(false)
 	}
 
 	log.Print("halting")
-	efi.UEFI.RuntimeServices.ResetSystem(efi.EfiResetShutdown)
+	x64.UEFI.Runtime.ResetSystem(uefi.EfiResetShutdown)
 }

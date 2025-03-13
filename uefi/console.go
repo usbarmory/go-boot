@@ -3,12 +3,11 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package efi
+package uefi
 
 import (
 	"io"
 	"unicode/utf16"
-	_ "unsafe"
 )
 
 const (
@@ -16,22 +15,6 @@ const (
 	outputString = 0x08
 	// EFI ConIn offset for ReadKeyStroke
 	readKeyStroke = 0x08
-)
-
-// set in amd64.s
-var (
-	conIn  uint64
-	conOut uint64
-)
-
-var (
-	// ForceLine controls whether line feeds (LF) should be supplemented
-	// with a carriage return (CR).
-	ForceLine bool
-
-	// ReplaceTabs controls whether Console I/O output should have Tab
-	// characters replaced with a number of spaces.
-	ReplaceTabs int = 0
 )
 
 // InputKey represents an EFI Input Key descriptor.
@@ -44,45 +27,53 @@ type InputKey struct {
 // Input/Output protocol.
 type Console struct {
 	io.ReadWriter
+
+	// ForceLine controls whether line feeds (LF) should be supplemented
+	// with a carriage return (CR).
+	ForceLine bool
+
+	// ReplaceTabs controls whether Console I/O output should have Tab
+	// characters replaced with a number of spaces.
+	ReplaceTabs int
+
+	// FIXME
+	In  uint64
+	Out uint64
 }
 
-func consoleInput(k *InputKey) (status uint64) {
+// FIXME
+func (c *Console) Input(k *InputKey) (status uint64) {
+	if c.In == 0 {
+		return
+	}
+
 	return callService(
-		conIn+readKeyStroke,
-		conIn,
+		c.In+readKeyStroke,
+		c.In,
 		ptrval(k),
 		0,
 		0,
 	)
 }
 
-func consoleOutput(p []byte) (status uint64) {
-	if UEFI.BootServices == nil {
-		return
-	}
-
+// FIXME
+// TODO: implement BufferedStdoutLog or similar
+func (c *Console) Output(p []byte) (status uint64) {
 	if p[len(p)-1] != 0x00 {
 		p = append(p, 0x00)
 	}
 
+	if c.Out == 0 {
+		return
+	}
+
 	return callService(
-		conOut+outputString,
-		conOut,
+		c.Out+outputString,
+		c.Out,
 		ptrval(&p[0]),
 		0,
 		0,
 	)
-}
-
-//go:linkname printk runtime.printk
-func printk(c byte) {
-	consoleOutput([]byte{c})
-
-	// TODO: implement BufferedStdoutLog or similar
-
-	if c == 0x0a && ForceLine { // LF
-		consoleOutput([]byte{0x0d}) // CR
-	}
 }
 
 // Read available data to buffer from console.
@@ -90,7 +81,7 @@ func (c *Console) Read(p []byte) (n int, err error) {
 	k := &InputKey{}
 
 	for n = 0; n < len(p); n += 2 {
-		status := consoleInput(k)
+		status := c.Input(k)
 
 		switch {
 		case status == EFI_SUCCESS:
@@ -118,8 +109,8 @@ func (c *Console) Write(p []byte) (n int, err error) {
 	// We receive an UTF-8 string but we can output only UTF-16 ones.
 
 	for _, r := range b {
-		if r == 0x09 && ReplaceTabs > 0 { // Tab
-			for i := 0; i < ReplaceTabs; i++ {
+		if r == 0x09 && c.ReplaceTabs > 0 { // Tab
+			for i := 0; i < c.ReplaceTabs; i++ {
 				s = append(s, []byte{0x20, 0x00}...) // Space
 			}
 			continue
@@ -128,12 +119,12 @@ func (c *Console) Write(p []byte) (n int, err error) {
 		s = append(s, byte(r&0xff))
 		s = append(s, byte(r>>8))
 
-		if r == 0x0a && ForceLine { // LF
+		if r == 0x0a && c.ForceLine { // LF
 			s = append(s, []byte{0x0d, 0x00}...) // CR
 		}
 	}
 
-	if status := consoleOutput(s); status != EFI_SUCCESS {
+	if status := c.Output(s); status != EFI_SUCCESS {
 		return n, parseStatus(status)
 	}
 

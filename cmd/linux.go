@@ -3,8 +3,6 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-//go:build amd64
-
 package cmd
 
 import (
@@ -17,15 +15,16 @@ import (
 	"strings"
 
 	"github.com/usbarmory/armory-boot/exec"
-	"github.com/usbarmory/go-boot/efi"
 	"github.com/usbarmory/go-boot/shell"
+	"github.com/usbarmory/go-boot/uefi"
+	"github.com/usbarmory/go-boot/uefi/x64"
 	"github.com/usbarmory/tamago/dma"
 )
 
 const (
 	// avoid initial DMA region
 	minLoadAddr = 0x01000000
-	paramsSize = 0x1000
+	paramsSize  = 0x1000
 
 	// DefaultCommandLine overrides CommandLine when empty
 	DefaultCommandLine = "earlyprintk=ttyS0,115200,8n1,keep debug rootflags=ro"
@@ -53,12 +52,12 @@ func init() {
 	})
 }
 
-func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage) (err error) {
+func reserveMemory(memdesc []*uefi.MemoryDescriptor, image *exec.LinuxImage) (err error) {
 	size := len(image.BzImage.KernelCode) + len(image.InitialRamDisk)
 
 	// find unallocated UEFI memory for kernel and ramdisk loading
 	for _, desc := range memdesc {
-		if desc.Type != efi.EfiConventionalMemory ||
+		if desc.Type != uefi.EfiConventionalMemory ||
 			desc.PhysicalStart < minLoadAddr ||
 			desc.Size() < size {
 			continue
@@ -109,11 +108,11 @@ func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage) (err
 	return
 }
 
-func efiInfo(memoryMap *efi.MemoryMap) (efi *exec.EFI, err error) {
+func efiInfo(memoryMap *uefi.MemoryMap) (efi *exec.EFI, err error) {
 	return &exec.EFI{
 		LoaderSignature:   exec.EFI64LoaderSignature,
-		SystemTable:       uint32(systemTable.Address()),
-		SystemTableHigh:   uint32(systemTable.Address() >> 32),
+		SystemTable:       uint32(x64.UEFI.Address()),
+		SystemTableHigh:   uint32(x64.UEFI.Address() >> 32),
 		MemoryMapHigh:     uint32(memoryMap.Address() >> 32),
 		MemoryMapSize:     uint32(memoryMap.MapSize),
 		MemoryMap:         uint32(memoryMap.Address()),
@@ -123,11 +122,11 @@ func efiInfo(memoryMap *efi.MemoryMap) (efi *exec.EFI, err error) {
 }
 
 func screenInfo() (screen *exec.Screen, err error) {
-	var gop *efi.GraphicsOutput
-	var mode *efi.ProtocolMode
-	var info *efi.ModeInformation
+	var gop *uefi.GraphicsOutput
+	var mode *uefi.ProtocolMode
+	var info *uefi.ModeInformation
 
-	if gop, err = bootServices.GetGraphicsOutput(); err != nil {
+	if gop, err = x64.UEFI.Boot.GetGraphicsOutput(); err != nil {
 		return
 	}
 
@@ -168,11 +167,11 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", errors.New("bzImage not embedded")
 	}
 
-	if bootServices == nil {
+	if x64.UEFI.Boot == nil {
 		return "", errors.New("EFI Boot Services unavailable")
 	}
 
-	memoryMap, err := bootServices.GetMemoryMap()
+	memoryMap, err := x64.UEFI.Boot.GetMemoryMap()
 
 	if err != nil {
 		return
@@ -197,7 +196,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	log.Printf("go-boot exiting EFI boot services and jumping to kernel")
 
 	// own all available memory
-	if err = bootServices.Exit(); err != nil {
+	if err = x64.UEFI.Boot.Exit(); err != nil {
 		return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
 	}
 

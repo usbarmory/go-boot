@@ -3,7 +3,7 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package efi
+package uefi
 
 const EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID = "9042a9de-23dc-4a38-96fb-7aded080516a"
 

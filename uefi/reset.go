@@ -3,7 +3,7 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package efi
+package uefi
 
 // EFI Runtime Services offset for ResetSystem
 const resetSystem = 0x68

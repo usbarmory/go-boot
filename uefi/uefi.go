@@ -3,15 +3,15 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-// Package efi implements a driver for the Unified Extensible Firmware Interface (UEFI)
-// interface following the specifications at:
+// Package uefi implements a driver for the Unified Extensible Firmware
+// Interface (UEFI) following the specifications at:
 //
 //	https://uefi.org/specs/UEFI/2.10/
 //
 // This package is only meant to be used with `GOOS=tamago` as
 // supported by the TamaGo framework for bare metal Go, see
 // https://github.com/usbarmory/tamago.
-package efi
+package uefi
 
 import (
 	"errors"
@@ -52,7 +52,8 @@ func ptrval(ptr any) uint64 {
 
 // BootServices represents an EFI Boot Services instance.
 type BootServices struct {
-	base uint64
+	base        uint64
+	imageHandle uint64
 }
 
 // RuntimeServices represents an EFI Runtime Services instance.
@@ -89,45 +90,51 @@ type SystemTable struct {
 	ConfigurationTable   uint64
 }
 
-// GetSystemTable returns the EFI System Table if the runtime has been launched
-// as an UEFI application.
-func GetSystemTable() (t *SystemTable, err error) {
-	t = &SystemTable{}
+// Services represents the UEFI services instance.
+type Services struct {
+	// EFI System Table instance
+	SystemTable *SystemTable
 
-	if err = decode(t, systemTable); err != nil {
+	// UEFI services
+	Console *Console
+	Boot    *BootServices
+	Runtime *RuntimeServices
+
+	imageHandle uint64
+	systemTable uint64
+}
+
+// Init initializes an UEFI services instance using the argument pointers.
+func (s *Services) Init(imageHandle uint64, systemTable uint64) (err error) {
+	s.systemTable = systemTable
+	s.SystemTable = &SystemTable{}
+
+	if err = decode(s.SystemTable, systemTable); err != nil {
 		return
 	}
 
-	if t.Header.Signature != signature {
-		return nil, errors.New("EFI System Table pointer is invalid")
+	if s.SystemTable.Header.Signature != signature {
+		return errors.New("EFI System Table pointer is invalid")
+	}
+
+	s.Console = &Console{
+		In:  s.SystemTable.ConIn,
+		Out: s.SystemTable.ConOut,
+	}
+
+	s.Boot = &BootServices{
+		base:        s.SystemTable.BootServices,
+		imageHandle: imageHandle,
+	}
+
+	s.Runtime = &RuntimeServices{
+		base: s.SystemTable.RuntimeServices,
 	}
 
 	return
 }
 
 // Address returns the EFI System Table pointer.
-func (d *SystemTable) Address() uint64 {
-	return systemTable
-}
-
-// GetBootServices returns an EFI Boot Services instance.
-func (d *SystemTable) GetBootServices() (*BootServices, error) {
-	if d.BootServices == 0 {
-		return nil, errors.New("EFI Boot Services pointer is nil")
-	}
-
-	return &BootServices{
-		base: d.BootServices,
-	}, nil
-}
-
-// GetRuntimeServices returns an EFI Runtime Services instance.
-func (d *SystemTable) GetRuntimeServices() (*RuntimeServices, error) {
-	if d.RuntimeServices == 0 {
-		return nil, errors.New("EFI Runtime Services pointer is nil")
-	}
-
-	return &RuntimeServices{
-		base: d.RuntimeServices,
-	}, nil
+func (s *Services) Address() uint64 {
+	return s.systemTable
 }

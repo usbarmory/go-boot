@@ -8,35 +8,20 @@ package cmd
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"log"
 	"regexp"
 	"strconv"
 	"unicode/utf16"
 
-	"github.com/usbarmory/go-boot/efi"
 	"github.com/usbarmory/go-boot/shell"
+	"github.com/usbarmory/go-boot/uefi"
+	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
 const maxVendorSize = 32
 
-var (
-	systemTable     *efi.SystemTable
-	bootServices    *efi.BootServices
-	runtimeServices *efi.RuntimeServices
-)
-
 func init() {
-	efi.ForceLine = true
-	efi.ReplaceTabs = 8
-
-	print("initializing EFI services\n")
-
-	systemTable = efi.UEFI.SystemTable
-	bootServices = efi.UEFI.BootServices
-	runtimeServices = efi.UEFI.RuntimeServices
-
 	shell.Add(shell.Cmd{
 		Name: "uefi",
 		Help: "UEFI information",
@@ -89,7 +74,8 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var buf bytes.Buffer
 	var s []uint16
 
-	b := mem(uint(systemTable.FirmwareVendor), maxVendorSize, nil)
+	t := x64.UEFI.SystemTable
+	b := mem(uint(t.FirmwareVendor), maxVendorSize, nil)
 
 	for i := 0; i < maxVendorSize; i += 2 {
 		if b[i] == 0x00 && b[i+1] == 0 {
@@ -100,9 +86,9 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	}
 
 	fmt.Fprintf(&buf, "Firmware Vendor ....: %s\n", string(utf16.Decode(s)))
-	fmt.Fprintf(&buf, "Firmware Revision ..: %#x\n", systemTable.FirmwareRevision)
-	fmt.Fprintf(&buf, "Runtime Services  ..: %#x\n", systemTable.RuntimeServices)
-	fmt.Fprintf(&buf, "Boot Services ......: %#x\n", systemTable.BootServices)
+	fmt.Fprintf(&buf, "Firmware Revision ..: %#x\n", t.FirmwareRevision)
+	fmt.Fprintf(&buf, "Runtime Services  ..: %#x\n", t.RuntimeServices)
+	fmt.Fprintf(&buf, "Boot Services ......: %#x\n", t.BootServices)
 
 	if s, err := screenInfo(); err == nil {
 		fmt.Fprintf(&buf, "Frame Buffer .......: %dx%d @ %#x\n",
@@ -110,9 +96,9 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 			uint64(s.ExtLfbBase)<<32|uint64(s.LfbBase))
 	}
 
-	fmt.Fprintf(&buf, "Configuration Tables: %#x\n", systemTable.ConfigurationTable)
+	fmt.Fprintf(&buf, "Configuration Tables: %#x\n", t.ConfigurationTable)
 
-	if c, err := systemTable.ConfigurationTables(); err == nil {
+	if c, err := t.ConfigurationTables(); err == nil {
 		for _, t := range c {
 			fmt.Fprintf(&buf, "  %s (%#x)\n", t.RegistryFormat(), t.VendorTable)
 		}
@@ -122,24 +108,15 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 }
 
 func locateCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	if bootServices == nil {
-		return "", errors.New("EFI Boot Services unavailable")
-	}
-
-	addr, err := bootServices.LocateProtocolString(arg[0])
-
+	addr, err := x64.UEFI.Boot.LocateProtocolString(arg[0])
 	return fmt.Sprintf("%s: %#08x", arg[0], addr), err
 }
 
 func memmapCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var buf bytes.Buffer
-	var memoryMap *efi.MemoryMap
+	var memoryMap *uefi.MemoryMap
 
-	if bootServices == nil {
-		return "", errors.New("EFI Boot Services unavailable")
-	}
-
-	if memoryMap, err = bootServices.GetMemoryMap(); err != nil {
+	if memoryMap, err = x64.UEFI.Boot.GetMemoryMap(); err != nil {
 		return
 	}
 
@@ -170,15 +147,11 @@ func allocCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("only 64-bit aligned accesses are supported")
 	}
 
-	if bootServices == nil {
-		return "", errors.New("EFI Boot Services unavailable")
-	}
-
 	log.Printf("allocating memory range %#08x - %#08x", addr, addr+size)
 
-	err = bootServices.AllocatePages(
-		efi.AllocateAddress,
-		efi.EfiLoaderData,
+	err = x64.UEFI.Boot.AllocatePages(
+		uefi.AllocateAddress,
+		uefi.EfiLoaderData,
 		int(size),
 		addr,
 	)
@@ -189,21 +162,17 @@ func allocCmd(_ *shell.Interface, arg []string) (res string, err error) {
 func resetCmd(_ *shell.Interface, arg []string) (_ string, err error) {
 	var resetType int
 
-	if runtimeServices == nil {
-		return "", errors.New("EFI Runtime Services unavailable")
-	}
-
 	switch arg[0] {
 	case "cold":
-		resetType = efi.EfiResetCold
+		resetType = uefi.EfiResetCold
 	case "warm", "":
-		resetType = efi.EfiResetWarm
+		resetType = uefi.EfiResetWarm
 	case "shutdown":
-		resetType = efi.EfiResetShutdown
+		resetType = uefi.EfiResetShutdown
 	}
 
 	log.Printf("performing system reset type %d", resetType)
-	err = runtimeServices.ResetSystem(resetType)
+	err = x64.UEFI.Runtime.ResetSystem(resetType)
 
 	return
 }

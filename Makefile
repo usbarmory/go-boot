@@ -30,7 +30,7 @@ QEMU ?= qemu-system-x86_64 \
 
 #### primary targets ####
 
-all: $(APP)
+all: $(APP).efi
 
 elf: $(APP)
 
@@ -45,7 +45,7 @@ qemu: $(APP).efi
 
 qemu-gdb: GOFLAGS := $(GOFLAGS:-w=)
 qemu-gdb: GOFLAGS := $(GOFLAGS:-s=)
-qemu-gdb: $(APP)
+qemu-gdb: $(APP).efi
 	$(QEMU) -S -s
 
 #### utilities ####

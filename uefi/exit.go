@@ -3,7 +3,7 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package efi
+package uefi
 
 // EFI Boot Services offset for ExitBootServices
 const exitBootServices = 0xe8
@@ -18,7 +18,7 @@ func (s *BootServices) Exit() (err error) {
 
 	status := callService(
 		s.base+exitBootServices,
-		uint64(imageHandle),
+		uint64(s.imageHandle),
 		memoryMap.MapKey,
 		0,
 		0,
@@ -27,8 +27,6 @@ func (s *BootServices) Exit() (err error) {
 	if err = parseStatus(status); err != nil {
 		return
 	}
-
-	UEFI.BootServices = nil
 
 	return
 }

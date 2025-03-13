@@ -3,7 +3,7 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-package efi
+package uefi
 
 import (
 	"encoding/binary"
@@ -19,7 +19,7 @@ type ConfigurationTable struct {
 	VendorTable uint64
 }
 
-// RegistryFormat returns the table EF GUID in registry format.
+// RegistryFormat returns the table EFI GUID in registry format.
 func (d *ConfigurationTable) RegistryFormat() string {
 	// https://uefi.org/specs/UEFI/2.10/Apx_A_GUID_and_Time_Formats.html
 	return fmt.Sprintf("%08x-%04x-%04x-%x-%x",
