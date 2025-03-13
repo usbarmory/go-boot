@@ -57,12 +57,13 @@ func consoleInput(k *InputKey) (status uint64) {
 }
 
 func consoleOutput(p []byte) (status uint64) {
+	if UEFI.BootServices == nil {
+		return
+	}
+
 	if p[len(p)-1] != 0x00 {
 		p = append(p, 0x00)
 	}
-
-	// TODO: check if bootServices are present just to be sure they haven't
-	// been exited
 
 	return callService(
 		conOut+outputString,

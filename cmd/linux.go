@@ -23,12 +23,9 @@ import (
 )
 
 const (
-	// require at least 256MB for kernel and ramdisk loading
-	memorySize = 0x10000000
-	paramsSize = 0x1000
-
 	// avoid initial DMA region
 	minLoadAddr = 0x01000000
+	paramsSize = 0x1000
 
 	// DefaultCommandLine overrides CommandLine when empty
 	DefaultCommandLine = "earlyprintk=ttyS0,115200,8n1,keep debug rootflags=ro"
@@ -56,7 +53,9 @@ func init() {
 	})
 }
 
-func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage, size int) (err error) {
+func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage) (err error) {
+	size := len(image.BzImage.KernelCode) + len(image.InitialRamDisk)
+
 	// find unallocated UEFI memory for kernel and ramdisk loading
 	for _, desc := range memdesc {
 		if desc.Type != efi.EfiConventionalMemory ||
@@ -158,10 +157,6 @@ func screenInfo() (screen *exec.Screen, err error) {
 	return
 }
 
-func cleanup() {
-	bootServices = nil
-}
-
 func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	path := strings.TrimSpace(arg[0])
 
@@ -193,47 +188,35 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		image.CmdLine = DefaultCommandLine
 	}
 
+	// fill screen_info
+	if image.Screen, err = screenInfo(); err != nil {
+		log.Printf("could not detect screen information, %v\n", err)
+	}
+
+	// this is the last log we can issue as we will lose UEFI ConsoleOut
+	log.Printf("go-boot exiting EFI boot services and jumping to kernel")
+
+	// own all available memory
+	if err = bootServices.Exit(); err != nil {
+		return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
+	}
+
+	// parse kernel image
 	if err = image.Parse(); err != nil {
 		return
 	}
 
 	// reserve runtime memory for kernel loading
-	if err = reserveMemory(memoryMap.Descriptors, image, memorySize); err != nil {
+	if err = reserveMemory(memoryMap.Descriptors, image); err != nil {
 		return
 	}
 
 	// release in case of error
 	defer image.Region.Release(image.Region.Start())
 
-	start := uint64(image.Region.Start())
-	size := int(image.Region.Size())
-
-	log.Printf("allocating memory pages %#08x - %#08x", start, int(start)+size)
-
-	// reserve UEFI memory for kernel loading
-	if err = bootServices.AllocatePages(
-		efi.AllocateAddress,
-		efi.EfiLoaderData,
-		size,
-		start,
-	); err != nil {
-		return
-	}
-
-	// free in case of error
-	defer bootServices.FreePages(
-		start,
-		size,
-	)
-
 	// fill EFI information in boot parameters
 	if image.EFI, err = efiInfo(memoryMap); err != nil {
 		return
-	}
-
-	// fill screen_info
-	if image.Screen, err = screenInfo(); err != nil {
-		log.Printf("could not detect screen information, %v\n", err)
 	}
 
 	// load kernel in reserved memory
@@ -241,13 +224,5 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not load kernel, %v", err)
 	}
 
-	// we cannot log after exiting boot services
-	log.Printf("jumping to kernel entry %#08x", image.Entry())
-	log.Printf("exiting EFI boot services")
-
-	if err = bootServices.Exit(); err != nil {
-		return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
-	}
-
-	return "", image.Boot(cleanup)
+	return "", image.Boot(nil)
 }

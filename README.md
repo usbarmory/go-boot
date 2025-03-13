@@ -65,9 +65,7 @@ Type Start            End              Pages            Attributes
 ...
 
 > linux
-allocating memory pages 0x01780000 - 0x40000000
-jumping to kernel entry 0x04600c08
-exiting EFI boot services
+go-boot exiting EFI boot services and jumping to kernel
 Linux version 6.13.6-arch1-1 (linux@archlinux) (gcc (GCC) 14.2.1 20250207, GNU ld (GNU Binutils) 2.44)
 ...
 ```
@@ -100,7 +98,7 @@ The `IMAGE_BASE` environment variable must be set within a memory range (in
 hex) available in the target UEFI environment for the unikernel allocation, the
 [HCL](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list) or
 `memmap` command from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
-can provide such value, when empty a common default value (40000000) is set.
+can provide such value, when empty a common default value is set.
 
 The `CMDLINE` environment variable can be set to the desired Linux kernel
 command line parameters.

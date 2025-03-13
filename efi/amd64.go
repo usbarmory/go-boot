@@ -60,7 +60,7 @@ var (
 )
 
 //go:linkname ramStart runtime.ramStart
-var ramStart uint64 = 0x40000000 // overridden in amd64.s
+var ramStart uint64 = 0x00100000 // overridden in amd64.s
 
 //go:linkname RamSize runtime.ramSize
 var RamSize uint64 = 0x20000000 // 512MB
@@ -105,6 +105,8 @@ func init() {
 	// force alignment
 	align := uint64(4096)
 	heapStart += -heapStart & (align - 1)
+
+	// FIXME: heapStart not always matches UEFI allocation
 
 	UEFI.BootServices.AllocatePages(
 		AllocateAddress,

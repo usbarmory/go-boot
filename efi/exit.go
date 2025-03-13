@@ -24,5 +24,11 @@ func (s *BootServices) Exit() (err error) {
 		0,
 	)
 
-	return parseStatus(status)
+	if err = parseStatus(status); err != nil {
+		return
+	}
+
+	UEFI.BootServices = nil
+
+	return
 }
