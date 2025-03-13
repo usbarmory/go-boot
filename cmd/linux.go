@@ -60,7 +60,7 @@ func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage, size
 	// find unallocated UEFI memory for kernel and ramdisk loading
 	for _, desc := range memdesc {
 		if desc.Type != efi.EfiConventionalMemory ||
-			//desc.PhysicalStart < minLoadAddr || // FIXME
+			// desc.PhysicalStart < minLoadAddr || // FIXME
 			desc.Size() < size {
 			continue
 		}
@@ -186,11 +186,10 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	image := &exec.LinuxImage{
 		Kernel:         bzImage,
 		InitialRamDisk: initrd,
+		CmdLine:        CommandLine,
 	}
 
-	if len(CommandLine) > 0 {
-		image.CmdLine = DefaultCommandLine
-	} else {
+	if len(image.CmdLine) == 0 {
 		image.CmdLine = DefaultCommandLine
 	}
 
