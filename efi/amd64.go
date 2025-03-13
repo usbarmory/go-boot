@@ -111,18 +111,17 @@ func init() {
 	}
 
 	// reserve runtime RAM in UEFI memory
-
+	_, ramStart := runtime.DataRegion()
 	_, ramEnd := MemRegion()
-	_, dataEnd := runtime.DataRegion()
 
 	// force alignment
 	align := uint64(4096)
-	dataEnd += -dataEnd & (align - 1)
+	ramStart += -ramStart & (align - 1)
 
 	UEFI.BootServices.AllocatePages(
 		AllocateAddress,
 		EfiLoaderData,
-		int(ramEnd-dataEnd),
-		dataEnd,
+		int(ramEnd-ramStart),
+		ramStart,
 	)
 }

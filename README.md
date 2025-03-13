@@ -116,8 +116,9 @@ Executing as UEFI application
 =============================
 
 The `go-boot.efi` application executable, built after _Compiling_, can be
-loaded from an UEFI shell or boot manager, the following example shows an
-entry for [systemd-boot](https://www.freedesktop.org/wiki/Software/systemd/systemd-boot/):
+loaded from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
+or boot manager, the following example shows an entry for
+[systemd-boot](https://www.freedesktop.org/wiki/Software/systemd/systemd-boot/):
 
 ```
 # /boot/loader/entries/go-boot.conf
