@@ -28,7 +28,7 @@ const (
 	paramsSize = 0x1000
 
 	// avoid initial DMA region
-	minLoadAddr = 0x1000000
+	minLoadAddr = 0x01000000
 
 	// DefaultCommandLine overrides CommandLine when empty
 	DefaultCommandLine = "earlyprintk=ttyS0,115200,8n1,keep debug rootflags=ro"
@@ -60,7 +60,7 @@ func reserveMemory(memdesc []*efi.MemoryDescriptor, image *exec.LinuxImage, size
 	// find unallocated UEFI memory for kernel and ramdisk loading
 	for _, desc := range memdesc {
 		if desc.Type != efi.EfiConventionalMemory ||
-			// desc.PhysicalStart < minLoadAddr || // FIXME
+			desc.PhysicalStart < minLoadAddr ||
 			desc.Size() < size {
 			continue
 		}
@@ -233,7 +233,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	// fill screen_info
 	if image.Screen, err = screenInfo(); err != nil {
-		return
+		log.Printf("could not detect screen information, %v\n", err)
 	}
 
 	// load kernel in reserved memory

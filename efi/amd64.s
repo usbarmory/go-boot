@@ -25,4 +25,15 @@ TEXT cpuinit(SB),NOSPLIT|NOFRAME,$0
 	// Enable SSE
 	CALL	sse_enable(SB)
 
+	// ramStart is relocated based on build time variable IMAGE_BASE.
+	MOVQ	$runtime·text(SB), AX
+	SUBQ	$(64*1024), AX
+	MOVQ	AX, runtime·ramStart(SB)
+
+	MOVQ	runtime·ramStart(SB), SP
+	MOVQ	runtime·ramSize(SB), AX
+	MOVQ	runtime·ramStackOffset(SB), BX
+	ADDQ	AX, SP
+	SUBQ	BX, SP
+
 	JMP	runtime·rt0_amd64_tamago(SB)

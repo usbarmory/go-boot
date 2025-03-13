@@ -97,9 +97,9 @@ The `CONSOLE` environment variable must be set to either `com1` or `text`
 (default) to configure the output console to serial port or UEFI console.
 
 The `IMAGE_BASE` environment variable must be set within a memory range (in
-hex) available in the target UEFI environment for the unikernel allocation
-(64MB), the [HCL](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list)
-or `memmap` command from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
+hex) available in the target UEFI environment for the unikernel allocation, the
+[HCL](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list) or
+`memmap` command from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
 can provide such value, when empty a common default value (40000000) is set.
 
 The `CMDLINE` environment variable can be set to the desired Linux kernel

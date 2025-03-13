@@ -60,10 +60,10 @@ var (
 )
 
 //go:linkname ramStart runtime.ramStart
-var ramStart uint64 = 0x40000000 // unused (see MemRegion())
+var ramStart uint64 = 0x40000000 // overridden in amd64.s
 
 //go:linkname RamSize runtime.ramSize
-var RamSize uint64 = 0x04000000 // 64MB
+var RamSize uint64 = 0x20000000 // 512MB
 
 //go:linkname nanotime1 runtime.nanotime1
 func nanotime1() int64 {
@@ -82,17 +82,6 @@ func Init() {
 	UART0.Init()
 }
 
-// As this unikernel is relocated based on build time variable IMAGE_BASE,
-// runtime.MemRegion() should be avoided.
-func MemRegion() (start uint64, end uint64) {
-	textStart, _ := runtime.TextRegion()
-
-	start = textStart - 0x10000
-	end = start + RamSize
-
-	return
-}
-
 func init() {
 	// Real-Time Clock
 	RTC = &rtc.RTC{}
@@ -102,7 +91,6 @@ func init() {
 	}
 
 	// cache UEFI services
-
 	UEFI.SystemTable, _ = GetSystemTable()
 
 	if UEFI.SystemTable != nil {
@@ -110,18 +98,18 @@ func init() {
 		UEFI.RuntimeServices, _ = UEFI.SystemTable.GetRuntimeServices()
 	}
 
-	// reserve runtime RAM in UEFI memory
-	_, ramStart := runtime.DataRegion()
-	_, ramEnd := MemRegion()
+	// reserve runtime heap in UEFI memory
+	_, heapStart := runtime.DataRegion()
+	_, heapEnd := runtime.MemRegion()
 
 	// force alignment
 	align := uint64(4096)
-	ramStart += -ramStart & (align - 1)
+	heapStart += -heapStart & (align - 1)
 
 	UEFI.BootServices.AllocatePages(
 		AllocateAddress,
 		EfiLoaderData,
-		int(ramEnd-ramStart),
-		ramStart,
+		int(heapEnd-heapStart),
+		heapStart,
 	)
 }
