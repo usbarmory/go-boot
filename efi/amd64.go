@@ -8,6 +8,7 @@
 package efi
 
 import (
+	"fmt"
 	"runtime"
 	_ "unsafe"
 
@@ -59,8 +60,8 @@ var (
 	systemTable uint64
 )
 
-//go:linkname ramStart runtime.ramStart
-var ramStart uint64 = 0x00100000 // overridden in amd64.s
+//go:linkname _unused runtime.ramStart
+var _unused uint64 = 0x00100000 // overridden in amd64.s
 
 //go:linkname RamSize runtime.ramSize
 var RamSize uint64 = 0x20000000 // 512MB
@@ -98,20 +99,39 @@ func init() {
 		UEFI.RuntimeServices, _ = UEFI.SystemTable.GetRuntimeServices()
 	}
 
+	if UEFI.BootServices == nil {
+		return
+	}
+
+	memoryMap, err := UEFI.BootServices.GetMemoryMap()
+
+	if err != nil {
+		fmt.Printf("WARNING: could not get memory map, %err\n", err)
+		return
+	}
+
+	heapStart := uint64(0)
+	ramStart, ramEnd := runtime.MemRegion()
+
+	// locate runtime heap offset according to UEFI memory allocation
+	for _, desc := range memoryMap.Descriptors {
+		if desc.Type == EfiLoaderCode && desc.PhysicalStart == ramStart {
+			heapStart = desc.PhysicalEnd()
+			break
+		}
+	}
+
+	if heapStart == 0 {
+		fmt.Println("WARNING: could not find heap offset")
+	}
+
 	// reserve runtime heap in UEFI memory
-	_, heapStart := runtime.DataRegion()
-	_, heapEnd := runtime.MemRegion()
-
-	// force alignment
-	align := uint64(4096)
-	heapStart += -heapStart & (align - 1)
-
-	// FIXME: heapStart not always matches UEFI allocation
-
-	UEFI.BootServices.AllocatePages(
+	if err := UEFI.BootServices.AllocatePages(
 		AllocateAddress,
 		EfiLoaderData,
-		int(heapEnd-heapStart),
+		int(ramEnd-heapStart),
 		heapStart,
-	)
+	); err != nil {
+		fmt.Printf("WARNING: could not allocate heap at %x\n", heapStart)
+	}
 }
