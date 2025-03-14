@@ -40,6 +40,9 @@ func main() {
 		Banner: banner,
 	}
 
+	// disable UEFI watchdog
+	x64.UEFI.Boot.SetWatchdogTimer(0)
+
 	switch Console {
 	case "COM1", "com1", "":
 		iface.ReadWriter = x64.UART0
