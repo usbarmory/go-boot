@@ -159,4 +159,4 @@ go-boot | https://github.com/usbarmory/go-boot
 Copyright (c) WithSecure Corporation
 
 These source files are distributed under the BSD-style license found in the
-[LICENSE](https://github.com/usbarmory/go-boot/blob/master/LICENSE) file.
+[LICENSE](https://github.com/usbarmory/go-boot/blob/main/LICENSE) file.
