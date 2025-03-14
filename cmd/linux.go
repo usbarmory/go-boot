@@ -63,6 +63,10 @@ func reserveMemory(memdesc []*uefi.MemoryDescriptor, image *exec.LinuxImage) (er
 			continue
 		}
 
+		// TODO: EfiBootServicesCode and EfiBootServicesData is
+		// available as well but highly fragmented in some cases (e.g.
+		// BIOS setup), we should defrag and mark as available.
+
 		// opportunistic size increase
 		size = desc.Size()
 
