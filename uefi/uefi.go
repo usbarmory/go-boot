@@ -118,8 +118,10 @@ func (s *Services) Init(imageHandle uint64, systemTable uint64) (err error) {
 	}
 
 	s.Console = &Console{
-		In:  s.SystemTable.ConIn,
-		Out: s.SystemTable.ConOut,
+		ForceLine:   true,
+		ReplaceTabs: 8,
+		In:          s.SystemTable.ConIn,
+		Out:         s.SystemTable.ConOut,
 	}
 
 	s.Boot = &BootServices{

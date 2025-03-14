@@ -18,6 +18,12 @@ import (
 
 func init() {
 	shell.Add(shell.Cmd{
+		Name: "info",
+		Help: "device information",
+		Fn:   infoCmd,
+	})
+
+	shell.Add(shell.Cmd{
 		Name:    "cpuid",
 		Args:    2,
 		Pattern: regexp.MustCompile(`^cpuid\s+([[:xdigit:]]+) ([[:xdigit:]]+)$`),

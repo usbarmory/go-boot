@@ -14,7 +14,7 @@ import (
 )
 
 //go:linkname _unused runtime.ramStart
-var _unused uint64 = 0x00100000 // overridden in amd64.s
+var _unused uint64 = 0x00100000 // overridden in x64.s
 
 //go:linkname RamSize runtime.ramSize
 var RamSize uint64 = 0x20000000 // 512MB

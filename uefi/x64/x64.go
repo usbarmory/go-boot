@@ -32,7 +32,7 @@ const (
 	COM1 = 0x3f8
 )
 
-// set in amd64.s
+// set in x64.s
 var (
 	imageHandle uint64
 	systemTable uint64
@@ -76,9 +76,6 @@ func Init() {
 }
 
 func init() {
-	// Real-Time Clock
-	RTC = &rtc.RTC{}
-
 	if t, err := RTC.Now(); err == nil {
 		AMD64.SetTimer(t.UnixNano())
 	}

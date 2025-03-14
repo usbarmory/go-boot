@@ -36,12 +36,13 @@ type Console struct {
 	// characters replaced with a number of spaces.
 	ReplaceTabs int
 
-	// FIXME
-	In  uint64
+	// In should be set to the EFI SystemTable ConIn address.
+	In uint64
+	// Out should be set to the EFI SystemTable ConOut address.
 	Out uint64
 }
 
-// FIXME
+// Input calls EFI_SIMPLE_TEXT_INPUT_PROTOCOL.ReadKeyStroke().
 func (c *Console) Input(k *InputKey) (status uint64) {
 	if c.In == 0 {
 		return
@@ -56,9 +57,9 @@ func (c *Console) Input(k *InputKey) (status uint64) {
 	)
 }
 
-// FIXME
-// TODO: implement BufferedStdoutLog or similar
+// Output calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.OutputString().
 func (c *Console) Output(p []byte) (status uint64) {
+	// TODO: implement BufferedStdoutLog or similar
 	if p[len(p)-1] != 0x00 {
 		p = append(p, 0x00)
 	}

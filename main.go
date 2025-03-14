@@ -24,9 +24,6 @@ import (
 var Console string
 
 func init() {
-	x64.UEFI.Console.ForceLine = true
-	x64.UEFI.Console.ReplaceTabs = 8
-
 	fmt.Printf("initializing console (%s)\n", Console)
 
 	log.SetFlags(0)

@@ -82,15 +82,6 @@ func init() {
 		Help: "show how long the system has been running",
 		Fn:   uptimeCmd,
 	})
-
-	// The following commands are board specific, therefore their Fn
-	// pointers are defined elsewhere in the respective target files.
-
-	shell.Add(shell.Cmd{
-		Name: "info",
-		Help: "device information",
-		Fn:   infoCmd,
-	})
 }
 
 func buildInfoCmd(_ *shell.Interface, _ []string) (string, error) {
