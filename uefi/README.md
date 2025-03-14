@@ -4,7 +4,7 @@ TamaGo - bare metal Go - UEFI support
 TamaGo is a framework that enables compilation and execution of unencumbered Go
 applications on bare metal AMD64/ARM/RISC-V processors.
 
-The [efi](https://github.com/usbarmory/go-boot/tree/master/uefi) package
+The [uefi](https://github.com/usbarmory/go-boot/tree/master/uefi) package
 provides support for unikernels running under the Unified Extensible Firmware
 Interface ([UEFI](https://uefi.org)) on
 [x64](https://github.com/usbarmory/tamago/tree/master/uefi/x64) CPUs.
