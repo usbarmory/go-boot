@@ -105,6 +105,10 @@ func (s *BootServices) GetMemoryMap() (m *MemoryMap, err error) {
 		ptrval(&m.DescriptorVersion),
 	)
 
+	if err = parseStatus(status); err != nil {
+		return
+	}
+
 	for i := 0; i < int(m.MapSize); i += n {
 		if err = unmarshalBinary(m.buf[i:], d); err != nil {
 			break
@@ -113,8 +117,6 @@ func (s *BootServices) GetMemoryMap() (m *MemoryMap, err error) {
 		m.Descriptors = append(m.Descriptors, d)
 		d = &MemoryDescriptor{}
 	}
-
-	err = parseStatus(status)
 
 	return
 }

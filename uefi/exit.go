@@ -24,9 +24,5 @@ func (s *BootServices) Exit() (err error) {
 		0,
 	)
 
-	if err = parseStatus(status); err != nil {
-		return
-	}
-
-	return
+	return parseStatus(status)
 }
