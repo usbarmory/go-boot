@@ -26,7 +26,6 @@ func unmarshalBinary(buf []byte, data any) (err error) {
 	return
 }
 
-// TODO: expand this to remaining dma.NewRegion uses
 func decode(data any, addr uint64) (err error) {
 	if addr == 0 {
 		return errors.New("invalid address")
