@@ -122,8 +122,21 @@ func locateCmd(_ *shell.Interface, arg []string) (res string, err error) {
 }
 
 func fileCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	info, err := x64.UEFI.FileInfo(arg[0])
-	return info, err
+	var f *uefi.File
+
+	root, err := x64.UEFI.Root()
+
+	if err != nil {
+		return "", fmt.Errorf("could not open root volume, %v", err)
+	}
+
+	if f, err = root.Open(arg[0]); err != nil {
+		return "", fmt.Errorf("could not open file, %v", err)
+	}
+
+	stat, err := f.Stat()
+
+	return fmt.Sprintf("Size: %d", stat.Size()), err
 }
 
 func memmapCmd(_ *shell.Interface, _ []string) (res string, err error) {
