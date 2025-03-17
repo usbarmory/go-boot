@@ -43,7 +43,7 @@ func (d *MemoryDescriptor) Size() int {
 	return int(d.NumberOfPages * PageSize)
 }
 
-// E820() converts an EFI Memory Map entry to an x86 E820 one suitable for use
+// E820 converts an EFI Memory Map entry to an x86 E820 one suitable for use
 // after exiting EFI Boot Services.
 func (d *MemoryDescriptor) E820() (bzimage.E820Entry, error) {
 	e := bzimage.E820Entry{

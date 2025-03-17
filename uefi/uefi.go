@@ -106,7 +106,9 @@ type Services struct {
 
 // Init initializes an UEFI services instance using the argument pointers.
 func (s *Services) Init(imageHandle uint64, systemTable uint64) (err error) {
+	s.imageHandle = imageHandle
 	s.systemTable = systemTable
+
 	s.SystemTable = &SystemTable{}
 
 	if err = decode(s.SystemTable, systemTable); err != nil {
@@ -134,6 +136,11 @@ func (s *Services) Init(imageHandle uint64, systemTable uint64) (err error) {
 	}
 
 	return
+}
+
+// Handle returns the UEFI image handle pointer.
+func (s *Services) ImageHandle() uint64 {
+	return s.imageHandle
 }
 
 // Address returns the EFI System Table pointer.

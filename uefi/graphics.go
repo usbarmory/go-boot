@@ -30,7 +30,7 @@ type ProtocolMode struct {
 	FrameBufferSize uint64
 }
 
-// GetInfo() returns the EFI Graphics Output Mode information instance.
+// GetInfo returns the EFI Graphics Output Mode information instance.
 func (d *ProtocolMode) GetInfo() (mi *ModeInformation, err error) {
 	mi = &ModeInformation{}
 	err = decode(mi, d.Info)
@@ -57,7 +57,7 @@ func (gop *GraphicsOutput) GetMode() (pm *ProtocolMode, err error) {
 func (s *BootServices) GetGraphicsOutput() (gop *GraphicsOutput, err error) {
 	gop = &GraphicsOutput{}
 
-	base, err := s.LocateProtocolString(EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID)
+	base, err := s.LocateProtocol(EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID)
 
 	if err != nil {
 		return

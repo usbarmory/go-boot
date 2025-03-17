@@ -38,6 +38,15 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
+		Name:    "file",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^file (.*)`),
+		Syntax:  "<path>",
+		Help:    "EFI_FILE_PROTOCOL.GetInfo()",
+		Fn:      fileCmd,
+	})
+
+	shell.Add(shell.Cmd{
 		Name: "memmap",
 		Help: "EFI_BOOT_SERVICES.GetMemoryMap()",
 		Fn:   memmapCmd,
@@ -108,8 +117,13 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 }
 
 func locateCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	addr, err := x64.UEFI.Boot.LocateProtocolString(arg[0])
+	addr, err := x64.UEFI.Boot.LocateProtocol(uefi.GUID(arg[0]))
 	return fmt.Sprintf("%s: %#08x", arg[0], addr), err
+}
+
+func fileCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	info, err := x64.UEFI.FileInfo(arg[0])
+	return info, err
 }
 
 func memmapCmd(_ *shell.Interface, _ []string) (res string, err error) {
