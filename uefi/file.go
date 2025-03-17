@@ -66,7 +66,7 @@ func (fs *simpleFileSystem) openVolume(handle uint64) (f *fileProtocol, addr uin
 
 	f = &fileProtocol{}
 
-	if err = decode(f, handle); err != nil {
+	if err = decode(f, addr); err != nil {
 		return
 	}
 
