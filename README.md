@@ -82,6 +82,11 @@ Linux version 6.13.6-arch1-1 (linux@archlinux) (gcc (GCC) 14.2.1 20250207, GNU l
 ...
 ```
 
+Package documentation
+=====================
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/usbarmory/go-boot/uefi.svg)](https://pkg.go.dev/github.com/usbarmory/go-boot/uefi)
+
 Hardware Compatibility List
 ===========================
 
