@@ -184,7 +184,7 @@ func (f *fileProtocol) read(handle uint64, buf []byte) (n int, err error) {
 		0,
 	)
 
-	if status == EFI_DEVICE_ERROR {
+	if status == EFI_DEVICE_ERROR || size == 0 {
 		return 0, io.EOF
 	}
 

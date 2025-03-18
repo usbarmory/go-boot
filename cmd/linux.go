@@ -6,16 +6,15 @@
 package cmd
 
 import (
-	_ "embed"
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 
 	"github.com/usbarmory/armory-boot/exec"
 	"github.com/usbarmory/go-boot/shell"
+	"github.com/usbarmory/go-boot/uapi"
 	"github.com/usbarmory/go-boot/uefi"
 	"github.com/usbarmory/go-boot/uefi/x64"
 	"github.com/usbarmory/tamago/dma"
@@ -25,28 +24,18 @@ const (
 	// avoid initial DMA region
 	minLoadAddr = 0x01000000
 	paramsSize  = 0x1000
-
-	// DefaultCommandLine overrides CommandLine when empty
-	DefaultCommandLine = "earlyprintk=ttyS0,115200,8n1,keep debug rootflags=ro"
 )
 
-// TODO: load from EFI partition
-
-// CommandLine represents the Linux kernel boot parameters
-var CommandLine string
-
-//go:embed bzImage
-var bzImage []byte
-
-//go:embed initrd
-var initrd []byte
+// DefaultEntryPath represents the default path for the UAPI Type #1 Boot
+// Loader Entry.
+const DefaultEntryPath = "/loader/entries/arch.conf"
 
 func init() {
 	shell.Add(shell.Cmd{
 		Name:    "linux",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^linux(.*)`),
-		Syntax:  "(path)?",
+		Syntax:  "(loader entry path)?",
 		Help:    "boot Linux kernel bzImage",
 		Fn:      linuxCmd,
 	})
@@ -102,7 +91,7 @@ func reserveMemory(memdesc []*uefi.MemoryDescriptor, image *exec.LinuxImage) (er
 	image.InitialRamDiskOffset = 0
 	image.InitialRamDiskOffset += -(base + image.InitialRamDiskOffset) & (align - 1)
 
-	image.KernelOffset = image.InitialRamDiskOffset + len(initrd)
+	image.KernelOffset = image.InitialRamDiskOffset + len(image.InitialRamDisk)
 	image.KernelOffset += -(base + image.KernelOffset) & (align - 1)
 
 	// place boot parameters at the far end
@@ -160,35 +149,11 @@ func screenInfo() (screen *exec.Screen, err error) {
 	return
 }
 
-func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	path := strings.TrimSpace(arg[0])
-
-	if len(path) != 0 {
-		if bzImage, err = os.ReadFile(path); err != nil {
-			return
-		}
-	} else if len(bzImage) == 0 {
-		return "", errors.New("bzImage not embedded")
-	}
-
-	if x64.UEFI.Boot == nil {
-		return "", errors.New("EFI Boot Services unavailable")
-	}
-
+func boot(image *exec.LinuxImage) (err error) {
 	memoryMap, err := x64.UEFI.Boot.GetMemoryMap()
 
 	if err != nil {
 		return
-	}
-
-	image := &exec.LinuxImage{
-		Kernel:         bzImage,
-		InitialRamDisk: initrd,
-		CmdLine:        CommandLine,
-	}
-
-	if len(image.CmdLine) == 0 {
-		image.CmdLine = DefaultCommandLine
 	}
 
 	// fill screen_info
@@ -201,7 +166,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	// own all available memory
 	if err = x64.UEFI.Boot.Exit(); err != nil {
-		return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
+		return fmt.Errorf("could not exit EFI boot services, %v\n", err)
 	}
 
 	// parse kernel image
@@ -224,8 +189,48 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	// load kernel in reserved memory
 	if err = image.Load(); err != nil {
-		return "", fmt.Errorf("could not load kernel, %v", err)
+		return fmt.Errorf("could not load kernel, %v", err)
 	}
 
-	return "", image.Boot(nil)
+	return image.Boot(nil)
+}
+
+func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	var entry *uapi.Entry
+
+	path := strings.TrimSpace(arg[0])
+
+	if len(path) == 0 {
+		path = DefaultEntryPath
+	}
+
+	if x64.UEFI.Boot == nil {
+		return "", errors.New("EFI Boot Services unavailable")
+	}
+
+	root, err := x64.UEFI.Root()
+
+	if err != nil {
+		return "", fmt.Errorf("could not open root volume, %v", err)
+	}
+
+	log.Printf("loading boot loader entry %s", path)
+
+	if entry, err = uapi.LoadEntry(root, path); err != nil {
+		return
+	}
+
+	log.Printf("%s", entry)
+
+	if len(entry.Linux) == 0 {
+		return "", errors.New("empty kernel entry")
+	}
+
+	image := &exec.LinuxImage{
+		Kernel:         entry.Linux,
+		InitialRamDisk: entry.Initrd,
+		CmdLine:        entry.Options,
+	}
+
+	return "", boot(image)
 }

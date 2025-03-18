@@ -27,14 +27,14 @@ go-boot • tamago/amd64 (go1.24.1) • UEFI x64
 
 alloc           <hex offset> <size>      # EFI_BOOT_SERVICES.AllocatePages()
 build                                    # build information
+cat             <path>                   # EFI_FILE_PROTOCOL.Read()
 cpuid           <leaf> <subleaf>         # display CPU capabilities
 date            (time in RFC339 format)? # show/change runtime date and time
 dma             (free|used)?             # show allocation of default DMA region
 exit, quit                               # close session and halt the processor
 halt, shutdown                           # shutdown system
-file            <path>                   # EFI_FILE_PROTOCOL.GetInfo()
 info                                     # device information
-linux           (path)?                  # boot Linux kernel bzImage
+linux           (loader entry path)?     # boot Linux kernel bzImage
 log                                      # show runtime log
 memmap                                   # EFI_BOOT_SERVICES.GetMemoryMap()
 peek            <hex offset> <size>      # memory display (use with caution)
@@ -43,6 +43,7 @@ protocol        <registry format GUID>   # EFI_BOOT_SERVICES.LocateProtocol()
 reset           (cold|warm)?             # EFI_RUNTIME_SERVICES.ResetSystem()
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
+stat            <path>                   # EFI_FILE_PROTOCOL.GetInfo()
 uefi                                     # UEFI information
 uptime                                   # show how long the system has been running
 
@@ -65,7 +66,7 @@ Type Start            End              Pages            Attributes
 02   0000000090000000 0000000090000fff 0000000000000001 000000000000000f
 ...
 
-> linux
+> linux /loader/entries/arch.conf
 go-boot exiting EFI boot services and jumping to kernel
 Linux version 6.13.6-arch1-1 (linux@archlinux) (gcc (GCC) 14.2.1 20250207, GNU ld (GNU Binutils) 2.44)
 ...
@@ -101,14 +102,11 @@ hex) available in the target UEFI environment for the unikernel allocation, the
 `memmap` command from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
 can provide such value, when empty a common default value is set.
 
-The `CMDLINE` environment variable can be set to the desired Linux kernel
-command line parameters.
-
 Build the `go-boot.efi` application executable:
 
 ```
 git clone https://github.com/usbarmory/go-boot && cd go-boot
-make efi IMAGE_BASE=00100000 CONSOLE=text CMDLINE="$(cat /proc/cmdline)"
+make efi IMAGE_BASE=00100000 CONSOLE=text
 ```
 
 Executing as UEFI application

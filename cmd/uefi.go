@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"io/fs"
 	"log"
 	"regexp"
 	"strconv"
@@ -39,12 +40,21 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
-		Name:    "file",
+		Name:    "cat",
 		Args:    1,
-		Pattern: regexp.MustCompile(`^file (.*)`),
+		Pattern: regexp.MustCompile(`^cat (.*)`),
+		Syntax:  "<path>",
+		Help:    "EFI_FILE_PROTOCOL.Read()",
+		Fn:      catCmd,
+	})
+
+	shell.Add(shell.Cmd{
+		Name:    "stat",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^stat (.*)`),
 		Syntax:  "<path>",
 		Help:    "EFI_FILE_PROTOCOL.GetInfo()",
-		Fn:      fileCmd,
+		Fn:      statCmd,
 	})
 
 	shell.Add(shell.Cmd{
@@ -122,7 +132,23 @@ func locateCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	return fmt.Sprintf("%s: %#08x", arg[0], addr), err
 }
 
-func fileCmd(_ *shell.Interface, arg []string) (res string, err error) {
+func catCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	root, err := x64.UEFI.Root()
+
+	if err != nil {
+		return "", fmt.Errorf("could not open root volume, %v", err)
+	}
+
+	f, err := fs.ReadFile(root, arg[0])
+
+	if err != nil {
+		return "", fmt.Errorf("could not read file, %v", err)
+	}
+
+	return string(f), nil
+}
+
+func statCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	root, err := x64.UEFI.Root()
 
 	if err != nil {
@@ -137,7 +163,7 @@ func fileCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	defer f.Close()
 
-	stat, err := f.Stat();
+	stat, err := f.Stat()
 
 	if err != nil {
 		return
