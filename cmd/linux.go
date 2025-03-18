@@ -28,7 +28,7 @@ const (
 
 // DefaultEntryPath represents the default path for the UAPI Type #1 Boot
 // Loader Entry.
-const DefaultEntryPath = "/loader/entries/arch.conf"
+const DefaultEntryPath = `\loader\entries\arch.conf`
 
 func init() {
 	shell.Add(shell.Cmd{
