@@ -165,7 +165,7 @@ func boot(image *exec.LinuxImage) (err error) {
 	log.Printf("go-boot exiting EFI boot services and jumping to kernel")
 
 	// own all available memory
-	if err = x64.UEFI.Boot.Exit(); err != nil {
+	if err = x64.UEFI.Boot.ExitBootServices(); err != nil {
 		return fmt.Errorf("could not exit EFI boot services, %v\n", err)
 	}
 

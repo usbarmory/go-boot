@@ -43,7 +43,7 @@ func init() {
 		Name:    "exit, quit",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^(exit|quit)$`),
-		Help:    "close session and halt the processor",
+		Help:    "exit application",
 		Fn:      exitCmd,
 	})
 

@@ -52,6 +52,10 @@ func main() {
 		iface.Start(false)
 	}
 
-	log.Print("halting")
-	x64.UEFI.Runtime.ResetSystem(uefi.EfiResetShutdown)
+	log.Print("exit")
+
+	if err := x64.UEFI.Boot.Exit(0); err != nil {
+		log.Printf("halting due to exit error, %v", err)
+		x64.UEFI.Runtime.ResetSystem(uefi.EfiResetShutdown)
+	}
 }
