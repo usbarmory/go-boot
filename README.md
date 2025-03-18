@@ -1,12 +1,16 @@
 Introduction
 ============
 
-> :warning: this is a Work in Progress not meant for production use
-
 The [go-boot](https://github.com/usbarmory/go-boot) project is a
 [TamaGo](https://github.com/usbarmory/tamago) unikernel implementing a UEFI
-Shell and OS loader for AMD64 platforms, allowing UEFI API interaction and boot
-of Linux kernel images.
+Shell and OS loader for AMD64 platforms, allowing UEFI API interaction and OS
+loading.
+
+The OS loading functionality currently supports parsing of boot loader entries
+compliant with the Linux Userspace API (UAPI)
+[specifications](https://uapi-group.org/specifications/specs/boot_loader_specification/)
+such as ones supported by
+[systemd-boot](https://www.freedesktop.org/wiki/Software/systemd/systemd-boot/).
 
 Authors
 =======
@@ -66,7 +70,13 @@ Type Start            End              Pages            Attributes
 02   0000000090000000 0000000090000fff 0000000000000001 000000000000000f
 ...
 
-> linux /loader/entries/arch.conf
+> linux \loader\entries\arch.conf
+loading boot loader entry \loader\entries\arch.conf
+title Arch Linux
+linux /vmlinuz-linux
+initrd /intel-ucode.img
+initrd /initramfs-linux.img
+options rootfstype=ext4 rootflags=rw audit=0 debug
 go-boot exiting EFI boot services and jumping to kernel
 Linux version 6.13.6-arch1-1 (linux@archlinux) (gcc (GCC) 14.2.1 20250207, GNU ld (GNU Binutils) 2.44)
 ...
