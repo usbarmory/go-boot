@@ -6,7 +6,7 @@
 // Package uapi implements Boot Loader Entries parsing
 // following the specifications at:
 //
-//	https://uapi-group.org/specifications/specs/boot_loader_specification/
+//	https://uapi-group.org/specifications/specs/boot_loader_specification
 package uapi
 
 import (
@@ -14,18 +14,29 @@ import (
 	"strings"
 )
 
-// Entry represents the parsed contents of Type #1 Boot Loader Entry Keys.
+// Entry represents the contents loaded from a Type #1 Boot Loader Entry.
 type Entry struct {
-	Title   string
-	Linux   []byte
-	Initrd  []byte
+	// Title is the human-readable entry title.
+	Title string
+	// Linux is the kernel image to execute.
+	Linux []byte
+	// Initrd is the ramdisk cpio image, multiple entries are concatenated.
+	Initrd []byte
+	// Options is the kernel parameters.
 	Options string
 
 	parsed  string
 	ignored string
+
+	fsys fs.FS
 }
 
-func (e *Entry) parseKey(fsys fs.FS, line string) (err error) {
+func (e *Entry) loadKeyValue(v string) ([]byte, error) {
+	v = strings.ReplaceAll(v, `/`, `\`)
+	return fs.ReadFile(e.fsys, v)
+}
+
+func (e *Entry) parseKey(line string) (err error) {
 	kv := strings.SplitN(line, " ", 2)
 
 	if len(kv) < 2 {
@@ -39,17 +50,13 @@ func (e *Entry) parseKey(fsys fs.FS, line string) (err error) {
 	case "title":
 		e.Title = v
 	case "linux":
-		v = strings.ReplaceAll(v, `/`, `\`)
-
-		if e.Linux, err = fs.ReadFile(fsys, v); err != nil {
+		if e.Linux, err = e.loadKeyValue(v); err != nil {
 			return
 		}
 	case "initrd":
-		v = strings.ReplaceAll(v, `/`, `\`)
-
 		var initrd []byte
 
-		if initrd, err = fs.ReadFile(fsys, v); err != nil {
+		if initrd, err = e.loadKeyValue(v); err != nil {
 			return
 		}
 
@@ -66,12 +73,12 @@ func (e *Entry) parseKey(fsys fs.FS, line string) (err error) {
 	return
 }
 
-// String returns the lines successfully parsed.
+// String returns the successfully parsed entry keys.
 func (e *Entry) String() string {
 	return e.parsed
 }
 
-// Ignored returns the lines ignored during parsing.
+// Ignored returns the entry keys ignored during parsing.
 func (e *Entry) Ignored() string {
 	return e.ignored
 }
@@ -79,7 +86,9 @@ func (e *Entry) Ignored() string {
 // LoadEntry parses Type #1 Boot Loader Specification Entries from the argument
 // file and loads each key contents from the argument file system.
 func LoadEntry(fsys fs.FS, path string) (e *Entry, err error) {
-	e = &Entry{}
+	e = &Entry{
+		fsys: fsys,
+	}
 
 	entry, err := fs.ReadFile(fsys, path)
 
@@ -88,7 +97,7 @@ func LoadEntry(fsys fs.FS, path string) (e *Entry, err error) {
 	}
 
 	for line := range strings.Lines(string(entry)) {
-		if err = e.parseKey(fsys, line); err != nil {
+		if err = e.parseKey(line); err != nil {
 			return
 		}
 	}
