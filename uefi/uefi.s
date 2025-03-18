@@ -18,9 +18,19 @@ TEXT ·callService(SB),$0-48
 
 	MOVQ	SP, BX		// callee-saved
 	ANDQ	$~15, SP	// alignment for x86_64 ABI
-	ADJSP	$32
+
+	// Rather than ADJSP $24 we push NULL arguments on the stack to ease
+	// calls with more than 4 (unused) arguments.
+	PUSHQ	$0
+	PUSHQ	$0
+	PUSHQ	$0
+
 	CALL	(DI)
-	ADJSP	$-32
+
+	POPQ	CX
+	POPQ	CX
+	POPQ	CX
+
 	MOVQ	BX, SP
 
 	MOVQ	AX, status+40(FP)
