@@ -59,7 +59,6 @@ func (c *Console) Input(k *InputKey) (status uint64) {
 
 // Output calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.OutputString().
 func (c *Console) Output(p []byte) (status uint64) {
-	// TODO: implement BufferedStdoutLog or similar
 	if p[len(p)-1] != 0x00 {
 		p = append(p, 0x00)
 	}
