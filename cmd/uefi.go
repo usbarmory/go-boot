@@ -7,6 +7,7 @@ package cmd
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"log"
@@ -122,21 +123,39 @@ func locateCmd(_ *shell.Interface, arg []string) (res string, err error) {
 }
 
 func fileCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	var f *uefi.File
-
 	root, err := x64.UEFI.Root()
 
 	if err != nil {
 		return "", fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	if f, err = root.Open(arg[0]); err != nil {
+	f, err := root.Open(arg[0])
+
+	if err != nil {
 		return "", fmt.Errorf("could not open file, %v", err)
 	}
 
-	stat, err := f.Stat()
+	defer f.Close()
 
-	return fmt.Sprintf("Size: %d", stat.Size()), err
+	stat, err := f.Stat();
+
+	if err != nil {
+		return
+	}
+
+	buf := make([]byte, stat.Size())
+
+	if _, err = f.Read(buf); err != nil {
+		return
+	}
+
+	return fmt.Sprintf("Size:%d ModTime:%s IsDir:%v Sys:%#x Sum256:%x",
+		stat.Size(),
+		stat.ModTime(),
+		stat.IsDir(),
+		stat.Sys(),
+		sha256.Sum256(buf),
+	), nil
 }
 
 func memmapCmd(_ *shell.Interface, _ []string) (res string, err error) {

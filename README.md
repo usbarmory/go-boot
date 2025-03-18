@@ -32,6 +32,7 @@ date            (time in RFC339 format)? # show/change runtime date and time
 dma             (free|used)?             # show allocation of default DMA region
 exit, quit                               # close session and halt the processor
 halt, shutdown                           # shutdown system
+file            <path>                   # EFI_FILE_PROTOCOL.GetInfo()
 info                                     # device information
 linux           (path)?                  # boot Linux kernel bzImage
 log                                      # show runtime log
