@@ -6,6 +6,8 @@
 package uefi
 
 import (
+	"runtime"
+
 	"github.com/u-root/u-root/pkg/boot/bzimage"
 )
 
@@ -87,21 +89,29 @@ func (m *MemoryMap) Address() uint64 {
 
 // E820 converts an EFI Memory Map to an x86 E820 one suitable for use
 // after exiting EFI Boot Services.
-func (m *MemoryMap) E820(defrag bool) (e820 []bzimage.E820Entry) {
+func (m *MemoryMap) E820() (e820 []bzimage.E820Entry) {
 	var prev *bzimage.E820Entry
+
+	// When defragging we join unikernel allocation as a single page to
+	// ease its skipping during boot manager memory reservation.
+	ramStart, ramEnd := runtime.MemRegion()
 
 	for _, desc := range m.Descriptors {
 		entry := desc.E820()
 
-		if defrag && prev != nil {
-			if prev.MemType == entry.MemType && prev.Addr+prev.Size == entry.Addr {
-				prev.Size += entry.Size
+		if prev != nil {
+			// join and isolate runtime.MemRegion()
+			if (entry.Addr != ramStart && prev.Addr+prev.Size != ramEnd) &&
+				// join adjacent entries
+				(prev.MemType == entry.MemType && prev.Addr+prev.Size == entry.Addr) {
+				// increase size of previous entry
+				e820[len(e820)-1].Size += entry.Size
+				prev = &e820[len(e820)-1]
 				continue
 			}
-
-			prev = &entry
 		}
 
+		prev = &entry
 		e820 = append(e820, entry)
 	}
 

@@ -58,9 +58,12 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
-		Name: "memmap",
-		Help: "EFI_BOOT_SERVICES.GetMemoryMap()",
-		Fn:   memmapCmd,
+		Name:    "memmap",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^memmap( e820)?$`),
+		Help:    "EFI_BOOT_SERVICES.GetMemoryMap()",
+		Syntax:  "(e820)?",
+		Fn:      memmapCmd,
 	})
 
 	shell.Add(shell.Cmd{
@@ -184,7 +187,7 @@ func statCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	), nil
 }
 
-func memmapCmd(_ *shell.Interface, _ []string) (res string, err error) {
+func memmapCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	var buf bytes.Buffer
 	var memoryMap *uefi.MemoryMap
 
@@ -192,11 +195,21 @@ func memmapCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		return
 	}
 
-	fmt.Fprintf(&buf, "Type Start            End              Pages            Attributes\n")
+	fmt.Fprintf(&buf, "Type Start            End              Pages            ")
 
-	for _, desc := range memoryMap.Descriptors {
-		fmt.Fprintf(&buf, "%02d   %016x %016x %016x %016x\n",
-			desc.Type, desc.PhysicalStart, desc.PhysicalEnd()-1, desc.NumberOfPages, desc.Attribute)
+	switch {
+	case arg[0] == "":
+		fmt.Fprintf(&buf, "Attributes\n")
+		for _, desc := range memoryMap.Descriptors {
+			fmt.Fprintf(&buf, "%02d   %016x %016x %016x %016x\n",
+				desc.Type, desc.PhysicalStart, desc.PhysicalEnd()-1, desc.NumberOfPages, desc.Attribute)
+		}
+	case arg[0] == " e820":
+		fmt.Fprintf(&buf, "\n")
+		for _, desc := range memoryMap.E820() {
+			fmt.Fprintf(&buf, "%02d   %016x %016x %016x\n",
+				desc.MemType, desc.Addr, desc.Addr+desc.Size-1, desc.Size/4096)
+		}
 	}
 
 	return buf.String(), err

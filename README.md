@@ -40,7 +40,7 @@ halt,shutdown                            # shutdown system
 info                                     # device information
 linux,l         (loader entry path)?     # boot Linux kernel bzImage
 log                                      # show runtime log
-memmap                                   # EFI_BOOT_SERVICES.GetMemoryMap()
+memmap          (e820)?                  # EFI_BOOT_SERVICES.GetMemoryMap()
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
 protocol        <registry format GUID>   # EFI_BOOT_SERVICES.LocateProtocol()
@@ -72,11 +72,6 @@ Type Start            End              Pages            Attributes
 
 > linux \loader\entries\arch.conf
 loading boot loader entry \loader\entries\arch.conf
-title Arch Linux
-linux /vmlinuz-linux
-initrd /intel-ucode.img
-initrd /initramfs-linux.img
-options rootfstype=ext4 rootflags=rw audit=0 debug
 go-boot exiting EFI boot services and jumping to kernel
 Linux version 6.13.6-arch1-1 (linux@archlinux) (gcc (GCC) 14.2.1 20250207, GNU ld (GNU Binutils) 2.44)
 ...

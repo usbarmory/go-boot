@@ -46,16 +46,26 @@ func init() {
 func reserveMemory(m *uefi.MemoryMap, image *exec.LinuxImage) (err error) {
 	size := len(image.BzImage.KernelCode) + len(image.InitialRamDisk)
 
-	// Build E820 memory map, defrag as BIOS can leave highly fragmented
-	// maps in certain cases (e.g. post BIOS setup menu use).
-	image.Memory = m.E820(true)
+	// Convert UEFI Memory Map to E820 as it reflects availability after
+	// exiting EFI Boot Services.
+	image.Memory = m.E820()
 
 	// find unallocated UEFI memory for kernel and ramdisk loading
 	for _, entry := range image.Memory {
 		if entry.MemType != bzimage.RAM ||
-			entry.Addr < minLoadAddr ||
 			int(entry.Size) < size {
 			continue
+		}
+
+		// shift above minLoadAddr as required and recheck size
+		if entry.Addr < minLoadAddr {
+			off := minLoadAddr - entry.Addr
+			entry.Addr += off
+			entry.Size -= off
+
+			if int(entry.Size) < size {
+				continue
+			}
 		}
 
 		// opportunistic size increase
@@ -63,13 +73,14 @@ func reserveMemory(m *uefi.MemoryMap, image *exec.LinuxImage) (err error) {
 
 		// reserve unallocated UEFI memory for our runtime DMA
 		if image.Region, err = dma.NewRegion(uint(entry.Addr), size, false); err != nil {
-			// we overlap with runtime, skip
+			// skip our own runtime pages
 			continue
 		}
 
+		log.Printf("reserving memory %#x - %#x", entry.Addr, entry.Addr + entry.Size)
 		image.Region.Reserve(size, 0)
-		break
 
+		break
 	}
 
 	if image.Region == nil {
@@ -153,13 +164,17 @@ func boot(image *exec.LinuxImage) (err error) {
 		log.Printf("could not detect screen information, %v\n", err)
 	}
 
-	// this is the last log we can issue as we will lose UEFI ConsoleOut
-	log.Printf("go-boot exiting EFI boot services and jumping to kernel")
+	// last seen log on successful exit of EFI boot services
+	log.Print("go-boot exiting EFI boot services and jumping to kernel")
 
 	// own all available memory
 	if err = x64.UEFI.Boot.ExitBootServices(); err != nil {
 		return fmt.Errorf("could not exit EFI boot services, %v\n", err)
 	}
+
+	// silence EFI Simple Text console
+	x64.Console.Out = 0
+	x64.UEFI.Console.Out = 0
 
 	// parse kernel image
 	if err = image.Parse(); err != nil {
@@ -184,6 +199,7 @@ func boot(image *exec.LinuxImage) (err error) {
 		return fmt.Errorf("could not load kernel, %v", err)
 	}
 
+	log.Printf("booting kernel@%#x", image.Entry())
 	return image.Boot(nil)
 }
 
@@ -211,8 +227,6 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	if entry, err = uapi.LoadEntry(root, path); err != nil {
 		return
 	}
-
-	log.Printf("%s", entry)
 
 	if len(entry.Linux) == 0 {
 		return "", errors.New("empty kernel entry")
