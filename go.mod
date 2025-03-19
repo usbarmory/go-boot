@@ -6,7 +6,7 @@ require (
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/u-root/u-root v0.14.1-0.20250211171033-17c75c6542a1
 	github.com/usbarmory/armory-boot v0.0.0-20250312220901-a2481cdf63c8
-	github.com/usbarmory/tamago v0.0.0-20250304104809-386821b87ee4
+	github.com/usbarmory/tamago v0.0.0-20250319172035-7a31d898ccf9
 	golang.org/x/term v0.29.0
 )
 
