@@ -10,16 +10,18 @@ import (
 	_ "unsafe"
 )
 
-var earlyConsole = &uefi.Console{
+// Console represents the early UEFI services console for pre UEFI.Init()
+// standard output.
+var Console = &uefi.Console{
 	ForceLine: true,
 	Out:       conOut,
 }
 
 //go:linkname printk runtime.printk
 func printk(c byte) {
-	earlyConsole.Output([]byte{c})
+	Console.Output([]byte{c})
 
-	if c == 0x0a && earlyConsole.ForceLine { // LF
-		earlyConsole.Output([]byte{0x0d}) // CR
+	if c == 0x0a && Console.ForceLine { // LF
+		Console.Output([]byte{0x0d}) // CR
 	}
 }
