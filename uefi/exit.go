@@ -24,7 +24,9 @@ func (s *BootServices) Exit(code int) (err error) {
 	return parseStatus(status)
 }
 
-// ExitServices calls EFI_BOOT_SERVICES.ExitBootServices().
+// ExitServices calls EFI_BOOT_SERVICES.ExitBootServices(), it is the caller
+// responsability to avoid using any EFI Boot Service after this call is
+// successful.
 func (s *BootServices) ExitBootServices() (err error) {
 	memoryMap, err := s.GetMemoryMap()
 
