@@ -78,7 +78,7 @@ func init() {
 	shell.Add(shell.Cmd{
 		Name:    "reset",
 		Args:    1,
-		Pattern: regexp.MustCompile(`reset(?: (cold|warm))?$`),
+		Pattern: regexp.MustCompile(`^reset(?: (cold|warm))?$`),
 		Help:    "EFI_RUNTIME_SERVICES.ResetSystem()",
 		Syntax:  "(cold|warm)?",
 		Fn:      resetCmd,

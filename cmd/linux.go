@@ -36,7 +36,7 @@ func init() {
 	shell.Add(shell.Cmd{
 		Name:    "linux,l",
 		Args:    1,
-		Pattern: regexp.MustCompile(`^(?:linux|l)(.*)`),
+		Pattern: regexp.MustCompile(`^(?:linux|l)(?: (\S+))?$`),
 		Syntax:  "(loader entry path)?",
 		Help:    "boot Linux kernel bzImage",
 		Fn:      linuxCmd,
