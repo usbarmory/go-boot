@@ -133,11 +133,14 @@ title Go Boot
 efi /EFI/Linux/go-boot.efi
 ```
 
+UEFI boot manager entry
+=======================
+
 The following example shows creation of an EFI boot entry using
 [efibootmgr](https://github.com/rhboot/efibootmgr):
 
 ```
-efibootmgr -c -L "go-boot" -d $DISK -p $PART -l '\EFI\go-boot.efi'
+efibootmgr -C -L "go-boot" -d $DISK -p $PART -l '\EFI\go-boot.efi'
 ```
 
 Emulated hardware with QEMU
