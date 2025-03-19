@@ -42,7 +42,7 @@ func (d *SystemTable) ConfigurationTables() (c []*ConfigurationTable, err error)
 	entrySize := len(buf)
 	tableSize := entrySize * int(d.NumberOfTableEntries)
 
-	r, err := dma.NewRegion(uint(d.ConfigurationTable), tableSize, true)
+	r, err := dma.NewRegion(uint(d.ConfigurationTable), tableSize, false)
 
 	if err != nil {
 		return

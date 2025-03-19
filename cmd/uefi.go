@@ -82,7 +82,7 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
-		Name:    "halt, shutdown",
+		Name:    "halt,shutdown",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^(halt|shutdown)$`),
 		Help:    "shutdown system",

@@ -40,7 +40,7 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
-		Name:    "exit, quit",
+		Name:    "exit,quit",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^(exit|quit)$`),
 		Help:    "exit application",

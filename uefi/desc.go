@@ -34,7 +34,7 @@ func decode(data any, addr uint64) (err error) {
 	t, _ := marshalBinary(data)
 	n := len(t) + (len(t) % align)
 
-	r, err := dma.NewRegion(uint(addr), n, true)
+	r, err := dma.NewRegion(uint(addr), n, false)
 
 	if err != nil {
 		return

@@ -12,6 +12,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/u-root/u-root/pkg/boot/bzimage"
+
 	"github.com/usbarmory/armory-boot/exec"
 	"github.com/usbarmory/go-boot/shell"
 	"github.com/usbarmory/go-boot/uapi"
@@ -32,36 +34,37 @@ const DefaultEntryPath = `\loader\entries\arch.conf`
 
 func init() {
 	shell.Add(shell.Cmd{
-		Name:    "linux",
+		Name:    "linux,l",
 		Args:    1,
-		Pattern: regexp.MustCompile(`^linux(.*)`),
+		Pattern: regexp.MustCompile(`^(?:linux|l)(.*)`),
 		Syntax:  "(loader entry path)?",
 		Help:    "boot Linux kernel bzImage",
 		Fn:      linuxCmd,
 	})
 }
 
-func reserveMemory(memdesc []*uefi.MemoryDescriptor, image *exec.LinuxImage) (err error) {
+func reserveMemory(m *uefi.MemoryMap, image *exec.LinuxImage) (err error) {
 	size := len(image.BzImage.KernelCode) + len(image.InitialRamDisk)
 
+	// Build E820 memory map, defrag as BIOS can leave highly fragmented
+	// maps in certain cases (e.g. post BIOS setup menu use).
+	image.Memory = m.E820(true)
+
 	// find unallocated UEFI memory for kernel and ramdisk loading
-	for _, desc := range memdesc {
-		if desc.Type != uefi.EfiConventionalMemory ||
-			desc.PhysicalStart < minLoadAddr ||
-			desc.Size() < size {
+	for _, entry := range image.Memory {
+		if entry.MemType != bzimage.RAM ||
+			entry.Addr < minLoadAddr ||
+			int(entry.Size) < size {
 			continue
 		}
 
-		// TODO: EfiBootServicesCode and EfiBootServicesData is
-		// available as well but highly fragmented in some cases (e.g.
-		// BIOS setup), we should defrag and mark as available.
-
 		// opportunistic size increase
-		size = desc.Size()
+		size = int(entry.Size)
 
 		// reserve unallocated UEFI memory for our runtime DMA
-		if image.Region, err = dma.NewRegion(uint(desc.PhysicalStart), size, true); err != nil {
-			return
+		if image.Region, err = dma.NewRegion(uint(entry.Addr), size, false); err != nil {
+			// we overlap with runtime, skip
+			continue
 		}
 
 		image.Region.Reserve(size, 0)
@@ -71,17 +74,6 @@ func reserveMemory(memdesc []*uefi.MemoryDescriptor, image *exec.LinuxImage) (er
 
 	if image.Region == nil {
 		return errors.New("could not find memory for kernel loading")
-	}
-
-	// build E820 memory map
-	for _, desc := range memdesc {
-		e820, err := desc.E820()
-
-		if err != nil {
-			return err
-		}
-
-		image.Memory = append(image.Memory, e820)
 	}
 
 	// enforce required alignment on kernel and ramdisk offsets
@@ -165,9 +157,9 @@ func boot(image *exec.LinuxImage) (err error) {
 	log.Printf("go-boot exiting EFI boot services and jumping to kernel")
 
 	// own all available memory
-	if err = x64.UEFI.Boot.ExitBootServices(); err != nil {
-		return fmt.Errorf("could not exit EFI boot services, %v\n", err)
-	}
+	//if err = x64.UEFI.Boot.ExitBootServices(); err != nil {
+	//	return fmt.Errorf("could not exit EFI boot services, %v\n", err)
+	//}
 
 	// parse kernel image
 	if err = image.Parse(); err != nil {
@@ -175,7 +167,7 @@ func boot(image *exec.LinuxImage) (err error) {
 	}
 
 	// reserve runtime memory for kernel loading
-	if err = reserveMemory(memoryMap.Descriptors, image); err != nil {
+	if err = reserveMemory(memoryMap, image); err != nil {
 		return
 	}
 

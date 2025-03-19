@@ -45,7 +45,7 @@ func (d *MemoryDescriptor) Size() int {
 
 // E820 converts an EFI Memory Map entry to an x86 E820 one suitable for use
 // after exiting EFI Boot Services.
-func (d *MemoryDescriptor) E820() (bzimage.E820Entry, error) {
+func (d *MemoryDescriptor) E820() bzimage.E820Entry {
 	e := bzimage.E820Entry{
 		Addr: d.PhysicalStart,
 		Size: d.NumberOfPages * PageSize,
@@ -66,7 +66,7 @@ func (d *MemoryDescriptor) E820() (bzimage.E820Entry, error) {
 		e.MemType = bzimage.Reserved
 	}
 
-	return e, nil
+	return e
 }
 
 // MemoryMap represents an EFI Memory Map
@@ -83,6 +83,29 @@ type MemoryMap struct {
 // Address returns the EFI Memory Map pointer.
 func (m *MemoryMap) Address() uint64 {
 	return ptrval(&m.buf[0])
+}
+
+// E820 converts an EFI Memory Map to an x86 E820 one suitable for use
+// after exiting EFI Boot Services.
+func (m *MemoryMap) E820(defrag bool) (e820 []bzimage.E820Entry) {
+	var prev *bzimage.E820Entry
+
+	for _, desc := range m.Descriptors {
+		entry := desc.E820()
+
+		if defrag && prev != nil {
+			if prev.MemType == entry.MemType && prev.Addr+prev.Size == entry.Addr {
+				prev.Size += entry.Size
+				continue
+			}
+
+			prev = &entry
+		}
+
+		e820 = append(e820, entry)
+	}
+
+	return
 }
 
 // GetMemoryMap calls EFI_BOOT_SERVICES.GetMemoryMap().

@@ -35,10 +35,10 @@ cat             <path>                   # EFI_FILE_PROTOCOL.Read()
 cpuid           <leaf> <subleaf>         # display CPU capabilities
 date            (time in RFC339 format)? # show/change runtime date and time
 dma             (free|used)?             # show allocation of default DMA region
-exit, quit                               # close session and halt the processor
-halt, shutdown                           # shutdown system
+exit,quit                                # exit application
+halt,shutdown                            # shutdown system
 info                                     # device information
-linux           (loader entry path)?     # boot Linux kernel bzImage
+linux,l         (loader entry path)?     # boot Linux kernel bzImage
 log                                      # show runtime log
 memmap                                   # EFI_BOOT_SERVICES.GetMemoryMap()
 peek            <hex offset> <size>      # memory display (use with caution)
