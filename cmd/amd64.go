@@ -28,7 +28,7 @@ func init() {
 		Args:    2,
 		Pattern: regexp.MustCompile(`^cpuid\s+([[:xdigit:]]+) ([[:xdigit:]]+)$`),
 		Syntax:  "<leaf> <subleaf>",
-		Help:    "display CPU capabilities",
+		Help:    "show CPU capabilities",
 		Fn:      cpuidCmd,
 	})
 }

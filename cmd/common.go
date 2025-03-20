@@ -35,7 +35,7 @@ func init() {
 
 	shell.Add(shell.Cmd{
 		Name: "log",
-		Help: "show runtime log",
+		Help: "show runtime logs",
 		Fn:   logCmd,
 	})
 
@@ -63,7 +63,7 @@ func init() {
 		Name:    "dma",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^dma(?: (free|used))?$`),
-		Help:    "show allocation of default DMA region",
+		Help:    "show default DMA region allocation",
 		Syntax:  "(free|used)?",
 		Fn:      dmaCmd,
 	})
@@ -79,7 +79,7 @@ func init() {
 
 	shell.Add(shell.Cmd{
 		Name: "uptime",
-		Help: "show how long the system has been running",
+		Help: "show system running time",
 		Fn:   uptimeCmd,
 	})
 }

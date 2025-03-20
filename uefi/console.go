@@ -6,6 +6,7 @@
 package uefi
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
 	"unicode/utf16"
@@ -14,6 +15,7 @@ import (
 // EFI ConOut offsets
 const (
 	outputString = 0x08
+	setMode      = 0x20
 	clearScreen  = 0x30
 )
 
@@ -21,6 +23,19 @@ const (
 const (
 	readKeyStroke = 0x08
 )
+
+// ASCII control characters
+const (
+	null  = 0x00
+	bs    = 0x08
+	tab   = 0x09
+	lf    = 0x0a
+	cr    = 0x0d
+	space = 0x20
+)
+
+// Control Sequence Introducer n D - CUB - Cursor Back
+var cub = []byte{0x1b, 0x5b, 0x44, 0x20, 0x1b, 0x5b, 0x44}
 
 // InputKey represents an EFI Input Key descriptor.
 type InputKey struct {
@@ -48,18 +63,37 @@ type Console struct {
 }
 
 // ClearScreen calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.ClearScreen().
-func (c *Console) ClearScreen() (status uint64) {
+func (c *Console) ClearScreen() error {
 	if c.Out == 0 {
-		return
+		return nil
 	}
 
-	return callService(
+	status := callService(
 		c.Out+clearScreen,
 		c.Out,
 		0,
 		0,
 		0,
 	)
+
+	return parseStatus(status)
+}
+
+// ClearScreen calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.SetMode().
+func (c *Console) SetMode(mode uint64) error {
+	if c.Out == 0 {
+		return nil
+	}
+
+	status := callService(
+		c.Out+setMode,
+		c.Out,
+		mode,
+		0,
+		0,
+	)
+
+	return parseStatus(status)
 }
 
 // Input calls EFI_SIMPLE_TEXT_INPUT_PROTOCOL.ReadKeyStroke().
@@ -79,8 +113,8 @@ func (c *Console) Input(k *InputKey) (status uint64) {
 
 // Output calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.OutputString().
 func (c *Console) Output(p []byte) (status uint64) {
-	if p[len(p)-1] != 0x00 {
-		p = append(p, 0x00)
+	if p[len(p)-1] != null {
+		p = append(p, null)
 	}
 
 	if c.Out == 0 {
@@ -126,14 +160,17 @@ func (c *Console) Write(p []byte) (n int, err error) {
 		return
 	}
 
+	if len(p) == len(cub) && bytes.Equal(cub, p) {
+		p = []byte{bs, 0x00}
+	}
+
+	// we receive an UTF-8 string and can output UTF-16
 	b := utf16.Encode([]rune(string(p)))
 
-	// We receive an UTF-8 string but we can output only UTF-16 ones.
-
 	for _, r := range b {
-		if r == 0x09 && c.ReplaceTabs > 0 { // Tab
+		if r == tab && c.ReplaceTabs > 0 {
 			for i := 0; i < c.ReplaceTabs; i++ {
-				s = append(s, []byte{0x20, 0x00}...) // Space
+				s = append(s, []byte{space, 0x00}...)
 			}
 			continue
 		}
@@ -141,8 +178,8 @@ func (c *Console) Write(p []byte) (n int, err error) {
 		s = append(s, byte(r&0xff))
 		s = append(s, byte(r>>8))
 
-		if r == 0x0a && c.ForceLine { // LF
-			s = append(s, []byte{0x0d, 0x00}...) // CR
+		if r == lf && c.ForceLine {
+			s = append(s, []byte{cr, 0x00}...)
 		}
 	}
 

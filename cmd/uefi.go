@@ -35,7 +35,7 @@ func init() {
 		Args:    1,
 		Pattern: regexp.MustCompile(`^protocol ([[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12})$`),
 		Syntax:  "<registry format GUID>",
-		Help:    "EFI_BOOT_SERVICES.LocateProtocol()",
+		Help:    "locate UEFI protocol",
 		Fn:      locateCmd,
 	})
 
@@ -44,8 +44,23 @@ func init() {
 		Args:    1,
 		Pattern: regexp.MustCompile(`^cat (.*)`),
 		Syntax:  "<path>",
-		Help:    "EFI_FILE_PROTOCOL.Read()",
+		Help:    "show file contents",
 		Fn:      catCmd,
+	})
+
+	shell.Add(shell.Cmd{
+		Name:    "clear",
+		Help:    "clear screen",
+		Fn:      clearCmd,
+	})
+
+	shell.Add(shell.Cmd{
+		Name:    "mode",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^mode (\d+)$`),
+		Syntax:  "<mode>",
+		Help:    "set screen mode",
+		Fn:      modeCmd,
 	})
 
 	shell.Add(shell.Cmd{
@@ -53,7 +68,7 @@ func init() {
 		Args:    1,
 		Pattern: regexp.MustCompile(`^stat (.*)`),
 		Syntax:  "<path>",
-		Help:    "EFI_FILE_PROTOCOL.GetInfo()",
+		Help:    "show file information",
 		Fn:      statCmd,
 	})
 
@@ -61,25 +76,16 @@ func init() {
 		Name:    "memmap",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^memmap( e820)?$`),
-		Help:    "EFI_BOOT_SERVICES.GetMemoryMap()",
+		Help:    "show UEFI memory map",
 		Syntax:  "(e820)?",
 		Fn:      memmapCmd,
-	})
-
-	shell.Add(shell.Cmd{
-		Name:    "alloc",
-		Args:    2,
-		Pattern: regexp.MustCompile(`^alloc ([[:xdigit:]]+) (\d+)$`),
-		Syntax:  "<hex offset> <size>",
-		Help:    "EFI_BOOT_SERVICES.AllocatePages()",
-		Fn:      allocCmd,
 	})
 
 	shell.Add(shell.Cmd{
 		Name:    "reset",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^reset(?: (cold|warm))?$`),
-		Help:    "EFI_RUNTIME_SERVICES.ResetSystem()",
+		Help:    "reset system",
 		Syntax:  "(cold|warm)?",
 		Fn:      resetCmd,
 	})
@@ -151,6 +157,20 @@ func catCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	return string(f), nil
 }
 
+func clearCmd(_ *shell.Interface, _ []string) (string, error) {
+	return "", x64.UEFI.Console.ClearScreen()
+}
+
+func modeCmd(_ *shell.Interface, arg []string) (string, error) {
+	mode, err := strconv.ParseUint(arg[0], 16, 64)
+
+	if err != nil {
+		return "", fmt.Errorf("invalid mode, %v", err)
+	}
+
+	return "", x64.UEFI.Console.SetMode(mode)
+}
+
 func statCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	root, err := x64.UEFI.Root()
 
@@ -213,35 +233,6 @@ func memmapCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	return buf.String(), err
-}
-
-func allocCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	addr, err := strconv.ParseUint(arg[0], 16, 64)
-
-	if err != nil {
-		return "", fmt.Errorf("invalid address, %v", err)
-	}
-
-	size, err := strconv.ParseUint(arg[1], 10, 64)
-
-	if err != nil {
-		return "", fmt.Errorf("invalid size, %v", err)
-	}
-
-	if (addr%8) != 0 || (size%8) != 0 {
-		return "", fmt.Errorf("only 64-bit aligned accesses are supported")
-	}
-
-	log.Printf("allocating memory range %#08x - %#08x", addr, addr+size)
-
-	err = x64.UEFI.Boot.AllocatePages(
-		uefi.AllocateAddress,
-		uefi.EfiLoaderData,
-		int(size),
-		addr,
-	)
-
-	return "", err
 }
 
 func resetCmd(_ *shell.Interface, arg []string) (_ string, err error) {

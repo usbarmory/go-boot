@@ -29,27 +29,27 @@ initializing console (com1)
 
 go-boot • tamago/amd64 (go1.24.1) • UEFI x64
 
-alloc           <hex offset> <size>      # EFI_BOOT_SERVICES.AllocatePages()
 build                                    # build information
-cat             <path>                   # EFI_FILE_PROTOCOL.Read()
-cpuid           <leaf> <subleaf>         # display CPU capabilities
+cat             <path>                   # show file contents
+clear                                    # clear screen
+cpuid           <leaf> <subleaf>         # show CPU capabilities
 date            (time in RFC339 format)? # show/change runtime date and time
-dma             (free|used)?             # show allocation of default DMA region
+dma             (free|used)?             # show default DMA region allocation
 exit,quit                                # exit application
 halt,shutdown                            # shutdown system
 info                                     # device information
-linux,l,\r      (loader entry path)?     # boot Linux kernel bzImage
-log                                      # show runtime log
-memmap          (e820)?                  # EFI_BOOT_SERVICES.GetMemoryMap()
+linux,l,\r      (loader entry path)?     # boot Linux kernel image
+log                                      # show runtime logs
+memmap          (e820)?                  # show UEFI memory map
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
-protocol        <registry format GUID>   # EFI_BOOT_SERVICES.LocateProtocol()
-reset           (cold|warm)?             # EFI_RUNTIME_SERVICES.ResetSystem()
+protocol        <registry format GUID>   # locate UEFI protocol
+reset           (cold|warm)?             # reset system
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
-stat            <path>                   # EFI_FILE_PROTOCOL.GetInfo()
+stat            <path>                   # show file information
 uefi                                     # UEFI information
-uptime                                   # show how long the system has been running
+uptime                                   # show system running time
 
 > uefi
 Firmware Vendor ....: Lenovo
