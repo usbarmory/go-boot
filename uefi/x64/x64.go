@@ -80,6 +80,8 @@ func init() {
 		AMD64.SetTimer(t.UnixNano())
 	}
 
+	Console.ClearScreen()
+
 	print("initializing EFI services\n")
 
 	if err := UEFI.Init(imageHandle, systemTable); err != nil {

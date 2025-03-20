@@ -6,14 +6,19 @@
 package uefi
 
 import (
+	"encoding/binary"
 	"io"
 	"unicode/utf16"
 )
 
+// EFI ConOut offsets
 const (
-	// EFI ConOut offset for OutputString
 	outputString = 0x08
-	// EFI ConIn offset for ReadKeyStroke
+	clearScreen  = 0x30
+)
+
+// EFI ConIn offsets
+const (
 	readKeyStroke = 0x08
 )
 
@@ -40,6 +45,21 @@ type Console struct {
 	In uint64
 	// Out should be set to the EFI SystemTable ConOut address.
 	Out uint64
+}
+
+// ClearScreen calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.ClearScreen().
+func (c *Console) ClearScreen() (status uint64) {
+	if c.Out == 0 {
+		return
+	}
+
+	return callService(
+		c.Out+clearScreen,
+		c.Out,
+		0,
+		0,
+		0,
+	)
 }
 
 // Input calls EFI_SIMPLE_TEXT_INPUT_PROTOCOL.ReadKeyStroke().
@@ -84,12 +104,14 @@ func (c *Console) Read(p []byte) (n int, err error) {
 		status := c.Input(k)
 
 		switch {
-		case status == EFI_SUCCESS:
-			copy(p[n:], k.UnicodeChar[:])
 		case status&0xff == EFI_NOT_READY:
 			return
-		default:
+		case status != EFI_SUCCESS:
 			return n, parseStatus(status)
+		case k.ScanCode > 0:
+			binary.LittleEndian.PutUint16(p[n:], k.ScanCode)
+		default:
+			copy(p[n:], k.UnicodeChar[:])
 		}
 	}
 
