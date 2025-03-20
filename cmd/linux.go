@@ -34,7 +34,7 @@ const DefaultEntryPath = `\loader\entries\arch.conf`
 
 func init() {
 	shell.Add(shell.Cmd{
-		Name:    "linux,l,<enter>",
+		Name:    "linux,l,\\r",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^(?:linux|l|)(?: (\S+))?$`),
 		Syntax:  "(loader entry path)?",

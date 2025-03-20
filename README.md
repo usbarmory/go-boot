@@ -38,7 +38,7 @@ dma             (free|used)?             # show allocation of default DMA region
 exit,quit                                # exit application
 halt,shutdown                            # shutdown system
 info                                     # device information
-linux,l,<enter> (loader entry path)?     # boot Linux kernel bzImage
+linux,l,\r      (loader entry path)?     # boot Linux kernel bzImage
 log                                      # show runtime log
 memmap          (e820)?                  # EFI_BOOT_SERVICES.GetMemoryMap()
 peek            <hex offset> <size>      # memory display (use with caution)
