@@ -41,6 +41,7 @@ info                                     # device information
 linux,l,\r      (loader entry path)?     # boot Linux kernel image
 log                                      # show runtime logs
 memmap          (e820)?                  # show UEFI memory map
+mode            <mode>                   # set screen mode
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
 protocol        <registry format GUID>   # locate UEFI protocol
