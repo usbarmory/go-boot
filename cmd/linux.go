@@ -34,9 +34,9 @@ const DefaultEntryPath = `\loader\entries\arch.conf`
 
 func init() {
 	shell.Add(shell.Cmd{
-		Name:    "linux,l",
+		Name:    "linux,l,<enter>",
 		Args:    1,
-		Pattern: regexp.MustCompile(`^(?:linux|l)(?: (\S+))?$`),
+		Pattern: regexp.MustCompile(`^(?:linux|l|)(?: (\S+))?$`),
 		Syntax:  "(loader entry path)?",
 		Help:    "boot Linux kernel bzImage",
 		Fn:      linuxCmd,
