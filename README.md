@@ -167,7 +167,7 @@ gdb -ex "target remote 127.0.0.1:1234"
 Breakpoints can be set in the usual way:
 
 ```
-b CoreStartImage
+b cpuinit
 continue
 ```
 
