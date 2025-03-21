@@ -114,7 +114,7 @@ func efiInfo(memoryMap *uefi.MemoryMap) (efi *exec.EFI, err error) {
 		MemoryMapSize:     uint32(memoryMap.MapSize),
 		MemoryMap:         uint32(memoryMap.Address()),
 		MemoryDescSize:    uint32(memoryMap.DescriptorSize),
-		MemoryDescVersion: uint32(memoryMap.DescriptorVersion),
+		MemoryDescVersion: 1, //
 	}, nil
 }
 
@@ -166,6 +166,7 @@ func boot(image *exec.LinuxImage) (err error) {
 	for i := 0; i < exitRetries; i++ {
 		// own all available memory
 		if memoryMap, err = x64.UEFI.Boot.ExitBootServices(); err != nil {
+			log.Print("go-boot exiting EFI boot services (retrying)")
 			continue
 		}
 		break
