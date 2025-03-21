@@ -13,14 +13,11 @@ import (
 	"regexp"
 	"runtime/debug"
 	"runtime/pprof"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/hako/durafmt"
 
 	"github.com/usbarmory/go-boot/shell"
-	"github.com/usbarmory/tamago/dma"
 )
 
 const testDiversifier = "\xde\xad\xbe\xef"
@@ -57,15 +54,6 @@ func init() {
 		Name: "stackall",
 		Help: "goroutine stack trace (all)",
 		Fn:   stackallCmd,
-	})
-
-	shell.Add(shell.Cmd{
-		Name:    "dma",
-		Args:    1,
-		Pattern: regexp.MustCompile(`^dma(?: (free|used))?$`),
-		Help:    "show default DMA region allocation",
-		Syntax:  "(free|used)?",
-		Fn:      dmaCmd,
 	})
 
 	shell.Add(shell.Cmd{
@@ -112,43 +100,6 @@ func stackallCmd(_ *shell.Interface, _ []string) (string, error) {
 	pprof.Lookup("goroutine").WriteTo(buf, 1)
 
 	return buf.String(), nil
-}
-
-func dmaCmd(_ *shell.Interface, arg []string) (string, error) {
-	var res []string
-
-	if dma.Default() == nil {
-		return "no default DMA region is present", nil
-	}
-
-	dump := func(blocks map[uint]uint, tag string) string {
-		var r []string
-		var t uint
-
-		for addr, n := range blocks {
-			t += n
-			r = append(r, fmt.Sprintf("%#08x-%#08x %10d", addr, addr+n, n))
-		}
-
-		sort.Strings(r)
-		r = append(r, fmt.Sprintf("%21s %10d bytes %s", "", t, tag))
-
-		return strings.Join(r, "\n")
-	}
-
-	if arg[0] == "" || arg[0] == "free" {
-		if blocks := dma.Default().FreeBlocks(); len(blocks) > 0 {
-			res = append(res, dump(blocks, "free"))
-		}
-	}
-
-	if arg[0] == "" || arg[0] == "used" {
-		if blocks := dma.Default().UsedBlocks(); len(blocks) > 0 {
-			res = append(res, dump(blocks, "used"))
-		}
-	}
-
-	return strings.Join(res, "\n"), nil
 }
 
 func dateCmd(_ *shell.Interface, arg []string) (res string, err error) {
