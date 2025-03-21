@@ -46,6 +46,7 @@ func (e *Entry) parseKey(line string) (err error) {
 
 	k := kv[0]
 	v := strings.Trim(kv[1], "\n\r")
+	v = strings.TrimSpace(v)
 
 	switch k {
 	case "title":
@@ -99,7 +100,7 @@ func LoadEntry(fsys fs.FS, path string) (e *Entry, err error) {
 
 	for line := range strings.Lines(string(entry)) {
 		if err = e.parseKey(line); err != nil {
-			return nil, fmt.Errorf("error parsing entry line (%s), %v", err)
+			return nil, fmt.Errorf("error parsing entry line, %v line:%s\n", err, line)
 		}
 	}
 
