@@ -229,7 +229,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	log.Printf("loading boot loader entry %s", path)
 
 	if entry, err = uapi.LoadEntry(root, path); err != nil {
-		return
+		return "", fmt.Errorf("error loading entry, %v", err)
 	}
 
 	if len(entry.Linux) == 0 {

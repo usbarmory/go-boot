@@ -10,6 +10,7 @@
 package uapi
 
 import (
+	"fmt"
 	"io/fs"
 	"strings"
 )
@@ -93,12 +94,12 @@ func LoadEntry(fsys fs.FS, path string) (e *Entry, err error) {
 	entry, err := fs.ReadFile(fsys, path)
 
 	if err != nil {
-		return
+		return nil, fmt.Errorf("error reading entry file, %v", err)
 	}
 
 	for line := range strings.Lines(string(entry)) {
 		if err = e.parseKey(line); err != nil {
-			return
+			return nil, fmt.Errorf("error parsing entry line (%s), %v", err)
 		}
 	}
 
