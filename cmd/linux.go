@@ -26,6 +26,7 @@ const (
 	// avoid initial DMA region
 	minLoadAddr = 0x01000000
 	paramsSize  = 0x1000
+	exitRetries = 3
 )
 
 // DefaultEntryPath represents the default path for the UAPI Type #1 Boot
@@ -77,7 +78,7 @@ func reserveMemory(m *uefi.MemoryMap, image *exec.LinuxImage) (err error) {
 			continue
 		}
 
-		log.Printf("reserving memory %#x - %#x", entry.Addr, entry.Addr + entry.Size)
+		log.Printf("reserving memory %#x - %#x", entry.Addr, entry.Addr+entry.Size)
 		image.Region.Reserve(size, 0)
 
 		break
@@ -113,7 +114,7 @@ func efiInfo(memoryMap *uefi.MemoryMap) (efi *exec.EFI, err error) {
 		MemoryMapSize:     uint32(memoryMap.MapSize),
 		MemoryMap:         uint32(memoryMap.Address()),
 		MemoryDescSize:    uint32(memoryMap.DescriptorSize),
-		MemoryDescVersion: 1, // Linux only accepts this value
+		MemoryDescVersion: uint32(memoryMap.DescriptorVersion),
 	}, nil
 }
 
@@ -153,22 +154,24 @@ func screenInfo() (screen *exec.Screen, err error) {
 }
 
 func boot(image *exec.LinuxImage) (err error) {
-	memoryMap, err := x64.UEFI.Boot.GetMemoryMap()
+	var memoryMap *uefi.MemoryMap
 
-	if err != nil {
-		return
-	}
+	log.Print("go-boot exiting EFI boot services and jumping to kernel")
 
 	// fill screen_info
 	if image.Screen, err = screenInfo(); err != nil {
 		log.Printf("could not detect screen information, %v\n", err)
 	}
 
-	// last seen log on successful exit of EFI boot services
-	log.Print("go-boot exiting EFI boot services and jumping to kernel")
+	for i := 0; i < exitRetries; i++ {
+		// own all available memory
+		if memoryMap, err = x64.UEFI.Boot.ExitBootServices(); err != nil {
+			continue
+		}
+		break
+	}
 
-	// own all available memory
-	if err = x64.UEFI.Boot.ExitBootServices(); err != nil {
+	if err != nil {
 		return fmt.Errorf("could not exit EFI boot services, %v\n", err)
 	}
 

@@ -18,7 +18,7 @@ const align = 8
 func marshalBinary(data any) (buf []byte, err error) {
 	b := new(bytes.Buffer)
 	err = binary.Write(b, binary.LittleEndian, data)
-	return b.Bytes(), nil
+	return b.Bytes(), err
 }
 
 func unmarshalBinary(buf []byte, data any) (err error) {

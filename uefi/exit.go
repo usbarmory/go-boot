@@ -13,12 +13,13 @@ const (
 
 // Exit calls EFI_BOOT_SERVICES.Exit().
 func (s *BootServices) Exit(code int) (err error) {
-	status := callService(
-		s.base+exit,
-		uint64(s.imageHandle),
-		uint64(code),
-		0,
-		0,
+	status := callService(s.base+exit, 4,
+		[]uint64{
+			uint64(s.imageHandle),
+			uint64(code),
+			0,
+			0,
+		},
 	)
 
 	return parseStatus(status)
@@ -27,20 +28,17 @@ func (s *BootServices) Exit(code int) (err error) {
 // ExitServices calls EFI_BOOT_SERVICES.ExitBootServices(), it is the caller
 // responsability to avoid using any EFI Boot Service after this call is
 // successful.
-func (s *BootServices) ExitBootServices() (err error) {
-	memoryMap, err := s.GetMemoryMap()
-
-	if err != nil {
+func (s *BootServices) ExitBootServices() (memoryMap *MemoryMap, err error) {
+	if memoryMap, err = s.GetMemoryMap(); err != nil {
 		return
 	}
 
-	status := callService(
-		s.base+exitBootServices,
-		uint64(s.imageHandle),
-		memoryMap.MapKey,
-		0,
-		0,
+	status := callService(s.base+exitBootServices, 2,
+		[]uint64{
+			uint64(s.imageHandle),
+			memoryMap.MapKey,
+		},
 	)
 
-	return parseStatus(status)
+	return memoryMap, parseStatus(status)
 }

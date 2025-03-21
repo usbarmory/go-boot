@@ -130,12 +130,14 @@ func (s *BootServices) GetMemoryMap() (m *MemoryMap, err error) {
 		buf:            make([]byte, n*maxEntries),
 	}
 
-	status := callService(
-		s.base+getMemoryMap,
-		ptrval(&m.MapSize),
-		ptrval(&m.buf[0]),
-		ptrval(&m.MapKey),
-		ptrval(&m.DescriptorVersion),
+	status := callService(s.base+getMemoryMap, 5,
+		[]uint64{
+			ptrval(&m.MapSize),
+			ptrval(&m.buf[0]),
+			ptrval(&m.MapKey),
+			ptrval(&m.DescriptorSize),
+			ptrval(&m.DescriptorVersion),
+		},
 	)
 
 	if err = parseStatus(status); err != nil {

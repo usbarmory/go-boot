@@ -30,6 +30,15 @@ func init() {
 		Fn:   uefiCmd,
 	})
 
+	//shell.Add(shell.Cmd{
+	//	Name:    ".",
+	//	Args:    1,
+	//	Pattern: regexp.MustCompile(`^\. (.*)$`),
+	//	Syntax:  "<path>",
+	//	Help:    "start EFI application",
+	//	Fn:      startCmd,
+	//})
+
 	shell.Add(shell.Cmd{
 		Name:    "protocol",
 		Args:    1,
@@ -49,9 +58,9 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
-		Name:    "clear",
-		Help:    "clear screen",
-		Fn:      clearCmd,
+		Name: "clear",
+		Help: "clear screen",
+		Fn:   clearCmd,
 	})
 
 	shell.Add(shell.Cmd{
@@ -136,6 +145,24 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	return buf.String(), err
 }
 
+func startCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	root, err := x64.UEFI.Root()
+
+	if err != nil {
+		return "", fmt.Errorf("could not open root volume, %v", err)
+	}
+
+	log.Printf("loading EFI image %s", arg[0])
+	h, err := x64.UEFI.Boot.LoadImage(0, root.FilePath(arg[0]))
+
+	if err != nil {
+		return "", fmt.Errorf("could not load image, %v", err)
+	}
+
+	log.Printf("starting EFI image %#x", h)
+	return "", x64.UEFI.Boot.StartImage(h)
+}
+
 func locateCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	addr, err := x64.UEFI.Boot.LocateProtocol(uefi.GUID(arg[0]))
 	return fmt.Sprintf("%s: %#08x", arg[0], addr), err
@@ -148,13 +175,13 @@ func catCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	f, err := fs.ReadFile(root, arg[0])
+	buf, err := fs.ReadFile(root, arg[0])
 
 	if err != nil {
 		return "", fmt.Errorf("could not read file, %v", err)
 	}
 
-	return string(f), nil
+	return string(buf), nil
 }
 
 func clearCmd(_ *shell.Interface, _ []string) (string, error) {
@@ -167,6 +194,8 @@ func modeCmd(_ *shell.Interface, arg []string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("invalid mode, %v", err)
 	}
+
+	defer log.Printf("switched to EFI Console mode %d", mode)
 
 	return "", x64.UEFI.Console.SetMode(mode)
 }

@@ -13,12 +13,12 @@ const (
 
 // HandleProtocol calls EFI_BOOT_SERVICES.HandleProtocol().
 func (s *BootServices) HandleProtocol(handle uint64, guid GUID) (addr uint64, err error) {
-	status := callService(
-		s.base+handleProtocol,
-		handle,
-		guid.ptrval(),
-		ptrval(&addr),
-		0,
+	status := callService(s.base+handleProtocol, 3,
+		[]uint64{
+			handle,
+			guid.ptrval(),
+			ptrval(&addr),
+		},
 	)
 
 	return addr, parseStatus(status)
@@ -26,12 +26,12 @@ func (s *BootServices) HandleProtocol(handle uint64, guid GUID) (addr uint64, er
 
 // LocateProtocol calls EFI_BOOT_SERVICES.LocateProtocol().
 func (s *BootServices) LocateProtocol(guid GUID) (addr uint64, err error) {
-	status := callService(
-		s.base+locateProtocol,
-		guid.ptrval(),
-		0,
-		ptrval(&addr),
-		0,
+	status := callService(s.base+locateProtocol, 3,
+		[]uint64{
+			guid.ptrval(),
+			0,
+			ptrval(&addr),
+		},
 	)
 
 	return addr, parseStatus(status)

@@ -68,12 +68,10 @@ func (c *Console) ClearScreen() error {
 		return nil
 	}
 
-	status := callService(
-		c.Out+clearScreen,
-		c.Out,
-		0,
-		0,
-		0,
+	status := callService(c.Out+clearScreen, 1,
+		[]uint64{
+			c.Out,
+		},
 	)
 
 	return parseStatus(status)
@@ -85,12 +83,11 @@ func (c *Console) SetMode(mode uint64) error {
 		return nil
 	}
 
-	status := callService(
-		c.Out+setMode,
-		c.Out,
-		mode,
-		0,
-		0,
+	status := callService(c.Out+setMode, 2,
+		[]uint64{
+			c.Out,
+			mode,
+		},
 	)
 
 	return parseStatus(status)
@@ -102,12 +99,11 @@ func (c *Console) Input(k *InputKey) (status uint64) {
 		return
 	}
 
-	return callService(
-		c.In+readKeyStroke,
-		c.In,
-		ptrval(k),
-		0,
-		0,
+	return callService(c.In+readKeyStroke, 2,
+		[]uint64{
+			c.In,
+			ptrval(k),
+		},
 	)
 }
 
@@ -121,12 +117,11 @@ func (c *Console) Output(p []byte) (status uint64) {
 		return
 	}
 
-	return callService(
-		c.Out+outputString,
-		c.Out,
-		ptrval(&p[0]),
-		0,
-		0,
+	return callService(c.Out+outputString, 2,
+		[]uint64{
+			c.Out,
+			ptrval(&p[0]),
+		},
 	)
 }
 

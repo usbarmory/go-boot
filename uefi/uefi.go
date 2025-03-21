@@ -22,10 +22,10 @@ import (
 const signature = 0x5453595320494249 // TSYS IBI
 
 // defined in efi.s
-func callService(fn uint64, a1, a2, a3, a4 uint64) (status uint64)
+func callService(fn uint64, n int, args []uint64) (status uint64)
 
 // This function helps preparing callService arguments, allowing a single call
-// for all EFI services with 4 or less arguments.
+// for all EFI services.
 //
 // Obtaining a pointer in this fashion is typically unsafe and tamago/dma
 // package would be best to handle this. However, as arguments are prepared

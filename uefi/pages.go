@@ -42,12 +42,13 @@ const (
 
 // AllocatePages calls EFI_BOOT_SERVICES.AllocatePages().
 func (s *BootServices) AllocatePages(allocateType int, memoryType int, size int, physicalAddress uint64) error {
-	status := callService(
-		s.base+allocatePages,
-		uint64(allocateType),
-		uint64(memoryType),
-		uint64(size)/PageSize,
-		ptrval(&physicalAddress),
+	status := callService(s.base+allocatePages, 4,
+		[]uint64{
+			uint64(allocateType),
+			uint64(memoryType),
+			uint64(size) / PageSize,
+			ptrval(&physicalAddress),
+		},
 	)
 
 	return parseStatus(status)
@@ -55,12 +56,11 @@ func (s *BootServices) AllocatePages(allocateType int, memoryType int, size int,
 
 // FreePages calls EFI_BOOT_SERVICES.FreePages().
 func (s *BootServices) FreePages(physicalAddress uint64, size int) error {
-	status := callService(
-		s.base+freePages,
-		physicalAddress,
-		uint64(size)/PageSize,
-		0,
-		0,
+	status := callService(s.base+freePages, 2,
+		[]uint64{
+			physicalAddress,
+			uint64(size) / PageSize,
+		},
 	)
 
 	return parseStatus(status)
