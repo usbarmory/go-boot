@@ -46,24 +46,33 @@ TEXT ·callService(SB),$0-48
 	CMPQ	R13, $0
 	JE	call
 
-	// 5th arguments and above are passed on the stack
+	ANDQ	$~15, SP	// alignment for x86_64 ABI
+
+	// 5th arguments and above are pushed in reverse order on the stack
+
+	// move to last element
+	MOVQ	R13, R15
+	ADDQ	$1, R15
+	IMULQ	$8, R15
+	ADDQ	R15, R12
+
 	MOVQ	R13, R14
 	ANDQ	$1, R14
 	CMPQ	R13, R14
 	JNE	align
 	PUSHQ	$0		// ensure 16-byte alignment
 align:
-	ANDQ	$~15, SP	// alignment for x86_64 ABI
-	ADJSP	$32		// shadow stack
 	MOVQ	R13, R14
 push:
-	ADDQ	$8, R12
+	SUBQ	$8, R12
 	PUSHQ	(R12)
 	SUBQ	$1, R13
 	CMPQ	R13, $0
 	JNE	push
 
+	ADJSP	$32		// shadow stack
 	CALL	(DI)
+	ADJSP	$-32
 pop:
 	POPQ	CX
 	SUBQ	$1, R14
@@ -73,7 +82,6 @@ pop:
 
 dummy:
 	// balance PUSH/POP Go assembler error for conditional alignment
-	ADJSP	$-32
 	POPQ	CX
 
 call:

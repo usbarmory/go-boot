@@ -5,6 +5,10 @@
 
 package uefi
 
+import (
+	"io/fs"
+)
+
 // EFI Boot Services offsets
 const (
 	loadImage  = 0xc8
@@ -12,16 +16,22 @@ const (
 )
 
 // LoadImage calls EFI_BOOT_SERVICES.LoadImage().
-func (s *BootServices) LoadImage(boot int, devicePath *FilePath) (imageHandle uint64, err error) {
-	filePath := devicePath.Bytes()
+func (s *BootServices) LoadImage(boot int, root *FS, name string) (imageHandle uint64, err error) {
+	filePath := root.FilePath(name).Bytes()
+
+	buf, err := fs.ReadFile(root, name)
+
+	if err != nil {
+		return
+	}
 
 	status := callService(s.base+loadImage, 6,
 		[]uint64{
 			uint64(boot),
 			s.imageHandle,
 			ptrval(&filePath[0]),
-			0,
-			0,
+			ptrval(&buf[0]),
+			uint64(len(buf)),
 			ptrval(&imageHandle),
 		},
 	)

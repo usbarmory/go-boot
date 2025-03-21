@@ -38,6 +38,13 @@ func (d *FilePath) Bytes() []byte {
 	binary.Write(buf, binary.LittleEndian, d.Length)
 	binary.Write(buf, binary.LittleEndian, d.PathName)
 
+	// Device Path End
+	binary.Write(buf, binary.LittleEndian, []byte{
+		0x7f, // Type    - End of Hardware Device Path
+		0xff, // SubType - End Entire Device Path
+		0x04, // Length
+	})
+
 	return buf.Bytes()
 }
 
@@ -93,13 +100,13 @@ func (root *simpleFileSystem) openVolume(handle uint64) (f *fileProtocol, addr u
 
 // FS implements the [fs.FS] interface for an EFI Simple File System.
 type FS struct {
+	image  *loadedImage
 	fs     *simpleFileSystem
 	volume *File
 	addr   uint64
 }
 
-// FilePath returns the EFI File Path Media Device Path associated with the
-// named file.
+// FilePath returns the EFI Device Path associated with the named file.
 func (root *FS) FilePath(name string) (filePath *FilePath) {
 	pathName := toUTF16(name)
 
@@ -155,6 +162,7 @@ func (s *Services) Root() (root *FS, err error) {
 	}
 
 	root = &FS{
+		image:  image,
 		fs:     &simpleFileSystem{},
 		volume: &File{},
 		addr:   addr,

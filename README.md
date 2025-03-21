@@ -29,6 +29,7 @@ initializing console (com1)
 
 go-boot • tamago/amd64 (go1.24.1) • UEFI x64
 
+.               <path>                   # start EFI application
 build                                    # build information
 cat             <path>                   # show file contents
 clear                                    # clear screen

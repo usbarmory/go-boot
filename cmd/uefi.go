@@ -30,14 +30,14 @@ func init() {
 		Fn:   uefiCmd,
 	})
 
-	//shell.Add(shell.Cmd{
-	//	Name:    ".",
-	//	Args:    1,
-	//	Pattern: regexp.MustCompile(`^\. (.*)$`),
-	//	Syntax:  "<path>",
-	//	Help:    "start EFI application",
-	//	Fn:      startCmd,
-	//})
+	shell.Add(shell.Cmd{
+		Name:    ".",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^\. (.*)$`),
+		Syntax:  "<path>",
+		Help:    "start EFI application",
+		Fn:      startCmd,
+	})
 
 	shell.Add(shell.Cmd{
 		Name:    "protocol",
@@ -153,7 +153,7 @@ func startCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	log.Printf("loading EFI image %s", arg[0])
-	h, err := x64.UEFI.Boot.LoadImage(0, root.FilePath(arg[0]))
+	h, err := x64.UEFI.Boot.LoadImage(0, root, arg[0])
 
 	if err != nil {
 		return "", fmt.Errorf("could not load image, %v", err)
