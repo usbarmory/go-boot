@@ -15,6 +15,7 @@ package uefi
 
 import (
 	"errors"
+	"fmt"
 	"unsafe"
 )
 
@@ -88,6 +89,16 @@ type SystemTable struct {
 	BootServices         uint64
 	NumberOfTableEntries uint64
 	ConfigurationTable   uint64
+}
+
+// Revision returns the EFI Specification revision string.
+func (d *SystemTable) Revision() string {
+	r := d.Header.Revision
+
+	major := r >> 16
+	minor := r & 0xffff
+
+	return fmt.Sprintf("%d.%d", major, minor)
 }
 
 // Services represents the UEFI services instance.

@@ -123,6 +123,7 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		s = append(s, binary.LittleEndian.Uint16(b[i:i+2]))
 	}
 
+	fmt.Fprintf(&buf, "UEFI Revision ......: %s\n", t.Revision())
 	fmt.Fprintf(&buf, "Firmware Vendor ....: %s\n", string(utf16.Decode(s)))
 	fmt.Fprintf(&buf, "Firmware Revision ..: %#x\n", t.FirmwareRevision)
 	fmt.Fprintf(&buf, "Runtime Services  ..: %#x\n", t.RuntimeServices)

@@ -21,6 +21,10 @@ andrea@inversepath.com
 Operation
 =========
 
+The default operation is to present an UEFI shell and its help, the <enter>
+shortcut boots the Arch Linux default UAPI entry at
+`\loader\entries\arch.conf`.
+
 ```
 Shell> go-boot.efi
 
@@ -53,6 +57,7 @@ uefi                                     # UEFI information
 uptime                                   # show system running time
 
 > uefi
+UEFI Revision ......: 2.70
 Firmware Vendor ....: Lenovo
 Firmware Revision ..: 0x1560
 Runtime Services  ..: 0x90e2eb98
