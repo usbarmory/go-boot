@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"sort"
 	"text/tabwriter"
+
+	"github.com/usbarmory/go-boot/uefi"
 )
 
 // CmdFn represents a command handler.
@@ -47,7 +49,7 @@ func Add(cmd Cmd) {
 
 // Help returns a formatted string with instructions for all registered
 // commands.
-func (c *Interface) Help(_ *Interface, _ []string) (res string, _ error) {
+func (c *Interface) Help(_ *Interface, _ []string) (_ string, _ error) {
 	var help bytes.Buffer
 	var names []string
 
@@ -64,10 +66,16 @@ func (c *Interface) Help(_ *Interface, _ []string) (res string, _ error) {
 	}
 
 	_ = t.Flush()
-	res = help.String()
+	res := help.String()
 
-	if c.Terminal != nil {
+	switch {
+	case c.Terminal != nil:
 		res = string(c.Terminal.Escape.Cyan) + res + string(c.Terminal.Escape.Reset)
+		fmt.Fprintln(c.Output, res)
+	case c.Console != nil:
+		c.Console.SetAttribute(uefi.EFI_CYAN)
+		fmt.Fprintln(c.Output, res)
+		c.Console.SetAttribute(uefi.EFI_LIGHTGRAY)
 	}
 
 	return

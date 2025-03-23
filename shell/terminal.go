@@ -16,6 +16,8 @@ import (
 	"sync"
 
 	"golang.org/x/term"
+
+	"github.com/usbarmory/go-boot/uefi"
 )
 
 // DefaultPrompt represents the command prompt when none is set for the
@@ -39,6 +41,8 @@ type Interface struct {
 	Output io.Writer
 	// Terminal represents the VT100 terminal output
 	Terminal *term.Terminal
+	// Console represents the UEFI Console
+	Console *uefi.Console
 
 	once sync.Once
 }
@@ -75,7 +79,14 @@ func (c *Interface) handleLine(line string) (err error) {
 }
 
 func (c *Interface) readLine(t *term.Terminal) error {
-	if c.Terminal == nil {
+	switch {
+	case c.Terminal != nil:
+		fmt.Fprint(c.Output, string(c.Terminal.Escape.Red)+c.Prompt+string(c.Terminal.Escape.Reset))
+	case c.Console != nil:
+		c.Console.SetAttribute(uefi.EFI_RED)
+		fmt.Fprint(c.Output, c.Prompt)
+		c.Console.SetAttribute(uefi.EFI_LIGHTGRAY)
+	default:
 		fmt.Fprint(c.Output, c.Prompt)
 	}
 
@@ -115,16 +126,13 @@ func (c *Interface) handle(t *term.Terminal) {
 	}
 
 	if c.Terminal != nil {
-		t.SetPrompt(string(t.Escape.Red) + c.Prompt + string(t.Escape.Reset))
 		c.Output = c.Terminal
 	} else {
 		c.Output = c.ReadWriter
 	}
 
-	help, _ := c.Help(nil, nil)
-
 	fmt.Fprintf(t, "\n%s\n\n", c.Banner)
-	fmt.Fprintf(t, "%s\n", help)
+	c.Help(nil, nil)
 
 	c.once.Do(func() {
 		Add(Cmd{

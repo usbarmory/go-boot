@@ -16,12 +16,34 @@ import (
 const (
 	outputString = 0x08
 	setMode      = 0x20
+	setAttribute = 0x28
 	clearScreen  = 0x30
 )
 
 // EFI ConIn offsets
 const (
 	readKeyStroke = 0x08
+)
+
+// EFI text attributes
+const (
+	EFI_BLACK = iota
+	EFI_BLUE
+	EFI_GREEN
+	EFI_CYAN
+	EFI_RED
+	EFI_MAGENTA
+	EFI_BROWN
+	EFI_LIGHTGRAY
+	EFI_BRIGHT
+	EFI_DARKGRAY
+	EFI_LIGHTBLUE
+	EFI_LIGHTGREEN
+	EFI_LIGHTCYAN
+	EFI_LIGHTRED
+	EFI_LIGHTMAGENTA
+	EFI_YELLOW
+	EFI_WHITE
 )
 
 // ASCII control characters
@@ -77,7 +99,7 @@ func (c *Console) ClearScreen() error {
 	return parseStatus(status)
 }
 
-// ClearScreen calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.SetMode().
+// SetMode calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.SetMode().
 func (c *Console) SetMode(mode uint64) error {
 	if c.Out == 0 {
 		return nil
@@ -87,6 +109,22 @@ func (c *Console) SetMode(mode uint64) error {
 		[]uint64{
 			c.Out,
 			mode,
+		},
+	)
+
+	return parseStatus(status)
+}
+
+// SetAttribute calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.SetAttribute().
+func (c *Console) SetAttribute(attr uint64) error {
+	if c.Out == 0 {
+		return nil
+	}
+
+	status := callService(c.Out+setAttribute, 2,
+		[]uint64{
+			c.Out,
+			attr,
 		},
 	)
 

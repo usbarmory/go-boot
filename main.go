@@ -38,6 +38,7 @@ func main() {
 
 	iface := &shell.Interface{
 		Banner: banner,
+		Console: x64.UEFI.Console,
 	}
 
 	// disable UEFI watchdog
