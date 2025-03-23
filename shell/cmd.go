@@ -73,7 +73,7 @@ func (c *Interface) Help(_ *Interface, _ []string) (_ string, _ error) {
 		res = string(c.Terminal.Escape.Cyan) + res + string(c.Terminal.Escape.Reset)
 		fmt.Fprintln(c.Output, res)
 	case c.Console != nil:
-		c.Console.SetAttribute(uefi.EFI_CYAN)
+		c.Console.SetAttribute(uefi.EFI_LIGHTCYAN)
 		fmt.Fprintln(c.Output, res)
 		c.Console.SetAttribute(uefi.EFI_WHITE)
 	}

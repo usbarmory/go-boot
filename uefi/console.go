@@ -172,6 +172,16 @@ func (c *Console) Read(p []byte) (n int, err error) {
 
 		switch {
 		case status&0xff == EFI_NOT_READY:
+			// Compatibility note:
+			//
+			// shell.(*Interface).readLine now starves the
+			// scheduler, however this package currently has no
+			// need for background goroutines.
+			//
+			// In case this becomes undersirable uncomment add
+			// here:
+			//
+			// runtime.Gosched()
 			return
 		case status != EFI_SUCCESS:
 			return n, parseStatus(status)
