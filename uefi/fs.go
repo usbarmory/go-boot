@@ -43,6 +43,7 @@ func (d *FilePath) Bytes() []byte {
 		0x7f, // Type    - End of Hardware Device Path
 		0xff, // SubType - End Entire Device Path
 		0x04, // Length
+		0x00, // Length
 	})
 
 	return buf.Bytes()
