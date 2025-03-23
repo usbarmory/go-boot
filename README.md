@@ -68,9 +68,6 @@ Configuration Tables: 0x8f426018
   dcfa911d-26eb-469f-a220-38b7dc461220 (0x8b037018)
 ...
 
-> alloc 90000000 4096
-allocating memory range 0x90000000 - 0x90001000
-
 > memmap
 Type Start            End              Pages            Attributes
 02   0000000090000000 0000000090000fff 0000000000000001 000000000000000f
