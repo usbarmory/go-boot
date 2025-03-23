@@ -75,7 +75,7 @@ func (c *Interface) Help(_ *Interface, _ []string) (_ string, _ error) {
 	case c.Console != nil:
 		c.Console.SetAttribute(uefi.EFI_CYAN)
 		fmt.Fprintln(c.Output, res)
-		c.Console.SetAttribute(uefi.EFI_LIGHTGRAY)
+		c.Console.SetAttribute(uefi.EFI_WHITE)
 	}
 
 	return

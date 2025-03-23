@@ -85,7 +85,7 @@ func (c *Interface) readLine(t *term.Terminal) error {
 	case c.Console != nil:
 		c.Console.SetAttribute(uefi.EFI_RED)
 		fmt.Fprint(c.Output, c.Prompt)
-		c.Console.SetAttribute(uefi.EFI_LIGHTGRAY)
+		c.Console.SetAttribute(uefi.EFI_WHITE)
 	default:
 		fmt.Fprint(c.Output, c.Prompt)
 	}
