@@ -17,7 +17,7 @@ import (
 var _unused uint64 = 0x00100000 // overridden in x64.s
 
 //go:linkname RamSize runtime.ramSize
-var RamSize uint64 = 0x20000000 // 512MB
+var RamSize uint64 = 0x40000000 // 1GB
 
 func allocateHeap() {
 	memoryMap, err := UEFI.Boot.GetMemoryMap()
