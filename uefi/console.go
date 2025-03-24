@@ -178,10 +178,9 @@ func (c *Console) Read(p []byte) (n int, err error) {
 			// scheduler, however this package currently has no
 			// need for background goroutines.
 			//
-			// In case this becomes undersirable uncomment add
-			// here:
+			// In case this becomes undesirable here add:
 			//
-			// runtime.Gosched()
+			//runtime.Gosched()
 			return
 		case status != EFI_SUCCESS:
 			return n, parseStatus(status)
