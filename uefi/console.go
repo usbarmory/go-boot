@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"time"
 	"unicode/utf16"
 )
 
@@ -179,8 +180,11 @@ func (c *Console) Read(p []byte) (n int, err error) {
 			// need for background goroutines.
 			//
 			// In case this becomes undesirable here add:
+			//  runtime.Gosched()
 			//
-			//runtime.Gosched()
+			// For now we just take an atomic nap as that eases a
+			// benign HeapAlloc increase due to GC starvation.
+			time.Sleep(1 * time.Millisecond)
 			return
 		case status != EFI_SUCCESS:
 			return n, parseStatus(status)

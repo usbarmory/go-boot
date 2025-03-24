@@ -41,7 +41,7 @@ cpuid           <leaf> <subleaf>         # show CPU capabilities
 date            (time in RFC339 format)? # show/change runtime date and time
 exit,quit                                # exit application
 halt,shutdown                            # shutdown system
-info                                     # device information
+info                                     # runtime information
 linux,l,\r      (loader entry path)?     # boot Linux kernel image
 log                                      # show runtime logs
 memmap          (e820)?                  # show UEFI memory map
