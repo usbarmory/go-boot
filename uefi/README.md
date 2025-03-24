@@ -65,7 +65,21 @@ Go applications can be compiled as usual, using the compiler built in the
 previous step, but with the addition of the following flags/variables:
 
 ```
-GOOS=tamago GOARCH=amd64 ${TAMAGO} build -ldflags "-E cpuinit -T 0x00110000 -R 0x1000" main.go
+GOOS=tamago GOARCH=amd64 ${TAMAGO} build -ldflags "-E cpuinit -T $(TEXT_START) -R 0x1000" main.go
+```
+
+The resulting ELF must be converted to a PE32+ executable for EFI for execution
+under UEFI:
+
+```
+objcopy \
+	--strip-debug \
+	--target efi-app-x86_64 \
+	--subsystem=efi-app \
+	--image-base 0x$(IMAGE_BASE) \
+	--stack=0x10000 \
+	main main.efi
+printf '\x26\x02' | dd of=${APP}.efi bs=1 seek=150 count=2 conv=notrunc,fsync # adjust Characteristics
 ```
 
 An example application, targeting the UEFI environment,
