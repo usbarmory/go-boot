@@ -81,7 +81,7 @@ func toUTF16(s string) (buf []byte) {
 func (f *fileProtocol) open(handle uint64, name string, mode uint64) (o *fileProtocol, addr uint64, err error) {
 	fileName := toUTF16(name)
 
-	status := callService(ptrval(&f.Open), 5,
+	status := callService(ptrval(&f.Open),
 		[]uint64{
 			handle,
 			ptrval(&addr),
@@ -110,7 +110,7 @@ func (f *fileProtocol) open(handle uint64, name string, mode uint64) (o *filePro
 
 // close calls EFI_FILE_PROTOCOL.Close().
 func (f *fileProtocol) close(handle uint64) (err error) {
-	status := callService(ptrval(&f.Close), 1,
+	status := callService(ptrval(&f.Close),
 		[]uint64{
 			handle,
 		},
@@ -123,7 +123,7 @@ func (f *fileProtocol) close(handle uint64) (err error) {
 func (f *fileProtocol) read(handle uint64, buf []byte) (n int, err error) {
 	size := uint64(len(buf))
 
-	status := callService(ptrval(&f.Read), 3,
+	status := callService(ptrval(&f.Read),
 		[]uint64{
 			handle,
 			ptrval(&size),
@@ -143,7 +143,7 @@ func (f *fileProtocol) getInfo(handle uint64, guid []byte) (info *fileInfo, err 
 	buf := make([]byte, 8*7+512)
 	size := uint64(len(buf))
 
-	status := callService(ptrval(&f.GetInfo), 4,
+	status := callService(ptrval(&f.GetInfo),
 		[]uint64{
 			handle,
 			ptrval(&guid[0]),

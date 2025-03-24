@@ -90,7 +90,7 @@ func (c *Console) ClearScreen() error {
 		return nil
 	}
 
-	status := callService(c.Out+clearScreen, 1,
+	status := callService(c.Out+clearScreen,
 		[]uint64{
 			c.Out,
 		},
@@ -105,7 +105,7 @@ func (c *Console) SetMode(mode uint64) error {
 		return nil
 	}
 
-	status := callService(c.Out+setMode, 2,
+	status := callService(c.Out+setMode,
 		[]uint64{
 			c.Out,
 			mode,
@@ -121,7 +121,7 @@ func (c *Console) SetAttribute(attr uint64) error {
 		return nil
 	}
 
-	status := callService(c.Out+setAttribute, 2,
+	status := callService(c.Out+setAttribute,
 		[]uint64{
 			c.Out,
 			attr,
@@ -137,7 +137,7 @@ func (c *Console) Input(k *InputKey) (status uint64) {
 		return
 	}
 
-	return callService(c.In+readKeyStroke, 2,
+	return callService(c.In+readKeyStroke,
 		[]uint64{
 			c.In,
 			ptrval(k),
@@ -155,7 +155,7 @@ func (c *Console) Output(p []byte) (status uint64) {
 		return
 	}
 
-	return callService(c.Out+outputString, 2,
+	return callService(c.Out+outputString,
 		[]uint64{
 			c.Out,
 			ptrval(&p[0]),

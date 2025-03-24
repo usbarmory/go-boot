@@ -130,7 +130,7 @@ func (s *BootServices) GetMemoryMap() (m *MemoryMap, err error) {
 		buf:            make([]byte, n*maxEntries),
 	}
 
-	status := callService(s.base+getMemoryMap, 5,
+	status := callService(s.base+getMemoryMap,
 		[]uint64{
 			ptrval(&m.MapSize),
 			ptrval(&m.buf[0]),

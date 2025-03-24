@@ -25,7 +25,7 @@ func (s *BootServices) LoadImage(boot int, root *FS, name string) (imageHandle u
 		return
 	}
 
-	status := callService(s.base+loadImage, 6,
+	status := callService(s.base+loadImage,
 		[]uint64{
 			uint64(boot),
 			s.imageHandle,
@@ -41,7 +41,7 @@ func (s *BootServices) LoadImage(boot int, root *FS, name string) (imageHandle u
 
 // StartImage calls EFI_BOOT_SERVICES.StartImage().
 func (s *BootServices) StartImage(imageHandle uint64) (err error) {
-	status := callService(s.base+startImage, 3,
+	status := callService(s.base+startImage,
 		[]uint64{
 			imageHandle,
 			0,

@@ -5,8 +5,8 @@
 
 #include "textflag.h"
 
-// func callService(fn uint64, n int, args []uint64) (status uint64)
-TEXT ·callService(SB),$0-48
+// func callFn(fn uint64, n int, args []uint64) (status uint64)
+TEXT ·callFn(SB),$0-48
 	MOVQ	fn+0(FP), DI
 	MOVQ	n+8(FP), R13
 	MOVQ	args+16(FP), R12

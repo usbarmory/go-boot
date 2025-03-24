@@ -18,7 +18,7 @@ const (
 
 // ResetSystem calls EFI_RUNTIME_SERVICES.ResetSystem().
 func (s *RuntimeServices) ResetSystem(resetType int) (err error) {
-	status := callService(s.base+resetSystem, 4,
+	status := callService(s.base+resetSystem,
 		[]uint64{
 			uint64(resetType),
 			EFI_SUCCESS,

@@ -75,7 +75,7 @@ type simpleFileSystem struct {
 
 // openVolume calls EFI_SIMPLE_FILE SYSTEM_PROTOCOL.OpenVolume().
 func (root *simpleFileSystem) openVolume(handle uint64) (f *fileProtocol, addr uint64, err error) {
-	status := callService(ptrval(&root.OpenVolume), 2,
+	status := callService(ptrval(&root.OpenVolume),
 		[]uint64{
 			handle,
 			ptrval(&addr),

@@ -16,14 +16,25 @@ package uefi
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"unsafe"
 )
 
 // EFI Table Header Signature
 const signature = 0x5453595320494249 // TSYS IBI
 
-// defined in efi.s
-func callService(fn uint64, n int, args []uint64) (status uint64)
+var mux sync.Mutex
+
+// defined in uefi.s
+func callFn(fn uint64, n int, args []uint64) (status uint64)
+
+// callService calls an UEFI service
+func callService(fn uint64, args []uint64) (status uint64) {
+	mux.Lock()
+	defer mux.Unlock()
+
+	return callFn(fn, len(args), args)
+}
 
 // This function helps preparing callService arguments, allowing a single call
 // for all EFI services.

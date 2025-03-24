@@ -13,7 +13,7 @@ const (
 
 // Exit calls EFI_BOOT_SERVICES.Exit().
 func (s *BootServices) Exit(code int) (err error) {
-	status := callService(s.base+exit, 4,
+	status := callService(s.base+exit,
 		[]uint64{
 			uint64(s.imageHandle),
 			uint64(code),
@@ -33,7 +33,7 @@ func (s *BootServices) ExitBootServices() (memoryMap *MemoryMap, err error) {
 		return
 	}
 
-	status := callService(s.base+exitBootServices, 2,
+	status := callService(s.base+exitBootServices,
 		[]uint64{
 			uint64(s.imageHandle),
 			memoryMap.MapKey,
