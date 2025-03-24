@@ -43,11 +43,14 @@ func infoCmd(_ *shell.Interface, _ []string) (string, error) {
 	ramStart, ramEnd := runtime.MemRegion()
 	textStart, textEnd := runtime.TextRegion()
 	_, heapStart := runtime.DataRegion()
+	
+	m := &runtime.MemStats{}
+	runtime.ReadMemStats(m)
 
 	fmt.Fprintf(&res, "Runtime ......: %s %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
-	fmt.Fprintf(&res, "RAM ..........: %#08x-%#08x (%d MiB)\n", ramStart, ramEnd, (ramEnd-ramStart)/(1025*1024))
+	fmt.Fprintf(&res, "RAM ..........: %#08x-%#08x (%d MiB)\n", ramStart, ramEnd, (ramEnd-ramStart)/(1024*1024))
 	fmt.Fprintf(&res, "Text .........: %#08x-%#08x\n", textStart, textEnd)
-	fmt.Fprintf(&res, "Heap .........: %#08x-%#08x\n", heapStart, ramEnd)
+	fmt.Fprintf(&res, "Heap .........: %#08x-%#08x Alloc:%d MiB Sys:%d MiB\n", heapStart, ramEnd, m.HeapAlloc/(1024*1024), m.HeapSys/(1024*1024))
 	fmt.Fprintf(&res, "CPU ..........: %s\n", x64.AMD64.Name())
 	fmt.Fprintf(&res, "Frequency ....: %v GHz\n", float32(x64.AMD64.Freq())/1e9)
 
