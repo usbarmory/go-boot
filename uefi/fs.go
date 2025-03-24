@@ -6,48 +6,19 @@
 package uefi
 
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"io/fs"
 )
 
 const (
-	EFI_LOADED_IMAGE_PROTOCOL_GUID       = "5b1b31a1-9562-11d2-8e3f-00a0c969723b"
-	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID = "964e5b22-6459-11d2-8e39-00a0c969723b"
+	EFI_LOADED_IMAGE_PROTOCOL_GUID             = "5b1b31a1-9562-11d2-8e3f-00a0c969723b"
+	EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID = "09576e91-6d3f-11d2-8e39-00a0c969723b"
+	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID       = "964e5b22-6459-11d2-8e39-00a0c969723b"
 
 	EFI_LOADED_IMAGE_PROTOCOL_REVISION       = 0x00001000
 	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_REVISION = 0x00010000
 )
-
-// FilePath represents an EFI File Path Media Device Path instance.
-type FilePath struct {
-	Type     uint8
-	SubType  uint8
-	Length   uint16
-	PathName []byte
-}
-
-// Bytes converts the descriptor structure to byte array format.
-func (d *FilePath) Bytes() []byte {
-	buf := new(bytes.Buffer)
-
-	binary.Write(buf, binary.LittleEndian, d.Type)
-	binary.Write(buf, binary.LittleEndian, d.SubType)
-	binary.Write(buf, binary.LittleEndian, d.Length)
-	binary.Write(buf, binary.LittleEndian, d.PathName)
-
-	// Device Path End
-	binary.Write(buf, binary.LittleEndian, []byte{
-		0x7f, // Type    - End of Hardware Device Path
-		0xff, // SubType - End Entire Device Path
-		0x04, // Length
-		0x00, // Length
-	})
-
-	return buf.Bytes()
-}
 
 // loadedImage represents an EFI Loaded Image Protocol instance.
 type loadedImage struct {
@@ -102,21 +73,11 @@ func (root *simpleFileSystem) openVolume(handle uint64) (f *fileProtocol, addr u
 // FS implements the [fs.FS] interface for an EFI Simple File System.
 type FS struct {
 	image  *loadedImage
+	device uint64
+	addr   uint64
+
 	fs     *simpleFileSystem
 	volume *File
-	addr   uint64
-}
-
-// FilePath returns the EFI Device Path associated with the named file.
-func (root *FS) FilePath(name string) (filePath *FilePath) {
-	pathName := toUTF16(name)
-
-	return &FilePath{
-		Type:     4,
-		SubType:  4,
-		Length:   uint16(4 + len(pathName)),
-		PathName: pathName,
-	}
 }
 
 // Open opens the named file [File.Close] must be called to release any
@@ -139,16 +100,14 @@ func (root *FS) Open(name string) (fs.File, error) {
 	return fs.File(f), nil
 }
 
-// Root returns an EFI Simple File System instance for the current EFI image
-// root volume.
-func (s *Services) Root() (root *FS, err error) {
+func (s *BootServices) loadImageHandle(imageHandle uint64) (image *loadedImage, err error) {
 	var addr uint64
 
-	if addr, err = s.Boot.HandleProtocol(s.imageHandle, EFI_LOADED_IMAGE_PROTOCOL_GUID); err != nil {
+	if addr, err = s.HandleProtocol(imageHandle, EFI_LOADED_IMAGE_PROTOCOL_GUID); err != nil {
 		return
 	}
 
-	image := &loadedImage{}
+	image = &loadedImage{}
 
 	if err = decode(image, addr); err != nil {
 		return
@@ -158,18 +117,30 @@ func (s *Services) Root() (root *FS, err error) {
 		return nil, errors.New("invalid protocol revision")
 	}
 
-	if addr, err = s.Boot.HandleProtocol(image.DeviceHandle, EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID); err != nil {
+	return
+}
+
+// Root returns an EFI Simple File System instance for the current EFI image
+// root volume.
+func (s *Services) Root() (root *FS, err error) {
+	root = &FS{
+		fs:     &simpleFileSystem{},
+		volume: &File{},
+	}
+
+	if root.image, err = s.Boot.loadImageHandle(s.imageHandle); err != nil {
 		return
 	}
 
-	root = &FS{
-		image:  image,
-		fs:     &simpleFileSystem{},
-		volume: &File{},
-		addr:   addr,
+	if root.device, err = s.Boot.HandleProtocol(root.image.DeviceHandle, EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID); err != nil {
+		return
 	}
 
-	if err = decode(root.fs, addr); err != nil {
+	if root.addr, err = s.Boot.HandleProtocol(root.image.DeviceHandle, EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID); err != nil {
+		return
+	}
+
+	if err = decode(root.fs, root.addr); err != nil {
 		return
 	}
 

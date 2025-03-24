@@ -43,7 +43,7 @@ func infoCmd(_ *shell.Interface, _ []string) (string, error) {
 	ramStart, ramEnd := runtime.MemRegion()
 	textStart, textEnd := runtime.TextRegion()
 	_, heapStart := runtime.DataRegion()
-	
+
 	m := &runtime.MemStats{}
 	runtime.ReadMemStats(m)
 

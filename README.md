@@ -55,6 +55,8 @@ stackall                                 # goroutine stack trace (all)
 stat            <path>                   # show file information
 uefi                                     # UEFI information
 uptime                                   # show system running time
+windows,win,w                            # start Windows UEFI bootloader
+
 
 > uefi
 UEFI Revision ......: 2.70

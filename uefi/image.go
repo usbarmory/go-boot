@@ -17,9 +17,13 @@ const (
 
 // LoadImage calls EFI_BOOT_SERVICES.LoadImage().
 func (s *BootServices) LoadImage(boot int, root *FS, name string) (imageHandle uint64, err error) {
-	filePath := root.FilePath(name).Bytes()
-
 	buf, err := fs.ReadFile(root, name)
+
+	if err != nil {
+		return
+	}
+
+	_, _, devicePath, err := root.FilePath(name)
 
 	if err != nil {
 		return
@@ -29,7 +33,7 @@ func (s *BootServices) LoadImage(boot int, root *FS, name string) (imageHandle u
 		[]uint64{
 			uint64(boot),
 			s.imageHandle,
-			ptrval(&filePath[0]),
+			ptrval(&devicePath[0]),
 			ptrval(&buf[0]),
 			uint64(len(buf)),
 			ptrval(&imageHandle),
