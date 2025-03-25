@@ -9,11 +9,21 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"unicode/utf16"
 
 	"github.com/usbarmory/tamago/dma"
 )
 
 const align = 8
+
+func toUTF16(s string) (buf []byte) {
+	for _, r := range utf16.Encode([]rune(s)) {
+		buf = append(buf, byte(r&0xff))
+		buf = append(buf, byte(r>>8))
+	}
+
+	return append([]byte(buf), []byte{0x00, 0x00}...)
+}
 
 func marshalBinary(data any) (buf []byte, err error) {
 	b := new(bytes.Buffer)
@@ -23,6 +33,26 @@ func marshalBinary(data any) (buf []byte, err error) {
 
 func unmarshalBinary(buf []byte, data any) (err error) {
 	_, err = binary.Decode(buf, binary.LittleEndian, data)
+	return
+}
+
+func encode(data any, addr uint64) (err error) {
+	if addr == 0 {
+		return errors.New("invalid address")
+	}
+
+	buf, _ := marshalBinary(data)
+	n := len(buf)
+
+	r, err := dma.NewRegion(uint(addr), n, false)
+
+	if err != nil {
+		return
+	}
+
+	ptr := r.Alloc(buf, 0)
+	r.Free(ptr)
+
 	return
 }
 

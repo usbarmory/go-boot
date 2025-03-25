@@ -11,7 +11,6 @@ import (
 	"io"
 	"io/fs"
 	"time"
-	"unicode/utf16"
 )
 
 const (
@@ -66,15 +65,6 @@ type fileInfo struct {
 	LastAccessTime   efiTime
 	ModificationTime efiTime
 	Attribute        uint64
-}
-
-func toUTF16(s string) (buf []byte) {
-	for _, r := range utf16.Encode([]rune(s)) {
-		buf = append(buf, byte(r&0xff))
-		buf = append(buf, byte(r>>8))
-	}
-
-	return append([]byte(buf), []byte{0x00, 0x00}...)
 }
 
 // open calls EFI_FILE_PROTOCOL.Open().
