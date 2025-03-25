@@ -30,6 +30,7 @@ type loadedImage struct {
 	FilePath        uint64
 	_               uint64
 	LoadOptionsSize uint32
+	_               uint32
 	LoadOptions     uint64
 	ImageBase       uint64
 	ImageSize       uint64
