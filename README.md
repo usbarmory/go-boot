@@ -121,7 +121,7 @@ Build the `go-boot.efi` application executable:
 
 ```
 git clone https://github.com/usbarmory/go-boot && cd go-boot
-make efi IMAGE_BASE=00100000 CONSOLE=text
+make efi IMAGE_BASE=10000000 CONSOLE=text
 ```
 
 Executing as UEFI application
@@ -156,7 +156,7 @@ QEMU supported targets can be executed under emulation, using the
 as follows:
 
 ```
-make qemu IMAGE_BASE=40000000 CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd> OVMFVARS=<path to OVMF_VARS.fd>
+make qemu CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd> OVMFVARS=<path to OVMF_VARS.fd>
 ```
 
 The emulation run will provide an interactive console.
