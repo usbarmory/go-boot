@@ -29,9 +29,9 @@ const (
 	exitRetries = 3
 )
 
-// DefaultEntryPath represents the default path for the UAPI Type #1 Boot
+// LinuxDefaultEntry represents the default path for the UAPI Type #1 Boot
 // Loader Entry.
-const DefaultEntryPath = `\loader\entries\arch.conf`
+const LinuxDefaultEntry = `\loader\entries\arch.conf`
 
 func init() {
 	shell.Add(shell.Cmd{
@@ -213,7 +213,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	path := strings.TrimSpace(arg[0])
 
 	if len(path) == 0 {
-		path = DefaultEntryPath
+		path = LinuxDefaultEntry
 	}
 
 	if x64.UEFI.Boot == nil {

@@ -11,17 +11,17 @@ import (
 	"github.com/usbarmory/go-boot/shell"
 )
 
-const windowsPath = `\EFI\Microsoft\Boot\bootmgfw.efi`
+const WindowsBootManager = `\EFI\Microsoft\Boot\bootmgfw.efi`
 
 func init() {
 	shell.Add(shell.Cmd{
 		Name:    "windows,win,w",
 		Pattern: regexp.MustCompile(`^(?:windows|win|w)$`),
-		Help:    "start Windows UEFI bootloader",
+		Help:    "launch Windows UEFI boot manager",
 		Fn:      winCmd,
 	})
 }
 
 func winCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	return startCmd(nil, []string{windowsPath})
+	return launchCmd(nil, []string{WindowsBootManager})
 }

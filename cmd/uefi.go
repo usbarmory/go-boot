@@ -35,8 +35,8 @@ func init() {
 		Args:    1,
 		Pattern: regexp.MustCompile(`^\. (.*)$`),
 		Syntax:  "<path>",
-		Help:    "start EFI application",
-		Fn:      startCmd,
+		Help:    "load and start EFI image",
+		Fn:      launchCmd,
 	})
 
 	shell.Add(shell.Cmd{
@@ -146,7 +146,7 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	return buf.String(), err
 }
 
-func startCmd(_ *shell.Interface, arg []string) (res string, err error) {
+func launchCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	root, err := x64.UEFI.Root()
 
 	if err != nil {

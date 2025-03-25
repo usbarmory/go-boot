@@ -6,11 +6,10 @@ The [go-boot](https://github.com/usbarmory/go-boot) project is a
 Shell and OS loader for AMD64 platforms, allowing UEFI API interaction and OS
 loading.
 
-The OS loading functionality currently supports parsing of boot loader entries
-compliant with the Linux Userspace API (UAPI)
-[specifications](https://uapi-group.org/specifications/specs/boot_loader_specification/)
-such as ones supported by
-[systemd-boot](https://www.freedesktop.org/wiki/Software/systemd/systemd-boot/).
+The OS loading functionality supports launching of:
+ * `l`  Linux kernels, with configuration parsed from Linux Userspace API (UAPI) [boot loader entries](https://uapi-group.org/specifications/specs/boot_loader_specification/)
+ * `w`  Windows UEFI boot manager
+ * `.`  EFI application images
 
 Authors
 =======
@@ -33,7 +32,7 @@ initializing console (com1)
 
 go-boot • tamago/amd64 (go1.24.1) • UEFI x64
 
-.               <path>                   # start EFI application
+.               <path>                   # load and start EFI image
 build                                    # build information
 cat             <path>                   # show file contents
 clear                                    # clear screen
@@ -55,7 +54,7 @@ stackall                                 # goroutine stack trace (all)
 stat            <path>                   # show file information
 uefi                                     # UEFI information
 uptime                                   # show system running time
-windows,win,w                            # start Windows UEFI bootloader
+windows,win,w                            # launch Windows UEFI boot manager
 
 
 > uefi
