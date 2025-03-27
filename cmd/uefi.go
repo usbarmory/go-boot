@@ -21,7 +21,7 @@ import (
 	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
-const maxVendorSize = 32
+const maxVendorSize = 64
 
 func init() {
 	shell.Add(shell.Cmd{
