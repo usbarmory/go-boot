@@ -14,11 +14,16 @@ import (
 // standard output.
 var Console = &uefi.Console{
 	ForceLine: true,
+	In:        conIn,
 	Out:       conOut,
 }
 
 //go:linkname printk runtime.printk
 func printk(c byte) {
+	if Console.Out == 0 {
+		return
+	}
+
 	Console.Output([]byte{c})
 
 	if c == 0x0a && Console.ForceLine { // LF
