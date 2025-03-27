@@ -16,11 +16,11 @@ TEXT cpuinit(SB),NOSPLIT|NOFRAME,$0
 
 	// 12.3 Simple Text Input Protocol
 	MOVQ	48(DX), AX			// SystemTable_ConIn(DX)
-	MOVQ	AX, ·conIn(SB)			// earlyConsole.In
+	MOVQ	AX, ·conIn(SB)			// Console.In
 
 	// 12.4 Simple Text Output Protocol
 	MOVQ	64(DX), AX			// SystemTable_ConOut(DX)
-	MOVQ	AX, ·conOut(SB)			// earlyConsole.Out
+	MOVQ	AX, ·conOut(SB)			// Console.Out
 
 	// Enable SSE
 	CALL	sse_enable(SB)
