@@ -32,9 +32,15 @@ func allocateHeap() {
 
 	// locate runtime heap offset within UEFI memory allocation
 	for _, desc := range memoryMap.Descriptors {
+		if heapStart > 0 {
+			// increase RamSize to cover entire page
+			ramEnd = heapStart + uint64(desc.Size())
+			RamSize = ramEnd - ramStart
+			break
+		}
+
 		if desc.Type == uefi.EfiLoaderCode && desc.PhysicalStart == ramStart {
 			heapStart = desc.PhysicalEnd()
-			break
 		}
 	}
 
