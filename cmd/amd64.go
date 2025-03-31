@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/usbarmory/tamago/soc/intel/pci"
+
 	"github.com/usbarmory/go-boot/shell"
 	"github.com/usbarmory/go-boot/uefi/x64"
 )
@@ -30,6 +32,15 @@ func init() {
 		Syntax:  "<leaf> <subleaf>",
 		Help:    "show CPU capabilities",
 		Fn:      cpuidCmd,
+	})
+
+	shell.Add(shell.Cmd{
+		Name:    "lspci",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^lspci\s+(\d+)$`),
+		Syntax:  "<n>",
+		Help:    "list PCI bus devices",
+		Fn:      lspciCmd,
 	})
 }
 
@@ -78,7 +89,24 @@ func cpuidCmd(_ *shell.Interface, arg []string) (string, error) {
 	fmt.Fprintf(&res, "%08x %08x %08x %08x\n", eax, ebx, ecx, edx)
 
 	return res.String(), nil
+}
 
+func lspciCmd(_ *shell.Interface, arg []string) (string, error) {
+	var res bytes.Buffer
+
+	bus, err := strconv.ParseUint(arg[0], 10, 8)
+
+	if err != nil {
+		return "", fmt.Errorf("invalid bus number, %v", err)
+	}
+
+	fmt.Fprintf(&res, "Vendor Device Bar0\n")
+
+	for _, d := range pci.Devices(int(bus)) {
+		fmt.Fprintf(&res, "%04x   %04x   %#08x\n", d.Vendor, d.Device, d.BaseAddress0)
+	}
+
+	return res.String(), nil
 }
 
 func date(epoch int64) {
