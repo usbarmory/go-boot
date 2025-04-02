@@ -7,9 +7,9 @@ Shell and OS loader for AMD64 platforms, allowing UEFI API interaction and OS
 loading.
 
 The OS loading functionality supports launching of:
- * `l`  Linux kernels, with configuration parsed from Linux Userspace API (UAPI) [boot loader entries](https://uapi-group.org/specifications/specs/boot_loader_specification/)
- * `w`  Windows UEFI boot manager
- * `.`  EFI application images
+ * `.` EFI application images
+ * `l` Linux kernels, with configuration parsed from Linux Userspace API (UAPI) [boot loader entries](https://uapi-group.org/specifications/specs/boot_loader_specification/)
+ * `w` Windows UEFI boot manager
 
 Authors
 =======
