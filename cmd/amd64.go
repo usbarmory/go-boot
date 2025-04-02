@@ -36,10 +36,7 @@ func init() {
 
 	shell.Add(shell.Cmd{
 		Name:    "lspci",
-		Args:    1,
-		Pattern: regexp.MustCompile(`^lspci\s+(\d+)$`),
-		Syntax:  "<n>",
-		Help:    "list PCI bus devices",
+		Help:    "list PCI devices",
 		Fn:      lspciCmd,
 	})
 }
@@ -94,16 +91,12 @@ func cpuidCmd(_ *shell.Interface, arg []string) (string, error) {
 func lspciCmd(_ *shell.Interface, arg []string) (string, error) {
 	var res bytes.Buffer
 
-	bus, err := strconv.ParseUint(arg[0], 10, 8)
+	fmt.Fprintf(&res, "Bus Vendor Device Bar0\n")
 
-	if err != nil {
-		return "", fmt.Errorf("invalid bus number, %v", err)
-	}
-
-	fmt.Fprintf(&res, "Vendor Device Bar0\n")
-
-	for _, d := range pci.Devices(int(bus)) {
-		fmt.Fprintf(&res, "%04x   %04x   %#08x\n", d.Vendor, d.Device, d.BaseAddress0)
+	for i := 0; i < 256; i++ {
+		for _, d := range pci.Devices(i) {
+			fmt.Fprintf(&res, "%03d %04x   %04x   %#016x\n", i, d.Vendor, d.Device, d.BaseAddress(0))
+		}
 	}
 
 	return res.String(), nil
