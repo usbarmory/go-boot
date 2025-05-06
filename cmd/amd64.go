@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/usbarmory/tamago/amd64"
 	"github.com/usbarmory/tamago/soc/intel/pci"
 
 	"github.com/usbarmory/go-boot/shell"
@@ -60,6 +61,7 @@ func infoCmd(_ *shell.Interface, _ []string) (string, error) {
 	fmt.Fprintf(&res, "Text .........: %#08x-%#08x\n", textStart, textEnd)
 	fmt.Fprintf(&res, "Heap .........: %#08x-%#08x Alloc:%d MiB Sys:%d MiB\n", heapStart, ramEnd, m.HeapAlloc/(1024*1024), m.HeapSys/(1024*1024))
 	fmt.Fprintf(&res, "CPU ..........: %s\n", x64.AMD64.Name())
+	fmt.Fprintf(&res, "Cores ........: %d\n", amd64.NumCPU())
 	fmt.Fprintf(&res, "Frequency ....: %v GHz\n", float32(x64.AMD64.Freq())/1e9)
 
 	return res.String(), nil

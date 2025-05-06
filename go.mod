@@ -1,13 +1,13 @@
 module github.com/usbarmory/go-boot
 
-go 1.24.0
+go 1.24.2
 
 require (
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/u-root/u-root v0.14.1-0.20250211171033-17c75c6542a1
-	github.com/usbarmory/armory-boot v0.0.0-20250312220901-a2481cdf63c8
-	github.com/usbarmory/tamago v0.0.0-20250331221049-d65787edb544
-	golang.org/x/term v0.29.0
+	github.com/usbarmory/armory-boot v0.0.0-20250313080757-07776e494cb3
+	github.com/usbarmory/tamago v0.0.0-20250505101903-259bcd3bc7ae
+	golang.org/x/term v0.31.0
 )
 
 require (
@@ -18,5 +18,5 @@ require (
 	github.com/u-root/uio v0.0.0-20240209044354-b3d14b93376a // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
-	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 )
