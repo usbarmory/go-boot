@@ -7,6 +7,22 @@ package uefi
 
 const EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID = "9042a9de-23dc-4a38-96fb-7aded080516a"
 
+// EFI Graphics Output Protocol offsets
+const (
+	blt = 0x10
+)
+
+type BltOperation int
+
+// EFI_GRAPHICS_OUTPUT_BLT_OPERATION
+const (
+	EfiBltVideoFill = iota
+	EfiBltVideoToBltBuffer
+	EfiBltBufferToVideo
+	EfiBltVideoToVideo
+	EfiGraphicsOutputBltOperationMax
+)
+
 // ModeInformation represents an EFI Graphics Output Mode Information instance.
 type ModeInformation struct {
 	Version              uint32
@@ -39,17 +55,39 @@ func (d *ProtocolMode) GetInfo() (mi *ModeInformation, err error) {
 
 // GraphicsOutput represents an EFI Graphics Output Protocol instance.
 type GraphicsOutput struct {
-	QueryMode uint64
-	SetMode   uint64
-	Blt       uint64
-	Mode      uint64
+	base uint64
+	mode uint64
 }
 
 // GetMode returns the EFI Graphics Output Mode instance.
 func (gop *GraphicsOutput) GetMode() (pm *ProtocolMode, err error) {
 	pm = &ProtocolMode{}
-	err = decode(pm, gop.Mode)
+	err = decode(pm, gop.mode)
 	return
+}
+
+// Blt calls EFI_GRAPHICS_OUTPUT_PROTCOL.Blt().
+func (gop *GraphicsOutput) Blt(buf []byte, op BltOperation, srcX, srcY, dstX, dstY, width, height, delta uint64) (err error) {
+	if gop.base == 0 {
+		return nil
+	}
+
+	status := callService(gop.base+blt,
+		[]uint64{
+			gop.base,
+			ptrval(&buf[0]),
+			uint64(op),
+			srcX,
+			srcY,
+			dstX,
+			dstY,
+			width,
+			height,
+			delta,
+		},
+	)
+
+	return parseStatus(status)
 }
 
 // GetGraphicsOutput locates and returns the EFI Graphics Output Protocol
@@ -57,13 +95,22 @@ func (gop *GraphicsOutput) GetMode() (pm *ProtocolMode, err error) {
 func (s *BootServices) GetGraphicsOutput() (gop *GraphicsOutput, err error) {
 	gop = &GraphicsOutput{}
 
-	base, err := s.LocateProtocol(EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID)
+	var data struct {
+		QueryMode uint64
+		SetMode   uint64
+		Blt       uint64
+		Mode      uint64
+	}
 
-	if err != nil {
+	if gop.base, err = s.LocateProtocol(EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID); err != nil {
 		return
 	}
 
-	err = decode(gop, base)
+	if err = decode(&data, gop.base); err != nil {
+		return
+	}
+
+	gop.mode = data.Mode
 
 	return
 }
