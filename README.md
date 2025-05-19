@@ -20,9 +20,8 @@ andrea@inversepath.com
 Operation
 =========
 
-The default operation is to present an UEFI shell and its help, the <enter>
-shortcut boots the Arch Linux default UAPI entry at
-`\loader\entries\arch.conf`.
+The default operation is to present an UEFI shell and its help, the ⏎ shortcut
+boots the Arch Linux default UAPI entry at `\loader\entries\arch.conf`.
 
 ```
 Shell> go-boot.efi
