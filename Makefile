@@ -7,10 +7,11 @@ BUILD_TAGS = linkcpuinit,linkramsize,linkramstart,linkprintk
 SHELL = /bin/bash
 APP ?= go-boot
 CONSOLE ?= text
+DEFAULT_LINUX_ENTRY = \loader\entries\arch.conf
 
 IMAGE_BASE := 10000000
 TEXT_START := $(shell echo $$((16#$(IMAGE_BASE) + 16#10000)))
-GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -E cpuinit -T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOLE}'"
+GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "-s -w -E cpuinit -T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOLE}' -X 'github.com/usbarmory/go-boot/cmd.DefaultLinuxEntry=${DEFAULT_LINUX_ENTRY}'"
 GOENV := GOOS=tamago GOARCH=amd64
 
 OVMFCODE ?= OVMF_CODE.fd
