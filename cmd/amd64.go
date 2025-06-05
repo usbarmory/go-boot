@@ -105,9 +105,9 @@ func lspciCmd(_ *shell.Interface, arg []string) (string, error) {
 }
 
 func date(epoch int64) {
-	x64.AMD64.SetTimer(epoch)
+	x64.AMD64.SetTime(epoch)
 }
 
 func uptime() (ns int64) {
-	return int64(float64(x64.AMD64.TimerFn()) * x64.AMD64.TimerMultiplier)
+	return x64.AMD64.GetTime() - x64.AMD64.TimerOffset
 }

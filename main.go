@@ -37,7 +37,7 @@ func main() {
 		runtime.GOOS, runtime.GOARCH, runtime.Version())
 
 	iface := &shell.Interface{
-		Banner: banner,
+		Banner:  banner,
 		Console: x64.UEFI.Console,
 	}
 

@@ -43,7 +43,10 @@ var (
 // Peripheral instances
 var (
 	// AMD64 core
-	AMD64 = &amd64.CPU{}
+	AMD64 = &amd64.CPU{
+		// required before Init()
+		TimerMultiplier: 1,
+	}
 
 	// Real-Time Clock
 	RTC = &rtc.RTC{}
@@ -60,13 +63,13 @@ var (
 
 //go:linkname nanotime1 runtime.nanotime1
 func nanotime1() int64 {
-	return int64(float64(AMD64.TimerFn())*AMD64.TimerMultiplier) + AMD64.TimerOffset
+	return AMD64.GetTime()
 }
 
 // Init takes care of the lower level initialization triggered early in runtime
 // setup.
 //
-//go:linkname Init runtime.hwinit
+//go:linkname Init runtime.hwinit1
 func Init() {
 	// initialize CPU
 	AMD64.Init()
@@ -77,7 +80,7 @@ func Init() {
 
 func init() {
 	if t, err := RTC.Now(); err == nil {
-		AMD64.SetTimer(t.UnixNano())
+		AMD64.SetTime(t.UnixNano())
 	}
 
 	Console.ClearScreen()
