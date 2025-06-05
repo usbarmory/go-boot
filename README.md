@@ -21,7 +21,8 @@ Operation
 =========
 
 The default operation is to present an UEFI shell and its help, the ⏎ shortcut
-boots the Arch Linux default UAPI entry at `\loader\entries\arch.conf`.
+boots the default UAPI entry set at compile time (`DEFAULT_LINUX_ENTRY`
+variable, set to `\loader\entries\arch.conf` if unspecified).
 
 ```
 Shell> go-boot.efi
@@ -40,7 +41,8 @@ date            (time in RFC339 format)? # show/change runtime date and time
 exit,quit                                # exit application
 halt,shutdown                            # shutdown system
 info                                     # runtime information
-linux,l,\r      (loader entry path)?     # boot Linux kernel image
+linux,l         (loader entry path)?     # boot Linux kernel image
+linux,l,\r                               # `l \loader\entries\arch.conf`
 log                                      # show runtime logs
 lspci                                    # list PCI devices
 memmap          (e820)?                  # show UEFI memory map
