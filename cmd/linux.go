@@ -29,19 +29,29 @@ const (
 	exitRetries = 3
 )
 
-// LinuxDefaultEntry represents the default path for the UAPI Type #1 Boot
+// DefaultLinuxEntry represents the default path for the UAPI Type #1 Boot
 // Loader Entry.
-const LinuxDefaultEntry = `\loader\entries\arch.conf`
+var DefaultLinuxEntry string
 
 func init() {
 	shell.Add(shell.Cmd{
-		Name:    "linux,l,\\r",
+		Name:    "linux,l",
 		Args:    1,
-		Pattern: regexp.MustCompile(`^(?:linux|l|)(?: (\S+))?$`),
+		Pattern: regexp.MustCompile(`^(?:linux|l)(?: (\S+))?$`),
 		Syntax:  "(loader entry path)?",
 		Help:    "boot Linux kernel image",
 		Fn:      linuxCmd,
 	})
+
+	if len(DefaultLinuxEntry) > 0 {
+		shell.Add(shell.Cmd{
+			Name:    "linux,l,\\r",
+			Args:    1,
+			Pattern: regexp.MustCompile(`^(?:linux|l|)(?: (\S+))?$`),
+			Help:    fmt.Sprintf("`l %s`", DefaultLinuxEntry),
+			Fn:      linuxCmd,
+		})
+	}
 }
 
 func reserveMemory(m *uefi.MemoryMap, image *exec.LinuxImage) (err error) {
@@ -213,7 +223,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	path := strings.TrimSpace(arg[0])
 
 	if len(path) == 0 {
-		path = LinuxDefaultEntry
+		path = DefaultLinuxEntry
 	}
 
 	if x64.UEFI.Boot == nil {
