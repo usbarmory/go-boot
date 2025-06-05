@@ -20,7 +20,7 @@ LOG ?= qemu.log
 
 QEMU ?= qemu-system-x86_64 \
         -enable-kvm -cpu host,invtsc=on -m 8G \
-        -drive file=fat:rw:$(CURDIR) \
+        -drive file=fat:rw:$(CURDIR)/qemu-disk \
         -drive if=pflash,format=raw,readonly,file=$(OVMFCODE) \
         -drive if=pflash,format=raw,file=$(OVMFVARS) \
         -global isa-debugcon.iobase=0x402 \
@@ -42,6 +42,7 @@ qemu: $(APP).efi
 		echo 'qemu not available for this target'; \
 		exit 1; \
 	fi
+	mkdir -p $(CURDIR)/qemu-disk/efi/boot && cp $(CURDIR)/$(APP).efi $(CURDIR)/qemu-disk/efi/boot/bootx64.efi
 	$(QEMU)
 
 qemu-gdb: GOFLAGS := $(GOFLAGS:-w=)
@@ -58,7 +59,7 @@ check_tamago:
 	fi
 
 clean:
-	@rm -fr $(APP) $(APP).efi
+	@rm -fr $(APP) $(APP).efi $(CURDIR)/qemu-disk
 
 #### dependencies ####
 
