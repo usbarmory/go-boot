@@ -21,8 +21,8 @@ Operation
 =========
 
 The default operation is to present an UEFI shell and its help, the ⏎ shortcut
-boots the default UAPI entry set at compile time (`DEFAULT_LINUX_ENTRY`
-variable, set to `\loader\entries\arch.conf` if unspecified).
+(identically to `l` or `linux`) boots the default UAPI entry set at compile
+time (see _Compiling_).
 
 ```
 Shell> go-boot.efi
@@ -57,7 +57,6 @@ stat            <path>                   # show file information
 uefi                                     # UEFI information
 uptime                                   # show system running time
 windows,win,w                            # launch Windows UEFI boot manager
-
 
 > uefi
 UEFI Revision ......: 2.70
@@ -109,16 +108,23 @@ cd tamago-go-latest/src && ./all.bash
 cd ../bin && export TAMAGO=`pwd`/go
 ```
 
-The `CONSOLE` environment variable must be set to either `com1` or `text`
-(default) to configure the output console to serial port or UEFI console.
+The following environment variables configure the `go-boot.efi` executable
+build:
 
-The `IMAGE_BASE` environment variable must be set within a memory range (in
-hex) available in the target UEFI environment for the unikernel allocation, the
-[HCL](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list) or
-`memmap` command from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
-can provide such value, when empty a common default value is set.
+* `CONSOLE`: set to either `com1` or `text`
+  (default) controls the output console to either serial port or UEFI console.
 
-Build the `go-boot.efi` application executable:
+* `IMAGE_BASE`: must be set (in hex) within a memory range
+  available in the target UEFI environment for the unikernel allocation, the
+  [HCL](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list) or
+  `memmap` command from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
+  can provide such value, when empty a common default value is set.
+
+* `DEFAULT_LINUX_ENTRY`: defines the `linux,l,\r` shortcut loader entry path
+  for Linux kernel image booting, it defaults to `\loader\entries\arch.conf`
+  when unspecified.
+
+Build the `go-boot.efi` executable:
 
 ```
 git clone https://github.com/usbarmory/go-boot && cd go-boot
