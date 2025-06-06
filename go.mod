@@ -1,6 +1,6 @@
 module github.com/usbarmory/go-boot
 
-go 1.24.3
+go 1.24.4
 
 require (
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
