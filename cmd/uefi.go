@@ -225,7 +225,7 @@ func statCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	buf := make([]byte, stat.Size())
 
 	if _, err = f.Read(buf); err != nil {
-		return
+		return "", fmt.Errorf("could not read file, %v", err)
 	}
 
 	return fmt.Sprintf("Size:%d ModTime:%s IsDir:%v Sys:%#x Sum256:%x",

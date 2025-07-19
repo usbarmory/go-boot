@@ -113,6 +113,10 @@ func (f *fileProtocol) close(handle uint64) (err error) {
 func (f *fileProtocol) read(handle uint64, buf []byte) (n int, err error) {
 	size := uint64(len(buf))
 
+	if size == 0 {
+		return 0, io.EOF
+	}
+
 	status := callService(ptrval(&f.Read),
 		[]uint64{
 			handle,
@@ -121,7 +125,7 @@ func (f *fileProtocol) read(handle uint64, buf []byte) (n int, err error) {
 		},
 	)
 
-	if status == EFI_DEVICE_ERROR || size == 0 {
+	if status == EFI_DEVICE_ERROR {
 		return 0, io.EOF
 	}
 
