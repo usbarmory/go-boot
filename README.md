@@ -120,6 +120,10 @@ build:
   `memmap` command from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
   can provide such value, when empty a common default value is set.
 
+* `DEFAULT_EFI_ENTRY`: defines the `.` shortcut loader entry path
+  for EFI image loading, it defaults to `\efi\boot\bootx64.efi`
+  when unspecified.
+
 * `DEFAULT_LINUX_ENTRY`: defines the `linux,l,\r` shortcut loader entry path
   for Linux kernel image booting, it defaults to `\loader\entries\arch.conf`
   when unspecified.

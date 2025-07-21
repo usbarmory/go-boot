@@ -23,6 +23,10 @@ import (
 
 const maxVendorSize = 64
 
+// DefaultEFIEntry represents the default path for EFI image loading
+// (`.` command).
+var DefaultEFIEntry string
+
 func init() {
 	shell.Add(shell.Cmd{
 		Name: "uefi",
@@ -31,13 +35,23 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
-		Name:    ".",
+		Name:    ". ",
 		Args:    1,
-		Pattern: regexp.MustCompile(`^\. (.*)$`),
+		Pattern: regexp.MustCompile(`^\.(?: (\S+))?$`),
 		Syntax:  "<path>",
 		Help:    "load and start EFI image",
-		Fn:      launchCmd,
+		Fn:      imageCmd,
 	})
+
+	if len(DefaultEFIEntry) > 0 {
+		shell.Add(shell.Cmd{
+			Name:    ".",
+			Args:    1,
+			Pattern: regexp.MustCompile(`^\.(?: (\S+))?$`),
+			Help:    fmt.Sprintf("`. %s`", DefaultEFIEntry),
+			Fn:      imageCmd,
+		})
+	}
 
 	shell.Add(shell.Cmd{
 		Name:    "protocol",
@@ -146,15 +160,21 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	return buf.String(), err
 }
 
-func launchCmd(_ *shell.Interface, arg []string) (res string, err error) {
+func imageCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	path := arg[0]
+
+	if len(path) == 0 {
+		path = DefaultEFIEntry
+	}
+
 	root, err := x64.UEFI.Root()
 
 	if err != nil {
 		return "", fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	log.Printf("loading EFI image %s", arg[0])
-	h, err := x64.UEFI.Boot.LoadImage(0, root, arg[0])
+	log.Printf("loading EFI image %s", path)
+	h, err := x64.UEFI.Boot.LoadImage(0, root, path)
 
 	if err != nil {
 		return "", fmt.Errorf("could not load image, %v", err)

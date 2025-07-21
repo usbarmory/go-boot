@@ -23,5 +23,5 @@ func init() {
 }
 
 func winCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	return launchCmd(nil, []string{WindowsBootManager})
+	return imageCmd(nil, []string{WindowsBootManager})
 }

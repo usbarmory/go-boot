@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"strings"
 
 	"github.com/u-root/u-root/pkg/boot/bzimage"
 
@@ -30,7 +29,7 @@ const (
 )
 
 // DefaultLinuxEntry represents the default path for the UAPI Type #1 Boot
-// Loader Entry.
+// Loader Entry (`linux,l,\\r` command).
 var DefaultLinuxEntry string
 
 func init() {
@@ -220,7 +219,7 @@ func boot(image *exec.LinuxImage) (err error) {
 func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	var entry *uapi.Entry
 
-	path := strings.TrimSpace(arg[0])
+	path := arg[0]
 
 	if len(path) == 0 {
 		path = DefaultLinuxEntry
