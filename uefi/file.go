@@ -114,7 +114,7 @@ func (f *fileProtocol) read(handle uint64, buf []byte) (n int, err error) {
 	size := uint64(len(buf))
 
 	if size == 0 {
-		return 0, io.EOF
+		return 0, nil
 	}
 
 	status := callService(ptrval(&f.Read),
@@ -125,7 +125,7 @@ func (f *fileProtocol) read(handle uint64, buf []byte) (n int, err error) {
 		},
 	)
 
-	if status == EFI_DEVICE_ERROR {
+	if status == EFI_DEVICE_ERROR || size == 0 {
 		return 0, io.EOF
 	}
 
