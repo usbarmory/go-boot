@@ -1,12 +1,12 @@
 module github.com/usbarmory/go-boot
 
-go 1.24.6
+go 1.25.0
 
 require (
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/u-root/u-root v0.14.1-0.20250625074930-74aa3d116bae
 	github.com/usbarmory/armory-boot v0.0.0-20250313080757-07776e494cb3
-	github.com/usbarmory/tamago v0.0.0-20250710154000-3dd21eabac74
+	github.com/usbarmory/tamago v0.0.0-20250819083339-4bb13deae827
 	golang.org/x/term v0.34.0
 )
 
