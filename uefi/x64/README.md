@@ -3,7 +3,7 @@ TamaGo - bare metal Go - UEFI x64 support
 
 go-boot | https://github.com/usbarmory/go-boot  
 
-Copyright (c) WithSecure Corporation  
+Copyright (c) The go-boot authors. All Rights Reserved.
 
 ![TamaGo gopher](https://github.com/usbarmory/tamago/wiki/images/tamago.svg?sanitize=true)
 
@@ -89,7 +89,7 @@ License
 =======
 
 go-boot | https://github.com/usbarmory/go-boot  
-Copyright (c) WithSecure Corporation
+Copyright (c) The go-boot authors. All Rights Reserved.
 
 These source files are distributed under the BSD-style license found in the
 [LICENSE](https://github.com/usbarmory/go-boot/blob/main/LICENSE) file.

@@ -4,8 +4,8 @@ go 1.25.0
 
 require (
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
-	github.com/u-root/u-root v0.14.1-0.20250625074930-74aa3d116bae
-	github.com/usbarmory/armory-boot v0.0.0-20250313080757-07776e494cb3
+	github.com/u-root/u-root v0.15.0
+	github.com/usbarmory/armory-boot v0.0.0-20250819104900-0aba355eccb3
 	github.com/usbarmory/tamago v0.0.0-20250819083339-4bb13deae827
 	golang.org/x/term v0.34.0
 )
