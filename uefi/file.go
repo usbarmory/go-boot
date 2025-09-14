@@ -6,11 +6,13 @@
 package uefi
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"time"
+	"unicode/utf16"
 )
 
 const (
@@ -65,6 +67,28 @@ type fileInfo struct {
 	LastAccessTime   efiTime
 	ModificationTime efiTime
 	Attribute        uint64
+}
+
+const fileInfoSize = 80
+
+func (fi *fileInfo) decode(buf []byte) (name string, err error) {
+	var s []uint16
+
+	if err = unmarshalBinary(buf, fi); err != nil {
+		return
+	}
+
+	for i := fileInfoSize; i < len(buf); i += 2 {
+		if buf[i] == 0x00 && buf[i+1] == 0 {
+			break
+		}
+
+		s = append(s, binary.LittleEndian.Uint16(buf[i:i+2]))
+	}
+
+	name = string(utf16.Decode(s))
+
+	return
 }
 
 // open calls EFI_FILE_PROTOCOL.Open().
@@ -133,8 +157,8 @@ func (f *fileProtocol) read(handle uint64, buf []byte) (n int, err error) {
 }
 
 // getInfo calls EFI_FILE SYSTEM_PROTOCOL.GetInfo().
-func (f *fileProtocol) getInfo(handle uint64, guid []byte) (info *fileInfo, err error) {
-	buf := make([]byte, 8*7+512)
+func (f *fileProtocol) getInfo(handle uint64, guid []byte) (info *fileInfo, name string, err error) {
+	buf := make([]byte, fileInfoSize+MaxFileName*2)
 	size := uint64(len(buf))
 
 	status := callService(ptrval(&f.GetInfo),
@@ -151,7 +175,7 @@ func (f *fileProtocol) getInfo(handle uint64, guid []byte) (info *fileInfo, err 
 	}
 
 	info = &fileInfo{}
-	err = unmarshalBinary(buf[0:size], info)
+	name, err = info.decode(buf[0:size])
 
 	return
 }
@@ -161,6 +185,7 @@ type File struct {
 	file *fileProtocol
 	addr uint64
 	name string
+	n    int
 }
 
 // FileInfo implements the [fs.FileInfo] interface for the EFI File Protocol.
@@ -170,7 +195,7 @@ type FileInfo struct {
 	name string
 }
 
-// Name returns the name of the file as presented to Open.
+// Name returns the name of the file (or subdirectory) described by the entry.
 func (fi *FileInfo) Name() string {
 	return fi.name
 }
@@ -206,7 +231,7 @@ func (fi *FileInfo) ModTime() time.Time {
 	)
 }
 
-// IsDir reports whether fi describes a directory.
+// IsDir reports whether the entry describes a directory.
 func (fi *FileInfo) IsDir() bool {
 	return (fi.info.Attribute & EFI_FILE_DIRECTORY) > 0
 }
@@ -221,7 +246,6 @@ func (f *File) Stat() (fs.FileInfo, error) {
 	var err error
 
 	fi := &FileInfo{
-		name: f.name,
 		addr: f.addr,
 	}
 
@@ -231,7 +255,7 @@ func (f *File) Stat() (fs.FileInfo, error) {
 
 	infoType := GUID(EFI_FILE_INFO_ID).Bytes()
 
-	if fi.info, err = f.file.getInfo(f.addr, infoType); err != nil {
+	if fi.info, fi.name, err = f.file.getInfo(f.addr, infoType); err != nil {
 		return nil, err
 	}
 

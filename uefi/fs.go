@@ -11,6 +11,12 @@ import (
 	"io/fs"
 )
 
+// EFI system partition (FAT) limits
+const (
+	MaxFileName   = 256
+	MaxDirEntries = 65536
+)
+
 const (
 	EFI_LOADED_IMAGE_PROTOCOL_GUID             = "5b1b31a1-9562-11d2-8e3f-00a0c969723b"
 	EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID = "09576e91-6d3f-11d2-8e39-00a0c969723b"

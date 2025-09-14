@@ -14,6 +14,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 	"unicode/utf16"
 
 	"github.com/usbarmory/go-boot/shell"
@@ -72,6 +73,24 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
+		Name:    "ls",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^ls(?: (\S+))?`),
+		Syntax:  "(path)?",
+		Help:    "list directory contents",
+		Fn:      lsCmd,
+	})
+
+	shell.Add(shell.Cmd{
+		Name:    "stat",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^stat (.*)`),
+		Syntax:  "<path>",
+		Help:    "show file information",
+		Fn:      statCmd,
+	})
+
+	shell.Add(shell.Cmd{
 		Name: "clear",
 		Help: "clear screen",
 		Fn:   clearCmd,
@@ -84,15 +103,6 @@ func init() {
 		Syntax:  "<mode>",
 		Help:    "set screen mode",
 		Fn:      modeCmd,
-	})
-
-	shell.Add(shell.Cmd{
-		Name:    "stat",
-		Args:    1,
-		Pattern: regexp.MustCompile(`^stat (.*)`),
-		Syntax:  "<path>",
-		Help:    "show file information",
-		Fn:      statCmd,
 	})
 
 	shell.Add(shell.Cmd{
@@ -196,6 +206,7 @@ func catCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not open root volume, %v", err)
 	}
 
+	arg[0] = strings.ReplaceAll(arg[0], `/`, `\`)
 	buf, err := fs.ReadFile(root, arg[0])
 
 	if err != nil {
@@ -205,20 +216,44 @@ func catCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	return string(buf), nil
 }
 
-func clearCmd(_ *shell.Interface, _ []string) (string, error) {
-	return "", x64.UEFI.Console.ClearScreen()
-}
+func lsCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	var buf bytes.Buffer
+	var info fs.FileInfo
 
-func modeCmd(_ *shell.Interface, arg []string) (string, error) {
-	mode, err := strconv.ParseUint(arg[0], 16, 64)
+	path := arg[0]
 
-	if err != nil {
-		return "", fmt.Errorf("invalid mode, %v", err)
+	if len(path) == 0 {
+		path = "."
 	}
 
-	defer log.Printf("switched to EFI Console mode %d", mode)
+	root, err := x64.UEFI.Root()
 
-	return "", x64.UEFI.Console.SetMode(mode)
+	if err != nil {
+		return "", fmt.Errorf("could not open root volume, %v", err)
+	}
+
+	path = strings.ReplaceAll(path, `/`, `\`)
+	entries, err := fs.ReadDir(root, path)
+
+	if err != nil {
+		return "", fmt.Errorf("could not read directory, %v", err)
+	}
+
+	for _, entry := range entries {
+		if info, err = entry.Info(); err != nil {
+			return
+		}
+
+		if info.IsDir() {
+			fmt.Fprintf(&buf, "d ")
+		} else {
+			fmt.Fprintf(&buf, "f ")
+		}
+
+		fmt.Fprintf(&buf, "%s\n", entry.Name())
+	}
+
+	return buf.String(), err
 }
 
 func statCmd(_ *shell.Interface, arg []string) (res string, err error) {
@@ -228,6 +263,7 @@ func statCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not open root volume, %v", err)
 	}
 
+	arg[0] = strings.ReplaceAll(arg[0], `/`, `\`)
 	f, err := root.Open(arg[0])
 
 	if err != nil {
@@ -255,6 +291,22 @@ func statCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		stat.Sys(),
 		sha256.Sum256(buf),
 	), nil
+}
+
+func clearCmd(_ *shell.Interface, _ []string) (string, error) {
+	return "", x64.UEFI.Console.ClearScreen()
+}
+
+func modeCmd(_ *shell.Interface, arg []string) (string, error) {
+	mode, err := strconv.ParseUint(arg[0], 16, 64)
+
+	if err != nil {
+		return "", fmt.Errorf("invalid mode, %v", err)
+	}
+
+	defer log.Printf("switched to EFI Console mode %d", mode)
+
+	return "", x64.UEFI.Console.SetMode(mode)
 }
 
 func memmapCmd(_ *shell.Interface, arg []string) (res string, err error) {

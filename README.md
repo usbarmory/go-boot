@@ -44,6 +44,7 @@ info                                     # runtime information
 linux,l         (loader entry path)?     # boot Linux kernel image
 linux,l,\r                               # `l \loader\entries\arch.conf`
 log                                      # show runtime logs
+ls              (path)?                  # list directory contents
 lspci                                    # list PCI devices
 memmap          (e820)?                  # show UEFI memory map
 mode            <mode>                   # set screen mode
