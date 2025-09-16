@@ -75,7 +75,7 @@ func init() {
 	shell.Add(shell.Cmd{
 		Name:    "ls",
 		Args:    1,
-		Pattern: regexp.MustCompile(`^ls(?: (\S+))?`),
+		Pattern: regexp.MustCompile(`^ls(?: (\S+))?$`),
 		Syntax:  "(path)?",
 		Help:    "list directory contents",
 		Fn:      lsCmd,
