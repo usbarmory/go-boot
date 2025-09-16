@@ -23,7 +23,7 @@ func allocateHeap() {
 	memoryMap, err := UEFI.Boot.GetMemoryMap()
 
 	if err != nil {
-		fmt.Printf("WARNING: could not get memory map, %err\n", err)
+		fmt.Printf("WARNING: could not get memory map, %v\n", err)
 		return
 	}
 
@@ -54,6 +54,6 @@ func allocateHeap() {
 		int(ramEnd-heapStart),
 		heapStart,
 	); err != nil {
-		fmt.Printf("WARNING: could not allocate heap at %x\n", heapStart)
+		fmt.Printf("WARNING: could not allocate heap at %x, %v\n", heapStart, err)
 	}
 }
