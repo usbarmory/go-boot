@@ -29,6 +29,7 @@ QEMU ?= qemu-system-x86_64 \
         -drive if=pflash,format=raw,file=$(OVMFVARS) \
         -global isa-debugcon.iobase=0x402 \
         -serial stdio -vga virtio \
+        # -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
         # -debugcon file:$(LOG)
 
 .PHONY: clean
@@ -42,16 +43,13 @@ elf: $(APP)
 efi: $(APP).efi
 
 qemu: $(APP).efi
-	@if [ "${QEMU}" == "" ]; then \
-		echo 'qemu not available for this target'; \
-		exit 1; \
-	fi
 	mkdir -p $(CURDIR)/qemu-disk/efi/boot && cp $(CURDIR)/$(APP).efi $(CURDIR)/qemu-disk/efi/boot/bootx64.efi
 	$(QEMU)
 
 qemu-gdb: GOFLAGS := $(GOFLAGS:-w=)
 qemu-gdb: GOFLAGS := $(GOFLAGS:-s=)
 qemu-gdb: $(APP).efi
+	mkdir -p $(CURDIR)/qemu-disk/efi/boot && cp $(CURDIR)/$(APP).efi $(CURDIR)/qemu-disk/efi/boot/bootx64.efi
 	$(QEMU) -S -s
 
 #### utilities ####
