@@ -22,6 +22,7 @@ const (
 	start      = 0x08
 	stop       = 0x10
 	initialize = 0x18
+	reset      = 0x20
 	getStatus  = 0x58
 	transmit   = 0x60
 	receive    = 0x68
@@ -66,6 +67,18 @@ func (sn *SimpleNetwork) Initialize() (err error) {
 		[]uint64{
 			sn.base,
 			0,
+			0,
+		},
+	)
+
+	return parseStatus(status)
+}
+
+// Reset calls EFI_SIMPLE_NETWORK.Reset()
+func (sn *SimpleNetwork) Reset() (err error) {
+	status := callService(sn.base+reset,
+		[]uint64{
+			sn.base,
 			0,
 		},
 	)
