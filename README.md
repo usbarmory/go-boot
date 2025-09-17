@@ -171,7 +171,8 @@ as follows:
 make qemu CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd> OVMFVARS=<path to OVMF_VARS.fd>
 ```
 
-The emulation run will provide an interactive console.
+The emulation run will provide an interactive console, depending on the OVMF
+configuration issuing `bootx64.efi` might be required to start the target.
 
 An emulated target can be [debugged with GDB](https://retrage.github.io/2019/12/05/debugging-ovmf-en.html/)
 using `make qemu-gdb`, this will make qemu waiting for a GDB connection that
