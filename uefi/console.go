@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"time"
+	"runtime"
 	"unicode/utf16"
 )
 
@@ -173,18 +173,7 @@ func (c *Console) Read(p []byte) (n int, err error) {
 
 		switch {
 		case status&0xff == EFI_NOT_READY:
-			// Compatibility note:
-			//
-			// shell.(*Interface).readLine now starves the
-			// scheduler, however this package currently has no
-			// need for background goroutines.
-			//
-			// In case this becomes undesirable here add:
-			//  runtime.Gosched()
-			//
-			// For now we just take an atomic nap as that eases a
-			// benign HeapAlloc increase due to GC starvation.
-			time.Sleep(1 * time.Millisecond)
+			runtime.Gosched()
 			return
 		case status != EFI_SUCCESS:
 			return n, parseStatus(status)
