@@ -5,6 +5,11 @@
 
 package uefi
 
+import (
+	"errors"
+	"time"
+)
+
 const (
 	EFI_SIMPLE_NETWORK_PROTOCOL_GUID     = "a19832b9-ac25-11d3-9a2d-0090273fc14d"
 	EFI_SIMPLE_NETWORK_PROTOCOL_REVISION = 0x00010000
@@ -21,6 +26,8 @@ const (
 	transmit   = 0x60
 	receive    = 0x68
 )
+
+var TransmitTimeout = 100 * time.Millisecond
 
 // SimpleNetwork represents an EFI Simple Network Protocol instance.
 type SimpleNetwork struct {
@@ -83,6 +90,8 @@ func (sn *SimpleNetwork) GetStatus() (interruptStatus uint32, txBuf uint64, err 
 func (sn *SimpleNetwork) Transmit(buf []byte) (err error) {
 	var interruptStatus uint32
 
+	start := time.Now()
+
 	status := callService(sn.base+transmit,
 		[]uint64{
 			sn.base,
@@ -106,6 +115,10 @@ func (sn *SimpleNetwork) Transmit(buf []byte) (err error) {
 
 		if interruptStatus & EFI_SIMPLE_NETWORK_TRANSMIT_INTERRUPT != 0 {
 			break
+		}
+
+		if time.Since(start) > TransmitTimeout {
+			return errors.New("timeout")
 		}
 	}
 
