@@ -42,6 +42,10 @@ func (sn *SimpleNetwork) Start() (err error) {
 		},
 	)
 
+	if status == EFI_ALREADY_STARTED {
+		return nil
+	}
+
 	return parseStatus(status)
 }
 
