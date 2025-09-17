@@ -50,6 +50,14 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not locate network protocol, %v", err)
 	}
 
+	if err = nic.Stop(); err != nil {
+		return "", fmt.Errorf("could not stop interface, %v", err)
+	}
+
+	if err = nic.Reset(); err != nil {
+		return "", fmt.Errorf("could not reset interface, %v", err)
+	}
+
 	if err = nic.Start(); err != nil {
 		return "", fmt.Errorf("could not start interface, %v", err)
 	}
