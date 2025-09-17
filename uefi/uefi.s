@@ -6,7 +6,7 @@
 #include "textflag.h"
 
 // func callFn(fn uint64, n int, args []uint64) (status uint64)
-TEXT ·callFn(SB),$0-48
+TEXT ·callFn(SB),NOSPLIT,$0-48
 	MOVQ	fn+0(FP), DI
 	MOVQ	n+8(FP), R13
 	MOVQ	args+16(FP), R12
@@ -20,6 +20,8 @@ TEXT ·callFn(SB),$0-48
 	JE	ret
 
 	MOVQ	SP, BX		// callee-saved
+
+	ANDQ	$~15, SP	// alignment for x86_64 ABI
 
 	// Unified Extensible Firmware Interface (UEFI) Specification
 	// Version 2.10 - 2.3.4.2 Detailed Calling Conventions
@@ -46,8 +48,6 @@ TEXT ·callFn(SB),$0-48
 	CMPQ	R13, $0
 	JE	call
 
-	ANDQ	$~15, SP	// alignment for x86_64 ABI
-
 	// 5th arguments and above are pushed in reverse order on the stack
 
 	// move to last element
@@ -59,9 +59,9 @@ TEXT ·callFn(SB),$0-48
 	MOVQ	R13, R14
 	ANDQ	$1, R14
 	CMPQ	R13, R14
-	JNE	align
+	JNE	aligned
 	PUSHQ	$0		// ensure 16-byte alignment
-align:
+aligned:
 	MOVQ	R13, R14
 push:
 	SUBQ	$8, R12
@@ -69,23 +69,14 @@ push:
 	SUBQ	$1, R13
 	CMPQ	R13, $0
 	JNE	push
-
-	ADJSP	$32		// shadow stack
-	CALL	(DI)
-	ADJSP	$-32
-pop:
-	POPQ	CX
-	SUBQ	$1, R14
-	CMPQ	R14, $0
-	JNE	pop
-	JMP	done
+	JMP	call
 
 dummy:
-	// balance PUSH/POP Go assembler error for conditional alignment
+	// avoid unbalanced PUSH/POP Go assembler error
+	POPQ	CX
 	POPQ	CX
 
 call:
-	ANDQ	$~15, SP	// alignment for x86_64 ABI
 	ADJSP	$32		// shadow stack
 	CALL	(DI)
 	ADJSP	$-32
