@@ -26,6 +26,8 @@ const signature = 0x5453595320494249 // TSYS IBI
 var mux sync.Mutex
 
 // defined in uefi.s
+//
+//go:noescape
 func callFn(fn uint64, n int, args []uint64) (status uint64)
 
 // callService calls an UEFI service
