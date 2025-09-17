@@ -42,7 +42,7 @@ func (sn *SimpleNetwork) Start() (err error) {
 		},
 	)
 
-	if status == EFI_ALREADY_STARTED {
+	if status & 0xff == EFI_ALREADY_STARTED {
 		return nil
 	}
 
