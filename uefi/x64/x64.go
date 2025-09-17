@@ -14,6 +14,7 @@ package x64
 
 import (
 	"fmt"
+	"runtime"
 	_ "unsafe"
 
 	"github.com/usbarmory/tamago/amd64"
@@ -73,6 +74,9 @@ func nanotime1() int64 {
 func Init() {
 	// initialize CPU
 	AMD64.Init()
+
+	// disable CPU idle time management
+	runtime.Idle = nil
 
 	// initialize serial console
 	UART0.Init()
