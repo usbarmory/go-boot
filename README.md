@@ -48,6 +48,7 @@ ls              (path)?                  # list directory contents
 lspci                                    # list PCI devices
 memmap          (e820)?                  # show UEFI memory map
 mode            <mode>                   # set screen mode
+net             <ip> <gateway>           # start UEFI networking
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
 protocol        <registry format GUID>   # locate UEFI protocol
