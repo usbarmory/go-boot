@@ -49,11 +49,11 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	if err = nic.Start(); err != nil {
-		return
+		return "", fmt.Errorf("could not start interface, %v", err)
 	}
 
 	if err = nic.Initialize(); err != nil {
-		return
+		return "", fmt.Errorf("could not initialize interface, %v", err)
 	}
 
 	iface := gnet.Interface{}
