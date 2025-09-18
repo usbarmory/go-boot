@@ -132,7 +132,7 @@ func (c *Interface) handle(t *term.Terminal) {
 	}
 
 	fmt.Fprintf(t, "\n%s\n\n", c.Banner)
-	c.Help(nil, nil)
+	c.Help(nil, nil) // FIXME
 
 	c.once.Do(func() {
 		Add(Cmd{

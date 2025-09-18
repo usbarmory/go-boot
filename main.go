@@ -12,7 +12,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"runtime"
 
 	"github.com/usbarmory/go-boot/cmd"
 	"github.com/usbarmory/go-boot/shell"
@@ -33,11 +32,8 @@ func init() {
 }
 
 func main() {
-	banner := fmt.Sprintf("go-boot • %s/%s (%s) • UEFI x64",
-		runtime.GOOS, runtime.GOARCH, runtime.Version())
-
 	iface := &shell.Interface{
-		Banner:  banner,
+		Banner:  cmd.Banner,
 		Console: x64.UEFI.Console,
 	}
 

@@ -43,7 +43,7 @@ func (sn *SimpleNetwork) Start() (err error) {
 		},
 	)
 
-	if status & 0xff == EFI_ALREADY_STARTED {
+	if status&0xff == EFI_ALREADY_STARTED {
 		return nil
 	}
 
@@ -130,7 +130,7 @@ func (sn *SimpleNetwork) Transmit(buf []byte) (err error) {
 			return
 		}
 
-		if interruptStatus & EFI_SIMPLE_NETWORK_TRANSMIT_INTERRUPT != 0 {
+		if interruptStatus&EFI_SIMPLE_NETWORK_TRANSMIT_INTERRUPT != 0 {
 			break
 		}
 

@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"runtime"
 	"runtime/debug"
 	"runtime/pprof"
 	"time"
@@ -23,7 +24,12 @@ import (
 const testDiversifier = "\xde\xad\xbe\xef"
 const LogPath = "/go-boot.log"
 
+var Banner string
+
 func init() {
+	Banner = fmt.Sprintf("go-boot • %s/%s (%s) • UEFI x64",
+		runtime.GOOS, runtime.GOARCH, runtime.Version())
+
 	shell.Add(shell.Cmd{
 		Name: "build",
 		Help: "build information",
