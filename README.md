@@ -48,7 +48,7 @@ ls              (path)?                  # list directory contents
 lspci                                    # list PCI devices
 memmap          (e820)?                  # show UEFI memory map
 mode            <mode>                   # set screen mode
-net             <ip> <gateway>           # start UEFI networking
+net             <ip> <mac> <gw> (debug)? # start UEFI networking
 peek            <hex offset> <size>      # memory display (use with caution)
 poke            <hex offset> <hex value> # memory write   (use with caution)
 protocol        <registry format GUID>   # locate UEFI protocol
@@ -113,9 +113,6 @@ cd ../bin && export TAMAGO=`pwd`/go
 The following environment variables configure the `go-boot.efi` executable
 build:
 
-* `CONSOLE`: set to either `com1` or `text`
-  (default) controls the output console to either serial port or UEFI console.
-
 * `IMAGE_BASE`: must be set (in hex) within a memory range
   available in the target UEFI environment for the unikernel allocation, the
   [HCL](https://github.com/usbarmory/go-boot/wiki#hardware-compatibility-list) or
@@ -129,6 +126,12 @@ build:
 * `DEFAULT_LINUX_ENTRY`: defines the `linux,l,\r` shortcut loader entry path
   for Linux kernel image booting, it defaults to `\loader\entries\arch.conf`
   when unspecified.
+
+* `CONSOLE`: set to either `com1` or `text` (default) controls the output
+  console to either serial port or UEFI console.
+
+* `NET`: set to either `0` (default) or `1` controls enabling of the `net
+  command.
 
 Build the `go-boot.efi` executable:
 

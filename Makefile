@@ -3,12 +3,17 @@
 # Use of this source code is governed by the license
 # that can be found in the LICENSE file.
 
+NET ?= 0
 BUILD_TAGS = linkcpuinit,linkramsize,linkramstart,linkprintk
 SHELL = /bin/bash
 APP ?= go-boot
 CONSOLE ?= text
 DEFAULT_EFI_ENTRY = \efi\boot\bootx64.efi
 DEFAULT_LINUX_ENTRY = \loader\entries\arch.conf
+
+ifeq ($(NET),1)
+    BUILD_TAGS := $(BUILD_TAGS),net
+endif
 
 IMAGE_BASE := 10000000
 TEXT_START := $(shell echo $$((16#$(IMAGE_BASE) + 16#10000)))
@@ -28,9 +33,12 @@ QEMU ?= qemu-system-x86_64 \
         -drive if=pflash,format=raw,readonly,file=$(OVMFCODE) \
         -drive if=pflash,format=raw,file=$(OVMFVARS) \
         -global isa-debugcon.iobase=0x402 \
-        -serial stdio -vga virtio \
-        # -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
+        -serial stdio -nographic -monitor none \
         # -debugcon file:$(LOG)
+
+ifeq ($(NET),1)
+        QEMU := $(QEMU) -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
+endif
 
 .PHONY: clean
 

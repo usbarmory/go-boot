@@ -10,8 +10,12 @@ package cmd
 import (
 	"fmt"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"regexp"
+	"strings"
 
+	"github.com/arl/statsviz"
 	"github.com/usbarmory/go-net"
 
 	"github.com/usbarmory/go-boot/shell"
@@ -24,9 +28,9 @@ var Resolver = "8.8.8.8:53"
 func init() {
 	shell.Add(shell.Cmd{
 		Name:    "net",
-		Args:    3,
-		Pattern: regexp.MustCompile(`^net (\S+) (\S+) (\S+)$`),
-		Syntax:  "<ip> <mac> <gateway>",
+		Args:    4,
+		Pattern: regexp.MustCompile(`^net (\S+) (\S+) (\S+)( debug)?$`),
+		Syntax:  "<ip> <mac> <gw> (debug)?",
 		Help:    "start UEFI networking",
 		Fn:      netCmd,
 	})
@@ -77,6 +81,18 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	// hook interface into Go runtime
 	net.SocketFunc = iface.Socket
+
+	if len(arg[3]) > 0 {
+		ip, _, _ := strings.Cut(arg[0], `/`)
+		fmt.Printf("starting debug servers:\n")
+		fmt.Printf("\thttp://%s:80/debug/pprof\n", ip)
+		fmt.Printf("\thttp://%s:80/debug/statsviz\n", ip)
+
+		go func() {
+			statsviz.RegisterDefault()
+			http.ListenAndServe("10.0.0.1:80", nil)
+		}()
+	}
 
 	return "network initialized", nil
 }

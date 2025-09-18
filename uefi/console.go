@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"runtime"
+	"time"
 	"unicode/utf16"
 )
 
@@ -173,7 +173,7 @@ func (c *Console) Read(p []byte) (n int, err error) {
 
 		switch {
 		case status&0xff == EFI_NOT_READY:
-			runtime.Gosched()
+			time.Sleep(1 * time.Millisecond)
 			return
 		case status != EFI_SUCCESS:
 			return n, parseStatus(status)
