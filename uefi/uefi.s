@@ -21,6 +21,11 @@ TEXT ·callFn(SB),NOSPLIT,$0-48
 
 	MOVQ	SP, BX		// callee-saved
 
+	// set stack to unused RAM boundary (see runtime.ramStackOffset)
+	MOVQ	runtime·ramStart(SB), SP
+	MOVQ	runtime·ramSize(SB), CX
+	ADDQ	CX, SP
+
 	ANDQ	$~15, SP	// alignment for x86_64 ABI
 
 	// Unified Extensible Firmware Interface (UEFI) Specification
@@ -77,9 +82,9 @@ dummy:
 	POPQ	CX
 
 call:
-	ADJSP	$32		// shadow stack
+	ADJSP	$(4*8)		// shadow stack
 	CALL	(DI)
-	ADJSP	$-32
+	ADJSP	$-(4*8)
 
 done:
 	MOVQ	BX, SP
