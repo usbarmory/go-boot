@@ -170,7 +170,7 @@ UEFI networking
 
 With `NET=1` passed in the environment builds include UEFI networking support
 through the [Simple Network Protocol](https://uefi.org/specs/UEFI/2.10_A/24_Network_Protocols_SNP_PXE_BIS.html)
-(SNP).
+(SNP) and [go-net](https://github.com/usbarmory/go-net).
 
 On such builds the `net` and `dns` commands become available and `make qemu`
 will require a tap0 interface.
