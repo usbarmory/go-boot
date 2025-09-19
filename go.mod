@@ -3,7 +3,7 @@ module github.com/usbarmory/go-boot
 go 1.25.1
 
 require (
-	github.com/gliderlabs/ssh v0.1.2-0.20181113160402-cbabf5414432
+	github.com/gliderlabs/ssh v0.3.8
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/u-root/u-root v0.15.0
 	github.com/usbarmory/armory-boot v0.0.0-20250827125939-ac32f955c61c
