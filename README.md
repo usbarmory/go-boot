@@ -38,6 +38,7 @@ cat             <path>                   # show file contents
 clear                                    # clear screen
 cpuid           <leaf> <subleaf>         # show CPU capabilities
 date            (time in RFC339 format)? # show/change runtime date and time
+dns             <host>                   # resolve domain
 exit,quit                                # exit application
 halt,shutdown                            # shutdown system
 info                                     # runtime information
@@ -130,8 +131,8 @@ build:
 * `CONSOLE`: set to either `com1` or `text` (default) controls the output
   console to either serial port or UEFI console.
 
-* `NET`: set to either `0` (default) or `1` controls enabling of the `net
-  command.
+* `NET`: set to either `0` (default) or `1` controls enabling of UEFI
+  networking support (see _UEFI networking_).
 
 Build the `go-boot.efi` executable:
 
@@ -164,6 +165,30 @@ The following example shows creation of an EFI boot entry using
 efibootmgr -C -L "go-boot" -d $DISK -p $PART -l '\EFI\go-boot.efi'
 ```
 
+UEFI networking
+===============
+
+With `NET=1` passed in the environment builds include UEFI networking support
+through the [Simple Network Protocol](https://uefi.org/specs/UEFI/2.10_A/24_Network_Protocols_SNP_PXE_BIS.html)
+(SNP).
+
+On such builds the `net` and `dns` commands become available and `make qemu`
+will require a tap0 interface.
+
+The `debug` argument, when passed as final argument to `net`, will enable Go
+[profiling server](https://pkg.go.dev/net/http/pprof) as well as an
+unauthenticated SSH console.
+
+```
+> net 10.0.0.1/24 ff:ff:ff:ff:ff:ff 10.0.0.2 debug
+starting debug servers:
+        http://10.0.0.1:80/debug/pprof
+        ssh://10.0.0.1:22
+network initialized
+> dns google.com
+[216.58.205.46 2a00:1450:4002:411::200e]
+```
+
 Emulated hardware with QEMU
 ===========================
 
@@ -177,6 +202,14 @@ make qemu CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd> OVMFVARS=<path to OVMF_VA
 
 The emulation run will provide an interactive console, depending on the OVMF
 configuration issuing `bootx64.efi` might be required to start the target.
+
+With `NET=1` tap0 should be configured as follows (Linux example):
+
+```
+ip tuntap add dev tap0 mode tap group <your user group>
+ip addr add 10.0.0.2/24 dev tap0
+ip link set tap0 up
+```
 
 An emulated target can be [debugged with GDB](https://retrage.github.io/2019/12/05/debugging-ovmf-en.html/)
 using `make qemu-gdb`, this will make qemu waiting for a GDB connection that
