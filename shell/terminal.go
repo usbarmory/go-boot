@@ -13,7 +13,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"sync"
 
 	"golang.org/x/term"
 
@@ -43,8 +42,6 @@ type Interface struct {
 	Terminal *term.Terminal
 	// Console represents the UEFI Console
 	Console *uefi.Console
-
-	once sync.Once
 }
 
 func (c *Interface) handleLine(line string) (err error) {
@@ -134,14 +131,6 @@ func (c *Interface) handle(t *term.Terminal) {
 	fmt.Fprintf(t, "\n%s\n\n", c.Banner)
 	Help(c, nil)
 
-	c.once.Do(func() {
-		Add(Cmd{
-			Name: "help",
-			Help: "this help",
-			Fn:   Help,
-		})
-	})
-
 	for {
 		if err := c.readLine(t); err != nil {
 			return
@@ -152,6 +141,12 @@ func (c *Interface) handle(t *term.Terminal) {
 // Start handles registered commands over the interface Terminal or ReadWriter,
 // the argument specifies whether ReadWriter is VT100 compatible.
 func (c *Interface) Start(vt100 bool) {
+	Add(Cmd{
+		Name: "help",
+		Help: "this help",
+		Fn:   Help,
+	})
+
 	switch {
 	case c.Terminal != nil:
 		c.handle(c.Terminal)
