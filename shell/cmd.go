@@ -49,7 +49,7 @@ func Add(cmd Cmd) {
 
 // Help returns a formatted string with instructions for all registered
 // commands.
-func (c *Interface) Help(_ *Interface, _ []string) (_ string, _ error) {
+func Help(c *Interface, _ []string) (_ string, _ error) {
 	var help bytes.Buffer
 	var names []string
 
