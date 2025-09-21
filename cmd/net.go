@@ -81,7 +81,7 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	if err = nic.StationAddress(false, iface.NIC.MAC); err != nil {
-		return "", fmt.Errorf("could not set permanent station address, %v", err)
+		fmt.Errorf("could not set permanent station address, %v\n", err)
 	}
 
 	iface.EnableICMP()

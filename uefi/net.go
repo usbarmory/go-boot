@@ -99,6 +99,7 @@ func (sn *SimpleNetwork) ReceiveFilters(enableMask uint32, disableMask uint32) (
 	status := callService(sn.base+receiveFilters,
 		[]uint64{
 			sn.base,
+			enableMask,
 			0,
 			0,
 			0,
