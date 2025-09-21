@@ -11,7 +11,7 @@ const (
 	watchdogCode     = 0xba3e5e7a1
 )
 
-// SetWatchdogTimer calls EFI_BOOT_SERVICES.SetWatchdogTimer()
+// SetWatchdogTimer calls EFI_BOOT_SERVICES.SetWatchdogTimer().
 func (s *BootServices) SetWatchdogTimer(sec int) (err error) {
 	status := callService(s.base+setWatchdogTimer,
 		[]uint64{

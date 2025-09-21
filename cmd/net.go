@@ -19,6 +19,7 @@ import (
 	"github.com/usbarmory/go-net"
 
 	"github.com/usbarmory/go-boot/shell"
+	"github.com/usbarmory/go-boot/uefi"
 	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
@@ -54,20 +55,23 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not locate network protocol, %v", err)
 	}
 
-	if err = nic.Stop(); err != nil {
-		return "", fmt.Errorf("could not stop interface, %v", err)
-	}
-
-	if err = nic.Reset(); err != nil {
-		return "", fmt.Errorf("could not reset interface, %v", err)
-	}
-
-	if err = nic.Start(); err != nil {
-		return "", fmt.Errorf("could not start interface, %v", err)
-	}
+	// clean up from previous initializations
+	nic.Shutdown()
+	nic.Stop()
+	nic.Start()
 
 	if err = nic.Initialize(); err != nil {
 		return "", fmt.Errorf("could not initialize interface, %v", err)
+	}
+
+	enableMask := uefi.EFI_SIMPLE_NETWORK_RECEIVE_UNICAST | uefi.EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST
+
+	if err = nic.ReceiveFilters(uint32(enableMask), 0); err != nil {
+		return "", fmt.Errorf("could not set receive filters, %v", err)
+	}
+
+	if err = nic.StationAddress(true, nil); err != nil {
+		return "", fmt.Errorf("could not set permanent station address, %v", err)
 	}
 
 	iface := gnet.Interface{}
