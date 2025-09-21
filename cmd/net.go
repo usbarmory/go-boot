@@ -26,6 +26,8 @@ import (
 // Resolver represents the default name server
 var Resolver = "8.8.8.8:53"
 
+const receiveMask = uefi.EFI_SIMPLE_NETWORK_RECEIVE_UNICAST | uefi.EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST
+
 func init() {
 	shell.Add(shell.Cmd{
 		Name:    "net",
@@ -64,20 +66,22 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not initialize interface, %v", err)
 	}
 
-	enableMask := uefi.EFI_SIMPLE_NETWORK_RECEIVE_UNICAST | uefi.EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST
-
-	if err = nic.ReceiveFilters(uint32(enableMask), 0); err != nil {
+	if err = nic.ReceiveFilters(receiveMask, 0); err != nil {
 		return "", fmt.Errorf("could not set receive filters, %v", err)
-	}
-
-	if err = nic.StationAddress(true, nil); err != nil {
-		return "", fmt.Errorf("could not set permanent station address, %v", err)
 	}
 
 	iface := gnet.Interface{}
 
+	if arg[1] == ":" {
+		arg[1] = ""
+	}
+
 	if err := iface.Init(nic, arg[0], arg[1], arg[2]); err != nil {
 		return "", fmt.Errorf("could not initialize networking, %v", err)
+	}
+
+	if err = nic.StationAddress(false, iface.NIC.MAC); err != nil {
+		return "", fmt.Errorf("could not set permanent station address, %v", err)
 	}
 
 	iface.EnableICMP()
@@ -110,7 +114,7 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		}()
 	}
 
-	return "network initialized", nil
+	return fmt.Sprintf("network initialized (%s %s)", arg[0], iface.NIC.MAC), nil
 }
 
 func dnsCmd(_ *shell.Interface, arg []string) (res string, err error) {

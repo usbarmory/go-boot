@@ -180,11 +180,11 @@ The `debug` argument, when passed as final argument to `net`, will enable Go
 unauthenticated SSH console.
 
 ```
-> net 10.0.0.1/24 ff:ff:ff:ff:ff:ff 10.0.0.2 debug
+> net 10.0.0.1/24 : 10.0.0.2 debug
 starting debug servers:
         http://10.0.0.1:80/debug/pprof
         ssh://10.0.0.1:22
-network initialized
+network initialized (10.0.0.1/24 da:e7:ac:e2:5e:05)
 > dns google.com
 [216.58.205.46 2a00:1450:4002:411::200e]
 ```
