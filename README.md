@@ -176,7 +176,7 @@ On such builds the `net` and `dns` commands become available and `make qemu`
 will require a tap0 interface.
 
 The `net` command takes an IP address in CIDR notation, a fixed MAC address or
-`:` for automatically generate a random one and a gateway IP address as
+`:` to automatically generate a random MAC, and a gateway IP address as
 arguments.
 
 The optional `debug` strings can be passed as final argument to `net` to enable
