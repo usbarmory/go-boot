@@ -37,7 +37,7 @@ const (
 )
 
 // TransmitTimeout represents the timeout for [SimpleNetwork.Transmit].
-var TransmitTimeout = 100 * time.Millisecond
+var TransmitTimeout = 10 * time.Millisecond
 
 // SimpleNetwork represents an EFI Simple Network Protocol instance.
 type SimpleNetwork struct {
