@@ -190,8 +190,8 @@ starting debug servers:
         ssh://10.0.0.1:22
 network initialized (10.0.0.1/24 da:e7:ac:e2:5e:05)
 
-> dns google.com
-[216.58.205.46 2a00:1450:4002:411::200e]
+> dns golang.org
+[142.251.209.17 2a00:1450:4002:410::2011]
 ```
 
 Emulated hardware with QEMU
