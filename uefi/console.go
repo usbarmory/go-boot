@@ -174,6 +174,7 @@ func (c *Console) Read(p []byte) (n int, err error) {
 		switch {
 		case status&0xff == EFI_NOT_READY:
 			if n == 0 {
+				// avoid starving Go scheduler
 				time.Sleep(1 * time.Millisecond)
 			}
 
