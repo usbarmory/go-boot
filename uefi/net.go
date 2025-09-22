@@ -21,6 +21,8 @@ const (
 	EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST             = 0x04
 	EFI_SIMPLE_NETWORK_RECEIVE_PROMISCUOUS           = 0x08
 	EFI_SIMPLE_NETWORK_RECEIVE_PROMISCUOUS_MULTICAST = 0x10
+
+	EFI_MAC_ADDRESS_SIZE = 32
 )
 
 // EFI Simple Network Protocol offsets
@@ -119,8 +121,9 @@ func (sn *SimpleNetwork) StationAddress(reset bool, mac []byte) (err error) {
 		r = 1
 	}
 
-	if n := len(mac); n > 0 && n <= 32 {
-		mac = append(mac, make([]byte, 32-n)...)
+	if n := len(mac); n > 0 && n <= EFI_MAC_ADDRESS_SIZE {
+		pad := make([]byte, EFI_MAC_ADDRESS_SIZE-n)
+		mac = append(mac, pad...)
 		m = ptrval(&mac[0])
 	}
 
@@ -136,7 +139,7 @@ func (sn *SimpleNetwork) StationAddress(reset bool, mac []byte) (err error) {
 }
 
 // GetStatus calls EFI_SIMPLE_NETWORK.GetStatus().
-func (sn *SimpleNetwork) GetStatus() (interruptStatus uint32, txBuf uint64, err error) {
+func (sn *SimpleNetwork) GetStatus() (interruptStatus uint32, txBuf uintptr, err error) {
 	status := callService(sn.base+getStatus,
 		[]uint64{
 			sn.base,
@@ -154,9 +157,7 @@ func (sn *SimpleNetwork) GetStatus() (interruptStatus uint32, txBuf uint64, err 
 // EFI_SIMPLE_NETWORK.GetStatus() to report a transmit interrupt within
 // [TransmitTimeout] before returning.
 func (sn *SimpleNetwork) Transmit(buf []byte) (err error) {
-	var interruptStatus uint32
-
-	start := time.Now()
+	var txBuf uintptr
 
 	status := callService(sn.base+transmit,
 		[]uint64{
@@ -170,16 +171,22 @@ func (sn *SimpleNetwork) Transmit(buf []byte) (err error) {
 		},
 	)
 
-	if err = parseStatus(status); err != nil {
-		return
-	}
+	start := time.Now()
 
 	for {
-		if interruptStatus, _, err = sn.GetStatus(); err != nil {
+		if status&0xff == EFI_NOT_READY {
+			continue
+		}
+
+		if err = parseStatus(status); err != nil {
 			return
 		}
 
-		if interruptStatus&EFI_SIMPLE_NETWORK_TRANSMIT_INTERRUPT != 0 {
+		if _, txBuf, err = sn.GetStatus(); err != nil {
+			return
+		}
+
+		if txBuf > 0 {
 			break
 		}
 
