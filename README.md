@@ -175,9 +175,13 @@ through the [Simple Network Protocol](https://uefi.org/specs/UEFI/2.10_A/24_Netw
 On such builds the `net` and `dns` commands become available and `make qemu`
 will require a tap0 interface.
 
-The `debug` argument, when passed as final argument to `net`, will enable Go
-[profiling server](https://pkg.go.dev/net/http/pprof) as well as an
-unauthenticated SSH console.
+The `net` command takes an IP address in CIDR notation, a fixed MAC address or
+`:` for automatically generate a random one and a gateway IP address as
+arguments.
+
+The optional `debug` strings can be passed as final argument to `net` to enable
+Go [profiling server](https://pkg.go.dev/net/http/pprof) and an unauthenticated
+SSH console exposing the UEFI shell.
 
 ```
 > net 10.0.0.1/24 : 10.0.0.2 debug
@@ -185,6 +189,7 @@ starting debug servers:
         http://10.0.0.1:80/debug/pprof
         ssh://10.0.0.1:22
 network initialized (10.0.0.1/24 da:e7:ac:e2:5e:05)
+
 > dns google.com
 [216.58.205.46 2a00:1450:4002:411::200e]
 ```

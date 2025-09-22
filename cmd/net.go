@@ -26,7 +26,9 @@ import (
 // Resolver represents the default name server
 var Resolver = "8.8.8.8:53"
 
-const receiveMask = uefi.EFI_SIMPLE_NETWORK_RECEIVE_UNICAST | uefi.EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST
+const receiveMask = uefi.EFI_SIMPLE_NETWORK_RECEIVE_UNICAST |
+	uefi.EFI_SIMPLE_NETWORK_RECEIVE_BROADCAST |
+	uefi.EFI_SIMPLE_NETWORK_RECEIVE_PROMISCUOUS
 
 func init() {
 	shell.Add(shell.Cmd{
