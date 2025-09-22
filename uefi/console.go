@@ -168,7 +168,7 @@ func (c *Console) Output(p []byte) (status uint64) {
 func (c *Console) Read(p []byte) (n int, err error) {
 	k := &InputKey{}
 
-	for n = 0; n < len(p); n += 2 {
+	for n < len(p) {
 		status := c.Input(k)
 
 		switch {
@@ -182,6 +182,8 @@ func (c *Console) Read(p []byte) (n int, err error) {
 		default:
 			copy(p[n:], k.UnicodeChar[:])
 		}
+
+		n += 2
 	}
 
 	return
