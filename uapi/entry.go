@@ -100,7 +100,7 @@ func LoadEntry(fsys fs.FS, path string) (e *Entry, err error) {
 
 	for line := range strings.Lines(string(entry)) {
 		if err = e.parseKey(line); err != nil {
-			return nil, fmt.Errorf("error parsing entry line, %v line:%s\n", err, line)
+			return nil, fmt.Errorf("error parsing entry line, %v line:%s", err, line)
 		}
 	}
 
