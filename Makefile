@@ -4,6 +4,7 @@
 # that can be found in the LICENSE file.
 
 NET ?= 0
+DEBUG ?= 0
 BUILD_TAGS = linkcpuinit,linkramsize,linkramstart,linkprintk
 SHELL = /bin/bash
 APP ?= go-boot
@@ -13,6 +14,10 @@ DEFAULT_LINUX_ENTRY = \loader\entries\arch.conf
 
 ifeq ($(NET),1)
     BUILD_TAGS := $(BUILD_TAGS),net
+endif
+
+ifeq ($(DEBUG),1)
+    BUILD_TAGS := $(BUILD_TAGS),debug
 endif
 
 IMAGE_BASE := 10000000
