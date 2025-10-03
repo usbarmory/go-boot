@@ -87,6 +87,8 @@ call:
 	ADJSP	$-(4*8)		// balance ADJSP to avoid compiler error
 
 done:
+	// disable interrupts
+	CLI
 	MOVQ	BX, SP
 	MOVQ	AX, status+40(FP)
 ret:

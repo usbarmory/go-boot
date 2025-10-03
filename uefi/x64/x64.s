@@ -7,6 +7,9 @@
 #include "textflag.h"
 
 TEXT cpuinit(SB),NOSPLIT|NOFRAME,$0
+	// disable interrupts
+	CLI
+
 	// Unified Extensible Firmware Interface (UEFI) Specification
 	// Version 2.10
 
