@@ -77,14 +77,14 @@ push:
 	JMP	call
 
 dummy:
-	// avoid unbalanced PUSH/POP Go assembler error
+	// balance PUSHQ to avoid compiler error
 	POPQ	CX
 	POPQ	CX
 
 call:
 	ADJSP	$(4*8)		// shadow stack
 	CALL	(DI)
-	ADJSP	$-(4*8)
+	ADJSP	$-(4*8)		// balance ADJSP to avoid compiler error
 
 done:
 	MOVQ	BX, SP

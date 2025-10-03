@@ -23,15 +23,15 @@ import (
 // EFI Table Header Signature
 const signature = 0x5453595320494249 // TSYS IBI
 
-var mux sync.Mutex
+var mu sync.Mutex
 
 //go:noescape
 func callFn(fn uint64, n int, args []uint64) (status uint64)
 
 // callService calls an UEFI service
 func callService(fn uint64, args []uint64) (status uint64) {
-	mux.Lock()
-	defer mux.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 
 	return callFn(fn, len(args), args)
 }
