@@ -35,13 +35,9 @@ func (g GUID) Bytes() (guid []byte) {
 
 		switch i {
 		case 0:
-			guid = append(guid, buf[3])
-			guid = append(guid, buf[2])
-			guid = append(guid, buf[1])
-			guid = append(guid, buf[0])
+			guid = append(guid, buf[3], buf[2], buf[1], buf[0])
 		case 1, 2:
-			guid = append(guid, buf[1])
-			guid = append(guid, buf[0])
+			guid = append(guid, buf[1], buf[0])
 		default:
 			guid = append(guid, buf...)
 		}
