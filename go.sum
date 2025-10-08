@@ -30,9 +30,8 @@ github.com/usbarmory/armory-boot v0.0.0-20250827125939-ac32f955c61c h1:ekQ4/W+e5
 github.com/usbarmory/armory-boot v0.0.0-20250827125939-ac32f955c61c/go.mod h1:1KvIPXDJo6OceGoTvEccw1DLf0Xr69UyK7/c7uycyTM=
 github.com/usbarmory/go-net v0.0.0-20251003201608-93d9ffe808de h1:5O20CXXbFwjrqyDFtCyFUlxiRLCdc+ksT8MUihbjIDg=
 github.com/usbarmory/go-net v0.0.0-20251003201608-93d9ffe808de/go.mod h1:+6WiKCFJtJQZdNM2VpwQsYGo/aBJ39pN7nWx6Td3Z8s=
-github.com/usbarmory/tamago v1.25.2-0.20250915195610-7b6e648e66bf/go.mod h1:F10GriCplrO5/E/B4HFdtIN1nZ3LsjDdwM/GBiH8o+o=
-github.com/usbarmory/tamago v1.25.2-0.20251003125135-77c99e30198c h1:4G3FAsNsoD0bftum3/hrl3yxV4O68xDvu/NTsaHOzFU=
-github.com/usbarmory/tamago v1.25.2-0.20251003125135-77c99e30198c/go.mod h1:EXc/MNBHWuwlYGi2N3VRfR9oYfGYnOkqasoxP4SM4Ig=
+github.com/usbarmory/tamago v1.25.2 h1:3yNRVhlFnTU4h/VZ2IDWc73mF1J4qlDWTwnynoN23bo=
+github.com/usbarmory/tamago v1.25.2/go.mod h1:CySGMX26pVXp1CMBxA5bq52eXEWqXqr+mWcZQW2e54c=
 golang.org/x/crypto v0.41.0 h1:WKYxWedPGCTVVl5+WHSSrOBT0O8lx32+zxmHxijgXp4=
 golang.org/x/crypto v0.41.0/go.mod h1:pO5AFd7FA68rFak7rOAGVuygIISepHftHnr8dr6+sUc=
 golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 h1:nDVHiLt8aIbd/VzvPWN6kSOPE7+F/fNFDSXLVYkE/Iw=
