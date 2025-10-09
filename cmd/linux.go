@@ -123,7 +123,7 @@ func efiInfo(memoryMap *uefi.MemoryMap) (efi *exec.EFI, err error) {
 		MemoryMapSize:     uint32(memoryMap.MapSize),
 		MemoryMap:         uint32(memoryMap.Address()),
 		MemoryDescSize:    uint32(memoryMap.DescriptorSize),
-		MemoryDescVersion: 1, //
+		MemoryDescVersion: 1, // Linux only accepts this value
 	}, nil
 }
 
