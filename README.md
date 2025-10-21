@@ -205,9 +205,6 @@ as follows:
 make qemu CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd>
 ```
 
-The emulation run will provide an interactive console, depending on the OVMF
-configuration issuing `bootx64.efi` might be required to start the target.
-
 With `NET=1` tap0 should be configured as follows (Linux example):
 
 ```
