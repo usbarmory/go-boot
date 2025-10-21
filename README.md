@@ -28,7 +28,7 @@ time (see _Compiling_).
 Shell> go-boot.efi
 
 initializing EFI services
-initializing console (com1)
+initializing console (text)
 
 go-boot • tamago/amd64 (go1.24.1) • UEFI x64
 
@@ -202,7 +202,7 @@ QEMU supported targets can be executed under emulation, using the
 as follows:
 
 ```
-make qemu CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd>
+make qemu OVMFCODE=<path to OVMF_CODE.fd>
 ```
 
 With `NET=1` tap0 should be configured as follows (Linux example):
