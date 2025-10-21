@@ -29,7 +29,7 @@ GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "${LDFLAGS}"
 GOENV := GOOS=tamago GOARCH=amd64
 
 OVMFCODE ?= OVMF_CODE.fd
-OVMFVARS ?= OVMF_VARS.fd
+OVMFVARS ?=
 LOG ?= qemu.log
 
 QEMU ?= qemu-system-x86_64 \
@@ -38,8 +38,11 @@ QEMU ?= qemu-system-x86_64 \
         -drive if=pflash,format=raw,readonly,file=$(OVMFCODE) \
         -global isa-debugcon.iobase=0x402 \
         -serial stdio -vga virtio \
-        # -drive if=pflash,format=raw,file=$(OVMFVARS) \
         # -debugcon file:$(LOG)
+
+ifneq ($(OVMFVARS),)
+        QEMU := $(QEMU) -drive if=pflash,format=raw,file=$(OVMFVARS)
+endif
 
 ifeq ($(NET),1)
         QEMU := $(QEMU) -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
