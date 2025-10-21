@@ -202,7 +202,7 @@ QEMU supported targets can be executed under emulation, using the
 as follows:
 
 ```
-make qemu CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd> OVMFVARS=<path to OVMF_VARS.fd>
+make qemu CONSOLE=com1 OVMFCODE=<path to OVMF_CODE.fd>
 ```
 
 The emulation run will provide an interactive console, depending on the OVMF

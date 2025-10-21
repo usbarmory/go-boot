@@ -36,9 +36,9 @@ QEMU ?= qemu-system-x86_64 \
         -enable-kvm -cpu host,invtsc=on -m 8G \
         -drive file=fat:rw:$(CURDIR)/qemu-disk \
         -drive if=pflash,format=raw,readonly,file=$(OVMFCODE) \
-        -drive if=pflash,format=raw,file=$(OVMFVARS) \
         -global isa-debugcon.iobase=0x402 \
         -serial stdio -vga virtio \
+        # -drive if=pflash,format=raw,file=$(OVMFVARS) \
         # -debugcon file:$(LOG)
 
 ifeq ($(NET),1)
