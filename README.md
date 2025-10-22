@@ -11,6 +11,10 @@ The OS loading functionality supports launching of:
  * `l` Linux kernels, with configuration parsed from Linux Userspace API (UAPI) [boot loader entries](https://uapi-group.org/specifications/specs/boot_loader_specification/)
  * `w` Windows UEFI boot manager
 
+The support of
+[boot-transparency](https://github.com/usbarmory/boot-transparency) is planned
+for future releases.
+
 Authors
 =======
 
