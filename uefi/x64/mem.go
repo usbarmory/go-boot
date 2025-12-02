@@ -63,21 +63,26 @@ func allocateHeap() {
 }
 
 // AllocateDMA initializes the global memory region for DMA buffer allocation
-// at the end of allocated heap space, reducing available Go runtime memory.
+// at the end of allocated Go runtime heap space.
+//
+// Once allocated `RamSize` is diminished accordingly, reducing available Go
+// runtime memory. It is the caller responsibility to ensure that the DMA
+// allocation takes place over an unused memory area.
 func AllocateDMA(size int) (err error) {
+	_, ramEnd := runtime.MemRegion()
+
 	if size <= dmaSize {
 		return
 	}
 
-	_, ramEnd := runtime.MemRegion()
 	RamSize -= uint64(size)
+	err = dma.Init(uint(ramEnd) - uint(size), size)
 
-	if err = dma.Init(uint(ramEnd) - uint(size), size); err != nil {
+	if err != nil {
 		RamSize += uint64(size)
-		return
+	} else {
+		dmaSize = size
 	}
 
-	dmaSize = size
-
-	return nil
+	return
 }
