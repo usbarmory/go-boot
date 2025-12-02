@@ -10,6 +10,8 @@ import (
 	"runtime"
 	_ "unsafe"
 
+	"github.com/usbarmory/tamago/dma"
+
 	"github.com/usbarmory/go-boot/uefi"
 )
 
@@ -18,6 +20,8 @@ var _unused uint64 = 0x00100000 // overridden in x64.s
 
 //go:linkname RamSize runtime.ramSize
 var RamSize uint64 = 0x2c000000 // 704MB
+
+var dmaSize int
 
 func allocateHeap() {
 	memoryMap, err := UEFI.Boot.GetMemoryMap()
@@ -56,4 +60,24 @@ func allocateHeap() {
 	); err != nil {
 		fmt.Printf("WARNING: could not allocate heap at %x, %v\n", heapStart, err)
 	}
+}
+
+// AllocateDMA initializes the global memory region for DMA buffer allocation
+// at the end of allocated heap space, reducing available Go runtime memory.
+func AllocateDMA(size int) (err error) {
+	if size <= dmaSize {
+		return
+	}
+
+	_, ramEnd := runtime.MemRegion()
+	RamSize -= uint64(size)
+
+	if err = dma.Init(uint(ramEnd) - uint(size), size); err != nil {
+		RamSize += uint64(size)
+		return
+	}
+
+	dmaSize = size
+
+	return nil
 }
