@@ -163,7 +163,7 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 
 	if c, err := t.ConfigurationTables(); err == nil {
 		for _, t := range c {
-			fmt.Fprintf(&buf, "  %s (%#x)\n", t.RegistryFormat(), t.VendorTable)
+			fmt.Fprintf(&buf, "  %s (%#x)\n", t.GUID.String(), t.VendorTable)
 		}
 	}
 
@@ -195,7 +195,11 @@ func imageCmd(_ *shell.Interface, arg []string) (res string, err error) {
 }
 
 func locateCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	addr, err := x64.UEFI.Boot.LocateProtocol(uefi.GUID(arg[0]))
+	g, e := uefi.ParseGUID(arg[0])
+	if e != nil {
+		return "", fmt.Errorf("invalid GUID provided: %v", e)
+	}
+	addr, err := x64.UEFI.Boot.LocateProtocol(g)
 	return fmt.Sprintf("%s: %#08x", arg[0], addr), err
 }
 

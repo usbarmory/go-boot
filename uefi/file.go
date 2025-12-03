@@ -15,9 +15,11 @@ import (
 	"unicode/utf16"
 )
 
-const (
-	EFI_FILE_INFO_ID = "09576e92-6d3f-11d2-8e39-00a0c969723b"
+var (
+	EFI_FILE_INFO_ID = MustParseGUID("09576e92-6d3f-11d2-8e39-00a0c969723b")
+)
 
+const (
 	EFI_FILE_PROTOCOL_REVISION  = 0x00010000
 	EFI_FILE_PROTOCOL_REVISION2 = 0x00020000
 
@@ -157,14 +159,14 @@ func (f *fileProtocol) read(handle uint64, buf []byte) (n int, err error) {
 }
 
 // getInfo calls EFI_FILE SYSTEM_PROTOCOL.GetInfo().
-func (f *fileProtocol) getInfo(handle uint64, guid []byte) (info *fileInfo, name string, err error) {
+func (f *fileProtocol) getInfo(handle uint64, guid GUID) (info *fileInfo, name string, err error) {
 	buf := make([]byte, fileInfoSize+MaxFileName*2)
 	size := uint64(len(buf))
 
 	status := callService(ptrval(&f.GetInfo),
 		[]uint64{
 			handle,
-			ptrval(&guid[0]),
+			guid.ptrval(),
 			ptrval(&size),
 			ptrval(&buf[0]),
 		},
@@ -253,9 +255,7 @@ func (f *File) Stat() (fs.FileInfo, error) {
 		return nil, errors.New("invalid file instance")
 	}
 
-	infoType := GUID(EFI_FILE_INFO_ID).Bytes()
-
-	if fi.info, fi.name, err = f.file.getInfo(f.addr, infoType); err != nil {
+	if fi.info, fi.name, err = f.file.getInfo(f.addr, EFI_FILE_INFO_ID); err != nil {
 		return nil, err
 	}
 
