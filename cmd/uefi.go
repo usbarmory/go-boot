@@ -380,8 +380,6 @@ func efivarCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	verbose := arg[0] == "verbose"
 
-	fmt.Fprintln(&buf, "UEFI variables:")
-
 	for {
 		if err = x64.UEFI.Runtime.GetNextVariableName(&name, &guid); err != nil {
 			break
@@ -393,23 +391,21 @@ func efivarCmd(_ *shell.Interface, arg []string) (res string, err error) {
 			continue
 		}
 
-		attr, dataSize, _, err := x64.UEFI.Runtime.GetVariable(name, guid, false)
+		attr, _, err := x64.UEFI.Runtime.GetVariable(name, guid, false)
 
 		if err != nil {
 			fmt.Fprintf(&buf, "    <could not obtain variable information>\n")
 			continue
 		}
 
-		fmt.Fprintf(&buf, "    dataSize: 0x%x\n", dataSize)
-		fmt.Fprintf(&buf, "    attributes:\n")
-		fmt.Fprintf(&buf, "      EFI_VARIABLE_NON_VOLATILE:                          %v\n", attr.NonVolatile)
-		fmt.Fprintf(&buf, "      EFI_VARIABLE_BOOTSERVICE_ACCESS:                    %v\n", attr.BootServiceAccess)
-		fmt.Fprintf(&buf, "      EFI_VARIABLE_RUNTIME_ACCESS:                        %v\n", attr.RuntimeServiceAccess)
-		fmt.Fprintf(&buf, "      EFI_VARIABLE_HARDWARE_ERROR_RECORD:                 %v\n", attr.HardwareErrorRecord)
-		fmt.Fprintf(&buf, "      EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS:            %v\n", attr.AuthWriteAccess)
-		fmt.Fprintf(&buf, "      EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS: %v\n", attr.TimeBasedAuthWriteAccess)
-		fmt.Fprintf(&buf, "      EFI_VARIABLE_APPEND_WRITE:                          %v\n", attr.AppendWrite)
-		fmt.Fprintf(&buf, "      EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS:         %v\n", attr.EnhancedAuthAccess)
+		fmt.Fprintf(&buf, "    EFI_VARIABLE_NON_VOLATILE:                          %v\n", attr.NonVolatile)
+		fmt.Fprintf(&buf, "    EFI_VARIABLE_BOOTSERVICE_ACCESS:                    %v\n", attr.BootServiceAccess)
+		fmt.Fprintf(&buf, "    EFI_VARIABLE_RUNTIME_ACCESS:                        %v\n", attr.RuntimeServiceAccess)
+		fmt.Fprintf(&buf, "    EFI_VARIABLE_HARDWARE_ERROR_RECORD:                 %v\n", attr.HardwareErrorRecord)
+		fmt.Fprintf(&buf, "    EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS:            %v\n", attr.AuthWriteAccess)
+		fmt.Fprintf(&buf, "    EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS: %v\n", attr.TimeBasedAuthWriteAccess)
+		fmt.Fprintf(&buf, "    EFI_VARIABLE_APPEND_WRITE:                          %v\n", attr.AppendWrite)
+		fmt.Fprintf(&buf, "    EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS:         %v\n", attr.EnhancedAuthAccess)
 	}
 
 	// fix-up error value as GetNextVariableName will return ErrEfiNotFound

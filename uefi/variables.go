@@ -33,8 +33,9 @@ type VariableAttributes struct {
 
 // GetVariable calls EFI_RUNTIME_SERVICES.GetVariable().
 // See: https://uefi.org/specs/UEFI/2.11/08_Services_Runtime_Services.html#getvariable
-func (s *RuntimeServices) GetVariable(name string, guid GUID, withData bool) (attr VariableAttributes, dataSize uint64, data []byte, err error) {
+func (s *RuntimeServices) GetVariable(name string, guid GUID, withData bool) (attr VariableAttributes, data []byte, err error) {
 	var attributes uint32
+	var size uint64
 
 	// Convert lastName to UTF-16 for UEFI
 	nameUTF16 := toUTF16(name)
@@ -45,46 +46,43 @@ func (s *RuntimeServices) GetVariable(name string, guid GUID, withData bool) (at
 			ptrval(&nameUTF16[0]),
 			guid.ptrval(),
 			ptrval(&attributes),
-			ptrval(&dataSize),
+			ptrval(&size),
 			0,
 		},
 	)
 
-	if status != EFI_SUCCESS && status&0xff != EFI_BUFFER_TOO_SMALL {
-		return VariableAttributes{}, 0, nil, parseStatus(status)
+	if status != EFI_SUCCESS && (status&0xff) != EFI_BUFFER_TOO_SMALL {
+		return VariableAttributes{}, nil, parseStatus(status)
 	}
 
-	// Parse attributes
-	attr.NonVolatile = attributes&0x1 != 0
-	attr.BootServiceAccess = attributes&0x2 != 0
-	attr.RuntimeServiceAccess = attributes&0x4 != 0
-	attr.HardwareErrorRecord = attributes&0x8 != 0
-	attr.AuthWriteAccess = attributes&0x10 != 0
-	attr.TimeBasedAuthWriteAccess = attributes&0x20 != 0
-	attr.AppendWrite = attributes&0x40 != 0
-	attr.EnhancedAuthAccess = attributes&0x80 != 0
+	attr = VariableAttributes{
+		NonVolatile:              attributes&0x01 != 0,
+		BootServiceAccess:        attributes&0x02 != 0,
+		RuntimeServiceAccess:     attributes&0x04 != 0,
+		HardwareErrorRecord:      attributes&0x08 != 0,
+		AuthWriteAccess:          attributes&0x10 != 0,
+		TimeBasedAuthWriteAccess: attributes&0x20 != 0,
+		AppendWrite:              attributes&0x40 != 0,
+		EnhancedAuthAccess:       attributes&0x80 != 0,
+	}
 
 	if !withData {
-		return attr, dataSize, nil, nil
+		return attr, nil, nil
 	}
 
 	// The second call retrieves the data
-	data = make([]byte, dataSize)
+	data = make([]byte, size)
 	status = callService(s.base+getVariable,
 		[]uint64{
 			ptrval(&nameUTF16[0]),
 			ptrval(&guid[0]),
 			0,
-			ptrval(&dataSize),
+			ptrval(&size),
 			ptrval(&data[0]),
 		},
 	)
 
-	if err = parseStatus(status); err != nil {
-		return attr, 0, nil, err
-	}
-
-	return attr, dataSize, data, nil
+	return attr, data, parseStatus(status)
 }
 
 // GetNextVariableName calls EFI_RUNTIME_SERVICES.GetNextVariableName().
