@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -129,6 +130,13 @@ func init() {
 		Pattern: regexp.MustCompile(`^(halt|shutdown)$`),
 		Help:    "shutdown system",
 		Fn:      shutdownCmd,
+	})
+
+	shell.Add(shell.Cmd{
+		Name: "efivar",
+		Args: 0,
+		Help: "List all UEFI variables",
+		Fn:   efivarCmd,
 	})
 }
 
@@ -361,4 +369,27 @@ func resetCmd(_ *shell.Interface, arg []string) (_ string, err error) {
 
 func shutdownCmd(_ *shell.Interface, _ []string) (_ string, err error) {
 	return resetCmd(nil, []string{"shutdown"})
+}
+
+func efivarCmd(_ *shell.Interface, _ []string) (res string, err error) {
+	var buf bytes.Buffer
+	var guid uefi.GUID
+
+	name := ""
+
+	fmt.Fprintf(&buf, "UEFI variables:\n")
+	for {
+		err = x64.UEFI.Runtime.GetNextVariableName(&name, &guid)
+		if err != nil {
+			break
+		}
+		fmt.Fprintf(&buf, "  %s %s\n", name, guid.String())
+	}
+
+	// fix-up error value. GetNextVariableName will return ErrEfiNotFound if there are no more variables
+	if errors.Is(err, uefi.ErrEfiNotFound) {
+		err = nil
+	}
+
+	return buf.String(), err
 }
