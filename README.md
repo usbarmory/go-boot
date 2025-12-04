@@ -14,8 +14,8 @@ The OS loading functionality supports launching of:
 Authors
 =======
 
-Andrea Barisani  
-andrea@inversepath.com  
+Andrea Barisani
+andrea@inversepath.com
 
 Operation
 =========
@@ -231,10 +231,79 @@ b cpuinit
 continue
 ```
 
+Google Compute Engine deployments
+=================================
+
+The following example demonstrates how to create a UEFI-bootable image
+for Google Compute Engine and deploy it using the Google Cloud CLI
+(though tools like [ops](https://github.com/nanovms/ops) can also be used).
+
+Creation of the raw image:
+
+```
+git clone https://github.com/usbarmory/go-boot && cd go-boot
+make efi IMAGE_BASE=00100000 CONSOLE=text
+
+dd if=/dev/zero of=disk.raw bs=1M count=100
+sudo losetup -f disk.raw
+# IMPORTANT: before proceeding with the next command ensure
+# the ${LOOP_DEV} is reflecting the correct /dev/loopX device
+# pointing to disk.raw (see losetup -l)
+sudo mkfs.vfat -F 32 ${LOOP_DEV}
+sudo mount ${LOOP_DEV} /mnt/
+sudo mkdir -p /mnt/EFI/BOOT
+sudo cp go-boot.efi /mnt/EFI/BOOT/BOOTX64.EFI
+# confidential VMs are always loading the EFI image from shimx64.efi
+# regardless of Secure Boot configuration
+sudo cp go-boot.efi /mnt/EFI/BOOT/shimx64.efi
+sudo umount /mnt
+sudo sync
+sudo losetup -d ${LOOP_DEV}
+tar -cvzf go-boot-disk.raw.tar.gz disk.raw
+```
+
+Upload of the raw image to a Google Cloud bucket and creation of
+a confidential instance:
+
+```
+gcloud storage buckets create gs://go-boot-bucket
+gcloud storage cp go-boot-disk.raw.tar.gz gs://go-boot-bucket
+gcloud compute images create go-boot-image \
+    --source-uri gs://go-boot-bucket/go-boot-disk.raw.tar.gz \
+    --architecture=X86_64 \
+    --guest-os-features=UEFI_COMPATIBLE,SEV_CAPABLE,SEV_SNP_CAPABLE
+
+# create, and start, an AMD SEV-SNP confidential instance
+gcloud compute instances create go-boot-instance \
+    --confidential-compute-type=SEV_SNP \
+    --machine-type=n2d-standard-2 \
+    --min-cpu-platform="AMD Milan" \
+    --maintenance-policy=TERMINATE \
+    --zone=europe-west3-a \
+    --metadata="serial-port-enable=true" \
+    --image=go-boot-image
+```
+
+Check the serial port output:
+
+```
+gcloud compute instances get-serial-port-output go-boot-instance --zone=europe-west3-a --port=1
+```
+
+Clean up:
+
+```
+gcloud storage rm gs://go-boot-bucket/go-boot-disk.raw.tar.gz
+gcloud storage buckets delete gs://go-boot-bucket
+gcloud compute instances stop go-boot-instance --zone europe-west3-a
+gcloud compute instances delete go-boot-instance --zone europe-west3-a
+gcloud compute images delete go-boot-image
+```
+
 License
 =======
 
-go-boot | https://github.com/usbarmory/go-boot  
+go-boot | https://github.com/usbarmory/go-boot
 Copyright (c) The go-boot authors. All Rights Reserved.
 
 These source files are distributed under the BSD-style license found in the
