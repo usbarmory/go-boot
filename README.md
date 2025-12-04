@@ -42,6 +42,7 @@ cat             <path>                   # show file contents
 clear                                    # clear screen
 cpuid           <leaf> <subleaf>         # show CPU capabilities
 date            (time in RFC339 format)? # show/change runtime date and time
+efivar          (verbose)?               # list UEFI variables
 dns             <host>                   # resolve domain
 exit,quit                                # exit application
 halt,shutdown                            # shutdown system

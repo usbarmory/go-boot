@@ -25,24 +25,24 @@ type GUID [16]byte
 
 // ParseGUID parses a GUID in registry string format into a native EFI GUID
 // byte slice (len 16). On parse error it returns nil and an error.
-func ParseGUID(s string) (GUID, error) {
-	var (
-		buf []byte
-		err error
-		out GUID
-		off int
-	)
+func ParseGUID(s string) (out GUID, err error) {
+	var off int
 
 	m := guidPattern.FindStringSubmatch(s)
+
 	if len(m) != 6 {
 		return GUID{}, fmt.Errorf("invalid GUID format: %q", s)
 	}
+
 	m = m[1:]
 
 	for i, b := range m {
-		if buf, err = hex.DecodeString(b); err != nil {
+		buf, err := hex.DecodeString(b)
+
+		if err != nil {
 			return GUID{}, err
 		}
+
 		switch i {
 		case 0:
 			out[off+0] = buf[3]
@@ -65,12 +65,14 @@ func ParseGUID(s string) (GUID, error) {
 
 // MustParseGUID is like ParseGUID but panics on error. It is intended for package
 // level GUID declarations.
-func MustParseGUID(s string) GUID {
-	g, err := ParseGUID(s)
-	if err != nil {
+func MustParseGUID(s string) (g GUID) {
+	var err error
+
+	if g, err = ParseGUID(s); err != nil {
 		panic(err)
 	}
-	return g
+
+	return
 }
 
 // String returns the registry format string representation of the GUID.

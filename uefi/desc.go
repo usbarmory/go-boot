@@ -31,21 +31,19 @@ func fromUTF16(buf []byte) string {
 		return ""
 	}
 
-	// Convert byte pairs to uint16 values (Little Endian)
 	codes := make([]uint16, len(buf)/2)
+
 	for i := 0; i < len(codes); i++ {
 		codes[i] = uint16(buf[i*2]) | (uint16(buf[i*2+1]) << 8)
 	}
 
-	// Find null terminator
 	for i, code := range codes {
-		if code == 0 {
+		if code == null {
 			codes = codes[:i]
 			break
 		}
 	}
 
-	// Decode UTF-16 to runes and then to string
 	return string(utf16.Decode(codes))
 }
 

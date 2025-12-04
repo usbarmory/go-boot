@@ -5,9 +5,11 @@
 
 package uefi
 
-var (
-	EFI_GLOBAL_VARIABLE_GUID = MustParseGUID("8BE4DF61-93CA-11D2-AA0D-00E098032B8C")
+import (
+	"errors"
 )
+
+var EFI_GLOBAL_VARIABLE_GUID = MustParseGUID("8be4df61-93ca-11d2-aa0d-00e098032b8c")
 
 // EFI Runtime Services offset for Variable Services
 // See: https://uefi.org/specs/UEFI/2.11/08_Services_Runtime_Services.html#variable-services
@@ -32,10 +34,10 @@ type VariableAttributes struct {
 // GetVariable calls EFI_RUNTIME_SERVICES.GetVariable().
 // See: https://uefi.org/specs/UEFI/2.11/08_Services_Runtime_Services.html#getvariable
 func (s *RuntimeServices) GetVariable(name string, guid GUID, withData bool) (attr VariableAttributes, dataSize uint64, data []byte, err error) {
+	var attributes uint32
+
 	// Convert lastName to UTF-16 for UEFI
 	nameUTF16 := toUTF16(name)
-
-	var attributes uint32
 
 	// The first call retrieves the attributes and size of data
 	status := callService(s.base+getVariable,
@@ -49,8 +51,7 @@ func (s *RuntimeServices) GetVariable(name string, guid GUID, withData bool) (at
 	)
 
 	if status != EFI_SUCCESS && status&0xff != EFI_BUFFER_TOO_SMALL {
-		err = parseStatus(status)
-		return VariableAttributes{}, 0, nil, err
+		return VariableAttributes{}, 0, nil, parseStatus(status)
 	}
 
 	// Parse attributes
@@ -89,6 +90,10 @@ func (s *RuntimeServices) GetVariable(name string, guid GUID, withData bool) (at
 // GetNextVariableName calls EFI_RUNTIME_SERVICES.GetNextVariableName().
 // See: https://uefi.org/specs/UEFI/2.11/08_Services_Runtime_Services.html#getnextvariablename
 func (s *RuntimeServices) GetNextVariableName(name *string, guid *GUID) (err error) {
+	if name == nil || guid == nil {
+		return errors.New("invalid argument")
+	}
+
 	// Convert name to UTF-16 for UEFI
 	lastNameUTF16 := toUTF16(*name)
 
@@ -96,6 +101,7 @@ func (s *RuntimeServices) GetNextVariableName(name *string, guid *GUID) (err err
 	// UEFI spec suggests 1024 bytes minimum, but we need more for longer names
 	initialSize := uint64(1024)
 	requiredSize := uint64(len(lastNameUTF16))
+
 	if requiredSize > initialSize {
 		initialSize = requiredSize
 	}
@@ -112,16 +118,15 @@ func (s *RuntimeServices) GetNextVariableName(name *string, guid *GUID) (err err
 		},
 	)
 
-	err = parseStatus(status)
-	if err != nil {
+	if err = parseStatus(status); err != nil {
 		if status&0xff == EFI_NOT_FOUND {
 			err = ErrEfiNotFound
 		} else {
-			return err
+			return
 		}
 	}
 
 	*name = fromUTF16(nameBuf)
 
-	return err
+	return
 }

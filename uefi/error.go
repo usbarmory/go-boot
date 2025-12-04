@@ -48,9 +48,7 @@ const (
 	EFI_HTTP_ERROR
 )
 
-var (
-	ErrEfiNotFound = errors.New("not found")
-)
+var ErrEfiNotFound = errors.New("not found")
 
 func parseStatus(status uint64) (err error) {
 	code := status & 0xff
