@@ -133,10 +133,12 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
-		Name: "efivar",
-		Args: 0,
-		Help: "List all UEFI variables",
-		Fn:   efivarCmd,
+		Name:    "efivar",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^efivar( verbose)?$`),
+		Syntax:  "(verbose)?",
+		Help:    "list all UEFI variables",
+		Fn:      efivarCmd,
 	})
 }
 
@@ -371,11 +373,16 @@ func shutdownCmd(_ *shell.Interface, _ []string) (_ string, err error) {
 	return resetCmd(nil, []string{"shutdown"})
 }
 
-func efivarCmd(_ *shell.Interface, _ []string) (res string, err error) {
+func efivarCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	var buf bytes.Buffer
 	var guid uefi.GUID
 
 	name := ""
+	verbose := false
+
+	if arg[0] == "verbose" {
+		verbose = true
+	}
 
 	fmt.Fprintf(&buf, "UEFI variables:\n")
 	for {
@@ -384,6 +391,24 @@ func efivarCmd(_ *shell.Interface, _ []string) (res string, err error) {
 			break
 		}
 		fmt.Fprintf(&buf, "  %s %s\n", name, guid.String())
+
+		if verbose {
+			attr, dataSize, _, err := x64.UEFI.Runtime.GetVariable(name, guid, false)
+			if err != nil {
+				fmt.Fprintf(&buf, "    <couldn't obtain variable information>\n")
+			} else {
+				fmt.Fprintf(&buf, "    dataSize: 0x%x\n", dataSize)
+				fmt.Fprintf(&buf, "    attributes:\n")
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_NON_VOLATILE:                          %v\n", attr.NonVolatile)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_BOOTSERVICE_ACCESS:                    %v\n", attr.BootServiceAccess)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_RUNTIME_ACCESS:                        %v\n", attr.RuntimeServiceAccess)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_HARDWARE_ERROR_RECORD:                 %v\n", attr.HardwareErrorRecord)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS:            %v\n", attr.AuthWriteAccess)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS: %v\n", attr.TimeBasedAuthWriteAccess)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_APPEND_WRITE:                          %v\n", attr.AppendWrite)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS:         %v\n", attr.EnhancedAuthAccess)
+			}
+		}
 	}
 
 	// fix-up error value. GetNextVariableName will return ErrEfiNotFound if there are no more variables
