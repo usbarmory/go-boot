@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -130,6 +131,15 @@ func init() {
 		Help:    "shutdown system",
 		Fn:      shutdownCmd,
 	})
+
+	shell.Add(shell.Cmd{
+		Name:    "efivar",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^efivar( verbose)?$`),
+		Syntax:  "(verbose)?",
+		Help:    "list all UEFI variables",
+		Fn:      efivarCmd,
+	})
 }
 
 func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
@@ -163,7 +173,7 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 
 	if c, err := t.ConfigurationTables(); err == nil {
 		for _, t := range c {
-			fmt.Fprintf(&buf, "  %s (%#x)\n", t.RegistryFormat(), t.VendorTable)
+			fmt.Fprintf(&buf, "  %s (%#x)\n", t.GUID.String(), t.VendorTable)
 		}
 	}
 
@@ -195,7 +205,11 @@ func imageCmd(_ *shell.Interface, arg []string) (res string, err error) {
 }
 
 func locateCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	addr, err := x64.UEFI.Boot.LocateProtocol(uefi.GUID(arg[0]))
+	g, e := uefi.ParseGUID(arg[0])
+	if e != nil {
+		return "", fmt.Errorf("invalid GUID provided: %v", e)
+	}
+	addr, err := x64.UEFI.Boot.LocateProtocol(g)
 	return fmt.Sprintf("%s: %#08x", arg[0], addr), err
 }
 
@@ -357,4 +371,50 @@ func resetCmd(_ *shell.Interface, arg []string) (_ string, err error) {
 
 func shutdownCmd(_ *shell.Interface, _ []string) (_ string, err error) {
 	return resetCmd(nil, []string{"shutdown"})
+}
+
+func efivarCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	var buf bytes.Buffer
+	var guid uefi.GUID
+
+	name := ""
+	verbose := false
+
+	if arg[0] == "verbose" {
+		verbose = true
+	}
+
+	fmt.Fprintf(&buf, "UEFI variables:\n")
+	for {
+		err = x64.UEFI.Runtime.GetNextVariableName(&name, &guid)
+		if err != nil {
+			break
+		}
+		fmt.Fprintf(&buf, "  %s %s\n", name, guid.String())
+
+		if verbose {
+			attr, dataSize, _, err := x64.UEFI.Runtime.GetVariable(name, guid, false)
+			if err != nil {
+				fmt.Fprintf(&buf, "    <couldn't obtain variable information>\n")
+			} else {
+				fmt.Fprintf(&buf, "    dataSize: 0x%x\n", dataSize)
+				fmt.Fprintf(&buf, "    attributes:\n")
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_NON_VOLATILE:                          %v\n", attr.NonVolatile)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_BOOTSERVICE_ACCESS:                    %v\n", attr.BootServiceAccess)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_RUNTIME_ACCESS:                        %v\n", attr.RuntimeServiceAccess)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_HARDWARE_ERROR_RECORD:                 %v\n", attr.HardwareErrorRecord)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS:            %v\n", attr.AuthWriteAccess)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS: %v\n", attr.TimeBasedAuthWriteAccess)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_APPEND_WRITE:                          %v\n", attr.AppendWrite)
+				fmt.Fprintf(&buf, "      EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS:         %v\n", attr.EnhancedAuthAccess)
+			}
+		}
+	}
+
+	// fix-up error value. GetNextVariableName will return ErrEfiNotFound if there are no more variables
+	if errors.Is(err, uefi.ErrEfiNotFound) {
+		err = nil
+	}
+
+	return buf.String(), err
 }

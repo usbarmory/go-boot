@@ -1,0 +1,9 @@
+# Binaries and Output
+/go-boot*
+
+# Test Files
+/OVMF*
+/qemu-disk/
+
+# IDE Files
+/.idea/

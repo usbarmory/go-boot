@@ -6,6 +6,7 @@
 package uefi
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -45,6 +46,10 @@ const (
 	EFI_COMPROMISED_DATA
 	EFI_IP_ADDRESS_CONFLICT
 	EFI_HTTP_ERROR
+)
+
+var (
+	ErrEfiNotFound = errors.New("not found")
 )
 
 func parseStatus(status uint64) (err error) {
