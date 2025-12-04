@@ -18,8 +18,8 @@ for future releases.
 Authors
 =======
 
-Andrea Barisani  
-andrea@inversepath.com  
+Andrea Barisani
+andrea@inversepath.com
 
 Operation
 =========
@@ -232,10 +232,18 @@ b cpuinit
 continue
 ```
 
+Cloud deployments
+=================
+
+The following example demonstrates how to create, and deploy, a UEFI-bootable image
+for Google Compute Engine:
+
+* [Google-Compute-Engine](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine)
+
 License
 =======
 
-go-boot | https://github.com/usbarmory/go-boot  
+go-boot | https://github.com/usbarmory/go-boot
 Copyright (c) The go-boot authors. All Rights Reserved.
 
 These source files are distributed under the BSD-style license found in the
