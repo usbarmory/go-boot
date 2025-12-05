@@ -45,6 +45,7 @@ func main() {
 		iface.ReadWriter = x64.UART0
 		iface.Start(true)
 	case "TEXT", "text":
+		iface.Console.EnableCursor(true)
 		iface.ReadWriter = x64.UEFI.Console
 		iface.Start(false)
 	}

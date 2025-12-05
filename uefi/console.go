@@ -20,6 +20,7 @@ const (
 	setMode      = 0x20
 	setAttribute = 0x28
 	clearScreen  = 0x30
+	enableCursor = 0x40
 	mode         = 0x48
 )
 
@@ -99,8 +100,15 @@ type Console struct {
 
 // GetMode returns the EFI Simple Text Output Mode instance.
 func (c *Console) GetMode() (m *OutputMode, err error) {
+	var ptr struct {
+		Mode uint64
+	}
+
+	decode(&ptr, c.Out+mode)
+
 	m = &OutputMode{}
-	err = decode(m, c.Out+mode)
+	err = decode(m, ptr.Mode)
+
 	return
 }
 
@@ -163,6 +171,28 @@ func (c *Console) ClearScreen() error {
 	status := callService(c.Out+clearScreen,
 		[]uint64{
 			c.Out,
+		},
+	)
+
+	return parseStatus(status)
+}
+
+// EnableCursor calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.EnableCursor().
+func (c *Console) EnableCursor(visible bool) error {
+	if c.Out == 0 {
+		return nil
+	}
+
+	v := uint64(0)
+
+	if visible {
+		v = 1
+	}
+
+	status := callService(c.Out+enableCursor,
+		[]uint64{
+			c.Out,
+			v,
 		},
 	)
 
