@@ -46,6 +46,8 @@ func main() {
 		iface.Start(true)
 	case "TEXT", "text":
 		iface.Console.EnableCursor(true)
+		iface.Pagination = true
+
 		iface.ReadWriter = x64.UEFI.Console
 		iface.Start(false)
 	}

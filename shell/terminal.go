@@ -13,6 +13,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"golang.org/x/term"
 
@@ -42,6 +43,39 @@ type Interface struct {
 	Terminal *term.Terminal
 	// Console represents the UEFI Console
 	Console *uefi.Console
+
+	// Pagination enables console pagination to avoid frame buffer
+	// scrolling.
+	Pagination bool
+
+	t   *term.Terminal
+}
+
+func (c *Interface) paginate(prompt bool) (err error) {
+	var mode *uefi.OutputMode
+	var rows uint64
+
+	if mode, err = c.Console.GetMode(); err != nil {
+		return
+	}
+
+	if _, rows, err = c.Console.QueryMode(uint64(mode.Mode)); err != nil {
+		return
+	}
+
+	if mode.CursorRow >= int32(rows) - 1 {
+		if prompt {
+			fmt.Fprintf(c.Output, "<press any key to continue>")
+
+			if _, err = c.t.ReadLine(); err == io.EOF {
+				return
+			}
+		}
+
+		c.Console.ClearScreen()
+	}
+
+	return
 }
 
 func (c *Interface) handleLine(line string) (err error) {
@@ -70,12 +104,29 @@ func (c *Interface) handleLine(line string) (err error) {
 		return
 	}
 
-	fmt.Fprintln(c.Output, res)
+	if len(res) == 0 {
+		return
+	}
+
+	if c.Console == nil || !c.Pagination {
+		fmt.Fprintln(c.Output, res)
+		return
+	}
+
+	if err = c.paginate(false); err != nil {
+		fmt.Fprintln(c.Output, res)
+		return
+	}
+
+	for line := range strings.Lines(res) {
+		fmt.Fprintf(c.Output, "%s", line)
+		c.paginate(true)
+	}
 
 	return
 }
 
-func (c *Interface) readLine(t *term.Terminal) error {
+func (c *Interface) readLine() error {
 	switch {
 	case c.Terminal != nil:
 		fmt.Fprint(c.Output, string(c.Terminal.Escape.Red)+c.Prompt+string(c.Terminal.Escape.Reset))
@@ -87,7 +138,7 @@ func (c *Interface) readLine(t *term.Terminal) error {
 		fmt.Fprint(c.Output, c.Prompt)
 	}
 
-	s, err := t.ReadLine()
+	s, err := c.t.ReadLine()
 
 	if err == io.EOF {
 		return err
@@ -117,7 +168,7 @@ func (c *Interface) Exec(cmd []byte) {
 	}
 }
 
-func (c *Interface) handle(t *term.Terminal) {
+func (c *Interface) handle() {
 	if len(c.Prompt) == 0 {
 		c.Prompt = DefaultPrompt
 	}
@@ -128,11 +179,11 @@ func (c *Interface) handle(t *term.Terminal) {
 		c.Output = c.ReadWriter
 	}
 
-	fmt.Fprintf(t, "\n%s\n\n", c.Banner)
+	fmt.Fprintf(c.t, "\n%s\n\n", c.Banner)
 	Help(c, nil)
 
 	for {
-		if err := c.readLine(t); err != nil {
+		if err := c.readLine(); err != nil {
 			return
 		}
 	}
@@ -149,14 +200,15 @@ func (c *Interface) Start(vt100 bool) {
 
 	switch {
 	case c.Terminal != nil:
-		c.handle(c.Terminal)
+		c.t = c.Terminal
+		c.handle()
 	case c.ReadWriter != nil:
-		t := term.NewTerminal(c.ReadWriter, "")
+		c.t = term.NewTerminal(c.ReadWriter, "")
 
 		if vt100 {
-			c.Terminal = t
+			c.Terminal = c.t
 		}
 
-		c.handle(t)
+		c.handle()
 	}
 }
