@@ -47,9 +47,9 @@ type ProtocolMode struct {
 }
 
 // GetInfo returns the EFI Graphics Output Mode information instance.
-func (d *ProtocolMode) GetInfo() (mi *ModeInformation, err error) {
-	mi = &ModeInformation{}
-	err = decode(mi, d.Info)
+func (d *ProtocolMode) GetInfo() (m *ModeInformation, err error) {
+	m = &ModeInformation{}
+	err = decode(m, d.Info)
 	return
 }
 

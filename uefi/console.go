@@ -16,9 +16,11 @@ import (
 // EFI ConOut offsets
 const (
 	outputString = 0x08
+	queryMode    = 0x18
 	setMode      = 0x20
 	setAttribute = 0x28
 	clearScreen  = 0x30
+	mode         = 0x48
 )
 
 // EFI ConIn offsets
@@ -60,6 +62,16 @@ const (
 // Control Sequence Introducer n D - CUB - Cursor Back
 var cub = []byte{0x1b, 0x5b, 0x44, 0x20, 0x1b, 0x5b, 0x44}
 
+// OutputMode represents an EFI Simple Text Output Mode instance.
+type OutputMode struct {
+	MaxMode       int32
+	Mode          int32
+	Attribute     int32
+	CursorColumn  int32
+	CursorRow     int32
+	CursorVisible bool
+}
+
 // InputKey represents an EFI Input Key descriptor.
 type InputKey struct {
 	ScanCode    uint16
@@ -85,19 +97,29 @@ type Console struct {
 	Out uint64
 }
 
-// ClearScreen calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.ClearScreen().
-func (c *Console) ClearScreen() error {
+// GetMode returns the EFI Simple Text Output Mode instance.
+func (c *Console) GetMode() (m *OutputMode, err error) {
+	m = &OutputMode{}
+	err = decode(m, c.Out+mode)
+	return
+}
+
+// QueryMode calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.QueryMode().
+func (c *Console) QueryMode(mode uint64) (cols uint64, rows uint64, err error) {
 	if c.Out == 0 {
-		return nil
+		return 0, 0, nil
 	}
 
-	status := callService(c.Out+clearScreen,
+	status := callService(c.Out+queryMode,
 		[]uint64{
 			c.Out,
+			mode,
+			ptrval(&cols),
+			ptrval(&rows),
 		},
 	)
 
-	return parseStatus(status)
+	return cols, rows, parseStatus(status)
 }
 
 // SetMode calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.SetMode().
@@ -126,6 +148,21 @@ func (c *Console) SetAttribute(attr uint64) error {
 		[]uint64{
 			c.Out,
 			attr,
+		},
+	)
+
+	return parseStatus(status)
+}
+
+// ClearScreen calls EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.ClearScreen().
+func (c *Console) ClearScreen() error {
+	if c.Out == 0 {
+		return nil
+	}
+
+	status := callService(c.Out+clearScreen,
+		[]uint64{
+			c.Out,
 		},
 	)
 
