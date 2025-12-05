@@ -24,6 +24,10 @@ import (
 // Interface instance.
 var DefaultPrompt = "> "
 
+// PaginationPrompt represents the prompt before displaying the next output
+// page when [Interface.Pagination] is enabled.
+var PaginationPrompt = "<press enter to continue>"
+
 // Interface represents a terminal interface.
 type Interface struct {
 	// Prompt represents the command prompt
@@ -63,17 +67,16 @@ func (c *Interface) paginate(prompt bool) (err error) {
 		return
 	}
 
-	if mode.CursorRow >= int32(rows) - 1 {
-		if prompt {
-			fmt.Fprintf(c.Output, "<press any key to continue>")
-
-			if _, err = c.t.ReadLine(); err == io.EOF {
-				return
-			}
-		}
-
-		c.Console.ClearScreen()
+	if mode.CursorRow < int32(rows) - 2 {
+		return
 	}
+
+	if prompt {
+		fmt.Fprintf(c.Output, PaginationPrompt)
+		c.t.ReadLine()
+	}
+
+	c.Console.ClearScreen()
 
 	return
 }
