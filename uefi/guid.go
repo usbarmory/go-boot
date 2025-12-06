@@ -27,6 +27,7 @@ type GUID [16]byte
 // byte slice (len 16). On parse error it returns nil and an error.
 func ParseGUID(s string) (out GUID, err error) {
 	var off int
+	var buf []byte
 
 	m := guidPattern.FindStringSubmatch(s)
 
@@ -37,9 +38,7 @@ func ParseGUID(s string) (out GUID, err error) {
 	m = m[1:]
 
 	for i, b := range m {
-		buf, err := hex.DecodeString(b)
-
-		if err != nil {
+		if buf, err = hex.DecodeString(b); err != nil {
 			return GUID{}, err
 		}
 
@@ -85,8 +84,4 @@ func (g GUID) String() string {
 		binary.LittleEndian.Uint16(g[6:8]),
 		g[8:10],
 		g[10:])
-}
-
-func (g GUID) ptrval() uint64 {
-	return ptrval(&g[0])
 }

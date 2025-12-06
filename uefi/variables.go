@@ -44,7 +44,7 @@ func (s *RuntimeServices) GetVariable(name string, guid GUID, withData bool) (at
 	status := callService(s.base+getVariable,
 		[]uint64{
 			ptrval(&nameUTF16[0]),
-			guid.ptrval(),
+			ptrval(&guid[0]),
 			ptrval(&attributes),
 			ptrval(&size),
 			0,
