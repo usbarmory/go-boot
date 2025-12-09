@@ -138,6 +138,9 @@ build:
 * `NET`: set to either `0` (default) or `1` controls enabling of UEFI
   networking support (see _UEFI networking_).
 
+* `TRANSPARENCY`: set either to `0` (default) or `1` controls enabling
+  support for interacting with transparency ecosystem.
+
 Build the `go-boot.efi` executable:
 
 ```
@@ -239,6 +242,17 @@ The following example demonstrates how to create, and deploy, a UEFI-bootable im
 for Google Compute Engine:
 
 * [Google Compute Engine](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine)
+
+Boot transparency
+=================
+
+The interaction with the transparency ecosystem for boot loading operation is provided
+by the [boot-transparency](https://github.com/usbarmory/boot-transparency) Go library.
+
+The following example demonstrates how to enable, and configure, the firmware
+transparency support in `go-boot`:
+
+* [Boot transparency](https://github.com/usbarmory/go-boot/wiki/Boot-Transparency)
 
 License
 =======
