@@ -23,9 +23,15 @@ require (
 	github.com/therootcompany/xz v1.0.1 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
+	github.com/usbarmory/boot-transparency v0.0.0-20251209141545-d49bc8b83d3e // indirect
 	golang.org/x/crypto v0.42.0 // indirect
+	golang.org/x/crypto/x509roots/fallback v0.0.0-20251208183426-19acf81bd7bc // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
+	golang.org/x/mod v0.28.0 // indirect
+	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	gvisor.dev/gvisor v0.0.0-20250911055229-61a46406f068 // indirect
+	sigsum.org/sigsum-go v0.11.2 // indirect
 )

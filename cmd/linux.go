@@ -15,6 +15,7 @@ import (
 
 	"github.com/usbarmory/armory-boot/exec"
 	"github.com/usbarmory/go-boot/shell"
+	"github.com/usbarmory/go-boot/transparency"
 	"github.com/usbarmory/go-boot/uapi"
 	"github.com/usbarmory/go-boot/uefi"
 	"github.com/usbarmory/go-boot/uefi/x64"
@@ -233,6 +234,10 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	if err != nil {
 		return "", fmt.Errorf("could not open root volume, %v", err)
+	}
+
+	if err = transparency.Check(root, false); err != nil {
+		return "", fmt.Errorf("boot-transparency check failed\n%v", err)
 	}
 
 	log.Printf("loading boot loader entry %s", path)
