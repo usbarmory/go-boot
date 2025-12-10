@@ -124,5 +124,5 @@ func dateCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 func uptimeCmd(_ *shell.Interface, _ []string) (string, error) {
 	ns := uptime()
-	return fmt.Sprintf("%s", durafmt.Parse(time.Duration(ns)*time.Nanosecond)), nil
+	return fmt.Sprintf("%s\n", durafmt.Parse(time.Duration(ns)*time.Nanosecond)), nil
 }

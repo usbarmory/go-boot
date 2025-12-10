@@ -166,7 +166,7 @@ func (f *fileProtocol) getInfo(handle uint64, guid GUID) (info *fileInfo, name s
 	status := callService(ptrval(&f.GetInfo),
 		[]uint64{
 			handle,
-			guid.ptrval(),
+			ptrval(&guid[0]),
 			ptrval(&size),
 			ptrval(&buf[0]),
 		},
