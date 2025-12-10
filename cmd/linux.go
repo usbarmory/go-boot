@@ -8,6 +8,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"regexp"
 
@@ -15,11 +16,14 @@ import (
 
 	"github.com/usbarmory/armory-boot/exec"
 	"github.com/usbarmory/go-boot/shell"
-	"github.com/usbarmory/go-boot/transparency"
 	"github.com/usbarmory/go-boot/uapi"
 	"github.com/usbarmory/go-boot/uefi"
 	"github.com/usbarmory/go-boot/uefi/x64"
 	"github.com/usbarmory/tamago/dma"
+
+	"github.com/usbarmory/boot-transparency/engine/sigsum"
+	"github.com/usbarmory/boot-transparency/policy"
+	"github.com/usbarmory/boot-transparency/transparency"
 )
 
 const (
@@ -32,6 +36,20 @@ const (
 // DefaultLinuxEntry represents the default path for the UAPI Type #1 Boot
 // Loader Entry (`linux,l,\\r` command).
 var DefaultLinuxEntry string
+
+var btConfig struct {
+	enabled bool
+	online  bool
+}
+
+const (
+	// boot-transparency paths.
+	bootPolicyPath    = `\transparency\policy.json`
+	witnessPolicyPath = `\transparency\trust_policy`
+	proofBundlePath   = `\transparency\proof-bundle.json`
+	submitKeyPath     = `\transparency\submit-key.pub`
+	logKeyPath        = `\transparency\log-key.pub`
+)
 
 func init() {
 	shell.Add(shell.Cmd{
@@ -52,6 +70,15 @@ func init() {
 			Fn:      linuxCmd,
 		})
 	}
+
+	shell.Add(shell.Cmd{
+		Name:    "bt",
+		Args:    2,
+		Pattern: regexp.MustCompile(`^(?:bt)( on| off)?( online)?$`),
+		Syntax:  "(on|off)? (online)?",
+		Help:    "show/set boot-transparency configuration",
+		Fn:      btCmd,
+	})
 }
 
 func reserveMemory(m *uefi.MemoryMap, image *exec.LinuxImage) (err error) {
@@ -236,8 +263,10 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	if err = transparency.Check(root, false); err != nil {
-		return "", fmt.Errorf("boot-transparency check failed\n%v", err)
+	if btConfig.enabled {
+		if err = btCheck(root, btConfig.online); err != nil {
+			return "", fmt.Errorf("boot-transparency check failed\n%v", err)
+		}
 	}
 
 	log.Printf("loading boot loader entry %s", path)
@@ -257,4 +286,131 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	return "", boot(image)
+}
+
+func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	if len(arg[0]) > 0 {
+		if arg[0] == " on" {
+			btConfig.enabled = true
+
+			if len(arg[1]) > 0 {
+				btConfig.online = true
+			}
+		} else {
+			btConfig.enabled = false
+			btConfig.online = false
+		}
+	}
+
+	if btConfig.enabled {
+		if btConfig.online {
+			return fmt.Sprintf("boot-transparency is on (online mode)\n"), nil
+		} else {
+			return fmt.Sprintf("boot-transparency is on (offline mode)\n"), nil
+		}
+	} else {
+		return fmt.Sprintf("boot-transparency is off\n"), nil
+	}
+}
+
+func btCheck(fsys fs.FS, onLine bool) (err error) {
+	bootPolicy, err := fs.ReadFile(fsys, bootPolicyPath)
+	if err != nil {
+		return fmt.Errorf("cannot read boot policy, %v", err)
+	}
+
+	witnessPolicy, err := fs.ReadFile(fsys, witnessPolicyPath)
+	if err != nil {
+		return fmt.Errorf("cannot read witness policy, %v", err)
+	}
+
+	submitKey, err := fs.ReadFile(fsys, submitKeyPath)
+	if err != nil {
+		return fmt.Errorf("cannot read log submitter key, %v", err)
+	}
+
+	logKey, err := fs.ReadFile(fsys, logKeyPath)
+	if err != nil {
+		return fmt.Errorf("cannot read log key, %v", err)
+	}
+
+	proofBundle, err := fs.ReadFile(fsys, proofBundlePath)
+	if err != nil {
+		return fmt.Errorf("cannot read proof bundle, %v", err)
+	}
+
+	te, err := transparency.GetEngine(transparency.Sigsum)
+	if err != nil {
+		return fmt.Errorf("unable to configure the transparency engine, %w", err)
+	}
+
+	err = te.SetKey([]string{string(logKey)}, []string{string(submitKey)})
+	if err != nil {
+		return
+	}
+
+	wp, err := te.ParseWitnessPolicy(witnessPolicy)
+	if err != nil {
+		return
+	}
+
+	err = te.SetWitnessPolicy(wp)
+	if err != nil {
+		return
+	}
+
+	// Parse the proof bundle, which is expected to contain
+	// the logged statement and its inclusion proof, or the probe
+	// data to request the inclusion proof when operating in
+	// online mode.
+	pb, _, err := te.ParseProof(proofBundle)
+	if err != nil {
+		return
+	}
+
+	if onLine {
+		// Probe the log to obtain a fresh inclusion proof.
+		pr, err := te.GetProof(pb)
+		if err != nil {
+			return err
+		}
+
+		freshBundle := pb.(*sigsum.ProofBundle)
+		freshBundle.Proof = string(pr)
+
+		// Inclusion proof verification in online mode:
+		// use the inclusion proof fetched from the log.
+		err = te.VerifyProof(freshBundle)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Inclusion proof verification in offline mode:
+		// use the inclusion proof included in the proof bundle.
+		err = te.VerifyProof(pb)
+		if err != nil {
+			return err
+		}
+	}
+
+	r, err := policy.ParseRequirements(bootPolicy)
+	if err != nil {
+		return
+	}
+
+	b := pb.(*sigsum.ProofBundle)
+
+	c, err := policy.ParseStatement(b.Statement)
+	if err != nil {
+		return
+	}
+
+	// Check if the logged claims are matching the policy requirements.
+	if err = policy.Check(r, c); err != nil {
+		// The boot bundle is NOT authorized for boot.
+		return
+	}
+
+	// All boot-transparency checks passed.
+	return
 }
