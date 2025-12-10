@@ -39,7 +39,7 @@ var DefaultLinuxEntry string
 
 var btConfig struct {
 	enabled bool
-	online  bool
+	net  bool
 }
 
 const (
@@ -74,8 +74,8 @@ func init() {
 	shell.Add(shell.Cmd{
 		Name:    "bt",
 		Args:    2,
-		Pattern: regexp.MustCompile(`^(?:bt)( on| off)?( online)?$`),
-		Syntax:  "(on|off)? (online)?",
+		Pattern: regexp.MustCompile(`^(?:bt)( on| off)?( net)?$`),
+		Syntax:  "(on|off)? (net)?",
 		Help:    "show/set boot-transparency configuration",
 		Fn:      btCmd,
 	})
@@ -264,7 +264,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	if btConfig.enabled {
-		if err = btCheck(root, btConfig.online); err != nil {
+		if err = btCheck(root, btConfig.net); err != nil {
 			return "", fmt.Errorf("boot-transparency check failed\n%v", err)
 		}
 	}
@@ -294,26 +294,26 @@ func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 			btConfig.enabled = true
 
 			if len(arg[1]) > 0 {
-				btConfig.online = true
+				btConfig.net = true
 			}
 		} else {
 			btConfig.enabled = false
-			btConfig.online = false
+			btConfig.net = false
 		}
 	}
 
 	if btConfig.enabled {
-		if btConfig.online {
-			return fmt.Sprintf("boot-transparency is on (online mode)\n"), nil
+		if btConfig.net {
+			return fmt.Sprintf("boot-transparency is on, with network access enabled\n"), nil
 		} else {
-			return fmt.Sprintf("boot-transparency is on (offline mode)\n"), nil
+			return fmt.Sprintf("boot-transparency is on, with network access disabled (default)\n"), nil
 		}
 	} else {
 		return fmt.Sprintf("boot-transparency is off\n"), nil
 	}
 }
 
-func btCheck(fsys fs.FS, onLine bool) (err error) {
+func btCheck(fsys fs.FS, net bool) (err error) {
 	bootPolicy, err := fs.ReadFile(fsys, bootPolicyPath)
 	if err != nil {
 		return fmt.Errorf("cannot read boot policy, %v", err)
@@ -361,14 +361,14 @@ func btCheck(fsys fs.FS, onLine bool) (err error) {
 
 	// Parse the proof bundle, which is expected to contain
 	// the logged statement and its inclusion proof, or the probe
-	// data to request the inclusion proof when operating in
-	// online mode.
+	// data to request the inclusion proof when operating with
+	// network access enabled.
 	pb, _, err := te.ParseProof(proofBundle)
 	if err != nil {
 		return
 	}
 
-	if onLine {
+	if net {
 		// Probe the log to obtain a fresh inclusion proof.
 		pr, err := te.GetProof(pb)
 		if err != nil {
@@ -378,14 +378,14 @@ func btCheck(fsys fs.FS, onLine bool) (err error) {
 		freshBundle := pb.(*sigsum.ProofBundle)
 		freshBundle.Proof = string(pr)
 
-		// Inclusion proof verification in online mode:
+		// Inclusion proof verification with network access:
 		// use the inclusion proof fetched from the log.
 		err = te.VerifyProof(freshBundle)
 		if err != nil {
 			return err
 		}
 	} else {
-		// Inclusion proof verification in offline mode:
+		// Inclusion proof verification without network access:
 		// use the inclusion proof included in the proof bundle.
 		err = te.VerifyProof(pb)
 		if err != nil {

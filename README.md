@@ -37,7 +37,7 @@ initializing console (text)
 go-boot • tamago/amd64 (go1.24.1) • UEFI x64
 
 .               <path>                   # load and start EFI image
-bt              (on|off)? (online)?      # show/set boot-transparency configuration
+bt              (on|off)? (net)?         # show/set boot-transparency configuration
 build                                    # build information
 cat             <path>                   # show file contents
 clear                                    # clear screen
