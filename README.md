@@ -37,7 +37,7 @@ initializing console (text)
 go-boot • tamago/amd64 (go1.24.1) • UEFI x64
 
 .               <path>                   # load and start EFI image
-bt              (on|off)? (net)?         # show/set boot-transparency configuration
+bt              (none|offline|online)?   # show/set boot-transparency status
 build                                    # build information
 cat             <path>                   # show file contents
 clear                                    # clear screen
@@ -138,9 +138,6 @@ build:
 
 * `NET`: set to either `0` (default) or `1` controls enabling of UEFI
   networking support (see _UEFI networking_).
-
-* `TRANSPARENCY`: set either to `0` (default) or `1` controls enabling
-  support for interacting with transparency ecosystem.
 
 Build the `go-boot.efi` executable:
 
