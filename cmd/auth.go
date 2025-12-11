@@ -35,7 +35,7 @@ func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		transparency.CleanupConfig()
 
 		return fmt.Sprintf("boot-transparency is disabled\n"), nil
-	case "offline","online":
+	case "offline", "online":
 		if err = transparency.LoadConfig(); err != nil {
 			return "", err
 		}

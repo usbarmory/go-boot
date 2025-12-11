@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"io/fs"
 
-	"github.com/usbarmory/go-boot/uefi/x64"
 	"github.com/usbarmory/boot-transparency/engine/sigsum"
 	"github.com/usbarmory/boot-transparency/policy"
 	"github.com/usbarmory/boot-transparency/transparency"
+	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
 // Boot transparency configuration.

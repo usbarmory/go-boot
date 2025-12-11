@@ -15,10 +15,10 @@ import (
 
 	"github.com/usbarmory/armory-boot/exec"
 	"github.com/usbarmory/go-boot/shell"
+	"github.com/usbarmory/go-boot/transparency"
 	"github.com/usbarmory/go-boot/uapi"
 	"github.com/usbarmory/go-boot/uefi"
 	"github.com/usbarmory/go-boot/uefi/x64"
-	"github.com/usbarmory/go-boot/transparency"
 	"github.com/usbarmory/tamago/dma"
 )
 
