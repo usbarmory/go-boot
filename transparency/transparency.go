@@ -10,11 +10,15 @@ package transparency
 
 import (
 	"fmt"
+	"io/fs"
+	"path"
+	"strings"
 
 	"github.com/usbarmory/boot-transparency/artifact"
 	"github.com/usbarmory/boot-transparency/engine/sigsum"
 	"github.com/usbarmory/boot-transparency/policy"
 	"github.com/usbarmory/boot-transparency/transparency"
+	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
 // Represents boot-transparency status.
@@ -76,6 +80,64 @@ type BtArtifact struct {
 	// Requirements are expressed in JSON format, following the same key:value
 	// syntax supported by boot-transparency to define boot policy requirements.
 	Requirements []byte
+}
+
+// boot-transparency configuration filenames
+const (
+	transparencyRoot  = `/transparency`
+	bootPolicyFile    = `policy.json`
+	witnessPolicyFile = `trust_policy`
+	proofBundleFile   = `proof-bundle.json`
+	submitKeyFile     = `submit-key.pub`
+	logKeyFile        = `log-key.pub`
+)
+
+// Load reads the boot-transparency configuration files from disk.
+// The entry argument allows per-bundle configurations.
+func (c *BtConfig) Load(entry string) (err error) {
+	entryPath := path.Join(transparencyRoot, entry)
+
+	bootPolicyPath := path.Join(entryPath, bootPolicyFile)
+	bootPolicyPath = strings.ReplaceAll(bootPolicyPath, `/`, `\`)
+
+	witnessPolicyPath := path.Join(entryPath, witnessPolicyFile)
+	witnessPolicyPath = strings.ReplaceAll(witnessPolicyPath, `/`, `\`)
+
+	submitKeyPath := path.Join(entryPath, submitKeyFile)
+	submitKeyPath = strings.ReplaceAll(submitKeyPath, `/`, `\`)
+
+	logKeyPath := path.Join(entryPath, logKeyFile)
+	logKeyPath = strings.ReplaceAll(logKeyPath, `/`, `\`)
+
+	proofBundlePath := path.Join(entryPath, proofBundleFile)
+	proofBundlePath = strings.ReplaceAll(proofBundlePath, `/`, `\`)
+
+	root, err := x64.UEFI.Root()
+	if err != nil {
+		return fmt.Errorf("could not open root volume, %v", err)
+	}
+
+	if c.BootPolicy, err = fs.ReadFile(root, bootPolicyPath); err != nil {
+		return fmt.Errorf("cannot read boot policy, %v", err)
+	}
+
+	if c.WitnessPolicy, err = fs.ReadFile(root, witnessPolicyPath); err != nil {
+		return fmt.Errorf("cannot read witness policy, %v", err)
+	}
+
+	if c.SubmitKey, err = fs.ReadFile(root, submitKeyPath); err != nil {
+		return fmt.Errorf("cannot read log submitter key, %v", err)
+	}
+
+	if c.LogKey, err = fs.ReadFile(root, logKeyPath); err != nil {
+		return fmt.Errorf("cannot read log key, %v", err)
+	}
+
+	if c.ProofBundle, err = fs.ReadFile(root, proofBundlePath); err != nil {
+		return fmt.Errorf("cannot read proof bundle, %v", err)
+	}
+
+	return
 }
 
 // Validate the transparency inclusion proof and the consistency
