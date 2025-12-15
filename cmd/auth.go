@@ -69,28 +69,23 @@ func btLoadConfig(entryPath string) (err error) {
 		return fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	btConfig.BootPolicy, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, bootPolicyFile))
-	if err != nil {
+	if btConfig.BootPolicy, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, bootPolicyFile)); err != nil {
 		return fmt.Errorf("cannot read boot policy, %v", err)
 	}
 
-	btConfig.WitnessPolicy, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, witnessPolicyFile))
-	if err != nil {
+	if btConfig.WitnessPolicy, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, witnessPolicyFile)); err != nil {
 		return fmt.Errorf("cannot read witness policy, %v", err)
 	}
 
-	btConfig.SubmitKey, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, submitKeyFile))
-	if err != nil {
+	if btConfig.SubmitKey, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, submitKeyFile)); err != nil {
 		return fmt.Errorf("cannot read log submitter key, %v", err)
 	}
 
-	btConfig.LogKey, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, logKeyFile))
-	if err != nil {
+	if btConfig.LogKey, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, logKeyFile)); err != nil {
 		return fmt.Errorf("cannot read log key, %v", err)
 	}
 
-	btConfig.ProofBundle, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, proofBundleFile))
-	if err != nil {
+	if btConfig.ProofBundle, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, proofBundleFile)); err != nil {
 		return fmt.Errorf("cannot read proof bundle, %v", err)
 	}
 

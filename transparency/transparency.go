@@ -92,24 +92,22 @@ func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
 		return fmt.Errorf("unable to configure the transparency engine, %w", err)
 	}
 
-	err = te.SetKey([]string{string(c.LogKey)}, []string{string(c.SubmitKey)})
-	if err != nil {
-		return
+	if err = te.SetKey([]string{string(c.LogKey)}, []string{string(c.SubmitKey)}); err != nil {
+		return fmt.Errorf("unable to set log and submitter keys, %v", err)
 	}
 
 	wp, err := te.ParseWitnessPolicy(c.WitnessPolicy)
 	if err != nil {
-		return
+		return fmt.Errorf("unable to parse witness policy, %v", err)
 	}
 
-	err = te.SetWitnessPolicy(wp)
-	if err != nil {
-		return
+	if err = te.SetWitnessPolicy(wp); err != nil {
+		return fmt.Errorf("unable to set witness policy, %v", err)
 	}
 
 	pb, _, err := te.ParseProof(c.ProofBundle)
 	if err != nil {
-		return
+		return fmt.Errorf("unable to parse proof bundle, %v", err)
 	}
 
 	if c.Status == Online {
@@ -124,15 +122,13 @@ func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
 
 		// If network access is available the inclusion proof verification
 		// is performed using the proof fetched from the log.
-		err = te.VerifyProof(freshBundle)
-		if err != nil {
+		if err = te.VerifyProof(freshBundle); err != nil {
 			return err
 		}
 	} else {
 		// If network access is not available the inclusion proof verification
 		// is performed using the proof included in the proof bundle.
-		err = te.VerifyProof(pb)
-		if err != nil {
+		if err = te.VerifyProof(pb); err != nil {
 			return err
 		}
 	}
@@ -175,8 +171,7 @@ func validateArtifacts(s *policy.Statement, btArtifacts *[]BtArtifact) (err erro
 		found := false
 		for _, a := range s.Artifacts {
 			if btArtifact.Category == a.Category {
-				h, err = artifact.GetHandler(a.Category)
-				if err != nil {
+				if h, err = artifact.GetHandler(a.Category); err != nil {
 					return
 				}
 
@@ -190,8 +185,7 @@ func validateArtifacts(s *policy.Statement, btArtifacts *[]BtArtifact) (err erro
 					return err
 				}
 
-				err = h.Validate(r, c)
-				if err != nil {
+				if err = h.Validate(r, c); err != nil {
 					return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, file hash mistmatch")
 				}
 
