@@ -21,16 +21,16 @@ import (
 type BtStatus int
 
 const (
-    None BtStatus = iota
-    Offline
-    Online
+	None BtStatus = iota
+	Offline
+	Online
 )
 
 // BtStatusName represents boot-transparency status names
-var BtStatusName = map[BtStatus]string {
-    None:    "none",
-    Offline: "offline",
-    Online:  "online",
+var BtStatusName = map[BtStatus]string{
+	None:    "none",
+	Offline: "offline",
+	Online:  "online",
 }
 
 // BtConfig represents boot-transparency configuration
@@ -44,16 +44,17 @@ type BtConfig struct {
 }
 
 // BtArtifact represents boot-transparency requirements for a boot artifact.
-// Requirements are expressed in JSON format, following the same key:value
-// syntax supported by boot-transparency to define boot policy requirements.
-// Category should be consistent with the artifact categories supported
-// by boot-transparency.
 type BtArtifact struct {
-        Category     uint
-        Requirements []byte
+	// Category should be consistent with the artifact categories supported
+	// by boot-transparency.
+	Category uint
+
+	// Requirements are expressed in JSON format, following the same key:value
+	// syntax supported by boot-transparency to define boot policy requirements.
+	Requirements []byte
 }
 
-// Validate validates the transparency inclusion proof and the consistency
+// Validate the transparency inclusion proof and the consistency
 // between the boot policy and the logged artifact claims.
 // The function takes as input the pointers to the boot-transparency
 // configuration and to the artifacts requirements which contain the
@@ -127,8 +128,8 @@ func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
 	}
 
 	if err = validateArtifacts(claims, a); err != nil {
-                return
-        }
+		return
+	}
 
 	// Validate the matching between the logged claims and the policy requirements.
 	if err = policy.Validate(requirements, claims); err != nil {
@@ -146,41 +147,41 @@ func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
 // loaded in memory during the boot and the claims that will be validated
 // by the boot-transparency policy function.
 func validateArtifacts(s *policy.Statement, btArtifacts *[]BtArtifact) (err error) {
-        var h artifact.Handler
+	var h artifact.Handler
 
-        for _, btArtifact := range *btArtifacts {
-                found := false
-                for _, a := range s.Artifacts {
-                        if btArtifact.Category == a.Category {
-                                h, err = artifact.GetHandler(a.Category)
-                                if err != nil {
-                                        return
-                                }
+	for _, btArtifact := range *btArtifacts {
+		found := false
+		for _, a := range s.Artifacts {
+			if btArtifact.Category == a.Category {
+				h, err = artifact.GetHandler(a.Category)
+				if err != nil {
+					return
+				}
 
-                                r, err := h.ParseRequirements([]byte(btArtifact.Requirements))
-                                if err != nil {
-                                        return err
-                                }
+				r, err := h.ParseRequirements([]byte(btArtifact.Requirements))
+				if err != nil {
+					return err
+				}
 
-                                c, err := h.ParseClaims([]byte(a.Claims))
-                                if err != nil {
-                                        return err
-                                }
+				c, err := h.ParseClaims([]byte(a.Claims))
+				if err != nil {
+					return err
+				}
 
-                                err = h.Validate(r, c)
-                                if err != nil {
-                                        return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, file hash mistmatch")
-                                }
+				err = h.Validate(r, c)
+				if err != nil {
+					return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, file hash mistmatch")
+				}
 
-                                found = true
-                                break
-                        }
-                }
+				found = true
+				break
+			}
+		}
 
-                if !found {
-                        return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, one or more artifacts are not present in the proof bundle")
-                }
-        }
+		if !found {
+			return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, one or more artifacts are not present in the proof bundle")
+		}
+	}
 
-        return
+	return
 }

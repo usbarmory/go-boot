@@ -253,7 +253,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	if btConfig.Status != transparency.None {
 		if err = btValidateLinuxEntry(entry); err != nil {
-			return "", fmt.Errorf("boot transparency validation failed, %v", err)
+			return "", fmt.Errorf("boot-transparency validation failed, %v", err)
 		}
 	}
 
@@ -266,8 +266,9 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	return "", boot(image)
 }
 
-// The validation is performed according with the loaded boot-transparency
-// configuration and the loaded artifacts identified with their file hashes.
+// btValidateLinuxEntry validates the boot entry according with the loaded
+// boot-transparency configuration and the loaded artifacts identified with
+// their file hashes.
 func btValidateLinuxEntry(entry *uapi.Entry) (err error) {
 	h := sha512.New()
 	h.Write(entry.Linux)
