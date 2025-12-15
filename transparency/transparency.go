@@ -17,30 +17,52 @@ import (
 	"github.com/usbarmory/boot-transparency/transparency"
 )
 
-// BtStatus represents boot-transparency status codes
-type BtStatus int
-
+// Represents boot-transparency status codes.
 const (
-	None BtStatus = iota
+	// Transparency disabled.
+	None int = iota
+
+	// Transparency enabled in offline mode.
 	Offline
+
+	// Transparency enabled in online mode.
 	Online
 )
 
 // BtStatusName represents boot-transparency status names
-var BtStatusName = map[BtStatus]string{
-	None:    "none",
+var BtStatusName = map[int]string{
+	// Transparency disabled.
+	None: "none",
+
+	// Transparency enabled in offline mode.
 	Offline: "offline",
-	Online:  "online",
+
+	// Transparency enabled in online mode.
+	Online: "online",
 }
 
 // BtConfig represents boot-transparency configuration
 type BtConfig struct {
-	Status        BtStatus
-	BootPolicy    []byte
+	// Status represents boot-transparency status.
+	Status int
+
+	// BootPolicy represents the boot policy in JSON format
+	// following the boot-transparency policy syntax.
+	BootPolicy []byte
+
+	// WitnessPolicy represents the witness policy following
+	// the Sigsum plaintext witness policy format.
 	WitnessPolicy []byte
-	ProofBundle   []byte
-	SubmitKey     []byte
-	LogKey        []byte
+
+	// ProofBundle represents the proof bundle in JSON format
+	// following the boot-transparency proof bundle syntax.
+	ProofBundle []byte
+
+	// SubmitKey represents the log submitter public key.
+	SubmitKey []byte
+
+	// LogKey represents the log public key.
+	LogKey []byte
 }
 
 // BtArtifact represents boot-transparency requirements for a boot artifact.
