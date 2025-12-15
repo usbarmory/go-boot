@@ -99,24 +99,19 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		fmt.Printf("\thttp://%s:80/debug/pprof\n", ip)
 		fmt.Printf("\tssh://%s:22\n", ip)
 
-		go func() {
-			ssh.Handle(func(s ssh.Session) {
-				c := &shell.Interface{
-					Banner:     Banner,
-					ReadWriter: s,
-				}
-				c.Start(true)
-			})
+		ssh.Handle(func(s ssh.Session) {
+			c := &shell.Interface{
+				Banner:     Banner,
+				ReadWriter: s,
+			}
+			c.Start(true)
+		})
 
-			ssh.ListenAndServe(":22", nil)
-		}()
-
-		go func() {
-			http.ListenAndServe(":80", nil)
-		}()
+		go ssh.ListenAndServe(":22", nil)
+		go http.ListenAndServe(":80", nil)
 	}
 
-	return fmt.Sprintf("network initialized (%s %s)", arg[0], iface.NIC.MAC), nil
+	return fmt.Sprintf("network initialized (%s %s)\n", arg[0], iface.NIC.MAC), nil
 }
 
 func dnsCmd(_ *shell.Interface, arg []string) (res string, err error) {
