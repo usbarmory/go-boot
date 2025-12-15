@@ -55,7 +55,7 @@ func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	case transparency.None:
 		return fmt.Sprintf("boot-transparency is disabled\n"), nil
 	case transparency.Offline, transparency.Online:
-		return fmt.Sprintf("boot-transparency is enabled in %s mode\n", transparency.BtStatusName[btConfig.Status]), nil
+		return fmt.Sprintf("boot-transparency is enabled in %s mode\n", btConfig.Status.ToString()), nil
 	}
 
 	return

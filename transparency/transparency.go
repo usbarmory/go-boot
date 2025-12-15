@@ -17,10 +17,13 @@ import (
 	"github.com/usbarmory/boot-transparency/transparency"
 )
 
+// Represents boot-transparency status.
+type BtStatus int
+
 // Represents boot-transparency status codes.
 const (
 	// Transparency disabled.
-	None int = iota
+	None BtStatus = iota
 
 	// Transparency enabled in offline mode.
 	Offline
@@ -29,22 +32,21 @@ const (
 	Online
 )
 
-// BtStatusName represents boot-transparency status names
-var BtStatusName = map[int]string{
-	// Transparency disabled.
-	None: "none",
+// ToString resolves BtStatus codes into a human-readable strings.
+func (s BtStatus) ToString() string {
+	var btStatusName = map[BtStatus]string{
+		None:    "none",
+		Offline: "offline",
+		Online:  "online",
+	}
 
-	// Transparency enabled in offline mode.
-	Offline: "offline",
-
-	// Transparency enabled in online mode.
-	Online: "online",
+	return btStatusName[s]
 }
 
-// BtConfig represents boot-transparency configuration
+// BtConfig represents boot-transparency configuration.
 type BtConfig struct {
 	// Status represents boot-transparency status.
-	Status int
+	Status BtStatus
 
 	// BootPolicy represents the boot policy in JSON format
 	// following the boot-transparency policy syntax.
