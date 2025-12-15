@@ -282,8 +282,14 @@ func btValidateLinuxEntry(entry *uapi.Entry) (err error) {
 	requiredInitrd, _ := json.Marshal(map[string]string{"file_hash": hex.EncodeToString(initrdHash)})
 
 	btArtifacts := []transparency.BtArtifact{
-		{Category: artifact.LinuxKernel, Requirements: requiredLinuxKernel},
-		{Category: artifact.Initrd, Requirements: requiredInitrd},
+		{
+			Category:     artifact.LinuxKernel,
+			Requirements: requiredLinuxKernel,
+		},
+		{
+			Category:     artifact.Initrd,
+			Requirements: requiredInitrd,
+		},
 	}
 
 	// constructs a unique path for a given Linux boot entry (kernel, initrd)
