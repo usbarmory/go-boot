@@ -8,6 +8,7 @@ package cmd
 import (
 	"fmt"
 	"io/fs"
+	"path"
 	"regexp"
 	"strings"
 
@@ -19,7 +20,7 @@ import (
 var btConfig transparency.BtConfig
 
 const (
-	transparencyRoot  = `\transparency`
+	transparencyRoot  = `/transparency`
 	bootPolicyFile    = `policy.json`
 	witnessPolicyFile = `trust_policy`
 	proofBundleFile   = `proof-bundle.json`
@@ -62,30 +63,46 @@ func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 // btLoadConfig loads the boot-transparency configuration from files on disk,
 // the entryPath argument allows per-bundle configurations.
-func btLoadConfig(entryPath string) (err error) {
-	root, err := x64.UEFI.Root()
+func btLoadConfig(entry string) (err error) {
+	entryPath := path.Join(transparencyRoot, entry)
 
+	bootPolicyPath := path.Join(entryPath, bootPolicyFile)
+	bootPolicyPath = strings.ReplaceAll(bootPolicyPath, `/`, `\`)
+
+	witnessPolicyPath := path.Join(entryPath, witnessPolicyFile)
+	witnessPolicyPath = strings.ReplaceAll(witnessPolicyPath, `/`, `\`)
+
+	submitKeyPath := path.Join(entryPath, submitKeyFile)
+	submitKeyPath = strings.ReplaceAll(submitKeyPath, `/`, `\`)
+
+	logKeyPath := path.Join(entryPath, logKeyFile)
+	logKeyPath = strings.ReplaceAll(logKeyPath, `/`, `\`)
+
+	proofBundlePath := path.Join(entryPath, proofBundleFile)
+	proofBundlePath = strings.ReplaceAll(proofBundlePath, `/`, `\`)
+
+	root, err := x64.UEFI.Root()
 	if err != nil {
 		return fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	if btConfig.BootPolicy, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, bootPolicyFile)); err != nil {
+	if btConfig.BootPolicy, err = fs.ReadFile(root, bootPolicyPath); err != nil {
 		return fmt.Errorf("cannot read boot policy, %v", err)
 	}
 
-	if btConfig.WitnessPolicy, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, witnessPolicyFile)); err != nil {
+	if btConfig.WitnessPolicy, err = fs.ReadFile(root, witnessPolicyPath); err != nil {
 		return fmt.Errorf("cannot read witness policy, %v", err)
 	}
 
-	if btConfig.SubmitKey, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, submitKeyFile)); err != nil {
+	if btConfig.SubmitKey, err = fs.ReadFile(root, submitKeyPath); err != nil {
 		return fmt.Errorf("cannot read log submitter key, %v", err)
 	}
 
-	if btConfig.LogKey, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, logKeyFile)); err != nil {
+	if btConfig.LogKey, err = fs.ReadFile(root, logKeyPath); err != nil {
 		return fmt.Errorf("cannot read log key, %v", err)
 	}
 
-	if btConfig.ProofBundle, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, proofBundleFile)); err != nil {
+	if btConfig.ProofBundle, err = fs.ReadFile(root, proofBundlePath); err != nil {
 		return fmt.Errorf("cannot read proof bundle, %v", err)
 	}
 
