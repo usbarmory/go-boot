@@ -23,7 +23,7 @@ require (
 	github.com/therootcompany/xz v1.0.1 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
-	github.com/usbarmory/boot-transparency v0.0.0-20251209141545-d49bc8b83d3e // indirect
+	github.com/usbarmory/boot-transparency v0.0.0-20251214154413-cc17620555b5 // indirect
 	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/crypto/x509roots/fallback v0.0.0-20251208183426-19acf81bd7bc // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect

@@ -6,6 +6,9 @@
 package cmd
 
 import (
+	"crypto/sha512"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -20,6 +23,8 @@ import (
 	"github.com/usbarmory/go-boot/uefi"
 	"github.com/usbarmory/go-boot/uefi/x64"
 	"github.com/usbarmory/tamago/dma"
+
+	"github.com/usbarmory/boot-transparency/artifact"
 )
 
 const (
@@ -236,12 +241,6 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	if transparency.Config.Status != "none" {
-		if err = transparency.Validate(); err != nil {
-			return "", fmt.Errorf("boot-transparency validation failed\n%v", err)
-		}
-	}
-
 	log.Printf("loading boot loader entry %s", path)
 
 	if entry, err = uapi.LoadEntry(root, path); err != nil {
@@ -252,6 +251,13 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", errors.New("empty kernel entry")
 	}
 
+	// boot-transparency validation
+	if btConfig.Status != transparency.None {
+		if err = btValidateLinuxEntry(entry); err != nil {
+			return "", fmt.Errorf("boot transparency validation failed\n%v", err)
+		}
+	}
+
 	image := &exec.LinuxImage{
 		Kernel:         entry.Linux,
 		InitialRamDisk: entry.Initrd,
@@ -259,4 +265,36 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	return "", boot(image)
+}
+
+// The validation is performed according with the loaded boot-transparency
+// configuration and the loaded artifacts identified with their file hashes.
+func btValidateLinuxEntry(entry *uapi.Entry) (err error) {
+	h := sha512.New()
+	h.Write(entry.Linux)
+	linuxHash := h.Sum(nil)
+
+	h = sha512.New()
+	h.Write(entry.Initrd)
+	initrdHash := h.Sum(nil)
+
+	requiredLinuxKernel, _ := json.Marshal(map[string]string{"file_hash": hex.EncodeToString(linuxHash)})
+	requiredInitrd, _ := json.Marshal(map[string]string{"file_hash": hex.EncodeToString(initrdHash)})
+
+	btArtifacts := []transparency.BtArtifact{
+		{Category: artifact.LinuxKernel, Requirements: requiredLinuxKernel},
+		{Category: artifact.Initrd, Requirements: requiredInitrd},
+	}
+
+	// unique path for any given Linux boot entry (kernel, initrd)
+	entryPath := fmt.Sprintf("%s-%s", hex.EncodeToString(linuxHash)[0:7], hex.EncodeToString(initrdHash)[0:7])
+	if err = btLoadConfig(entryPath); err != nil {
+		return
+	}
+
+	if err = transparency.Validate(&btConfig, &btArtifacts); err != nil {
+		return
+	}
+
+	return
 }

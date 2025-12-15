@@ -7,11 +7,24 @@ package cmd
 
 import (
 	"fmt"
+	"io/fs"
 	"regexp"
 	"strings"
 
 	"github.com/usbarmory/go-boot/shell"
 	"github.com/usbarmory/go-boot/transparency"
+	"github.com/usbarmory/go-boot/uefi/x64"
+)
+
+var btConfig transparency.BtConfig
+
+const (
+	transparencyRoot  = `\transparency`
+	bootPolicyFile    = `policy.json`
+	witnessPolicyFile = `trust_policy`
+	proofBundleFile   = `proof-bundle.json`
+	submitKeyFile     = `submit-key.pub`
+	logKeyFile        = `log-key.pub`
 )
 
 func init() {
@@ -27,20 +40,58 @@ func init() {
 
 func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	if len(arg[0]) > 0 {
-		transparency.Config.Status = strings.TrimSpace(arg[0])
+		switch strings.TrimSpace(arg[0]) {
+		case "none":
+			btConfig.Status = transparency.None
+		case "offline":
+			btConfig.Status = transparency.Offline
+		case "online":
+			btConfig.Status = transparency.Online
+		}
 	}
 
-	switch transparency.Config.Status {
-	case "none":
-		transparency.CleanupConfig()
-
+	switch btConfig.Status {
+	case transparency.None:
 		return fmt.Sprintf("boot-transparency is disabled\n"), nil
-	case "offline", "online":
-		if err = transparency.LoadConfig(); err != nil {
-			return "", err
-		}
+	case transparency.Offline, transparency.Online:
+		return fmt.Sprintf("boot-transparency is enabled in %s mode\n", transparency.BtStatusName[btConfig.Status]), nil
+	}
 
-		return fmt.Sprintf("boot-transparency is enabled in %s mode\n", transparency.Config.Status), nil
+	return
+}
+
+// Load the boot transparency configuration from files on disk.
+// The entryPath argument allows per-bundle combinations.
+func btLoadConfig(entryPath string) (err error) {
+	root, err := x64.UEFI.Root()
+
+	if err != nil {
+		return fmt.Errorf("could not open root volume, %v", err)
+	}
+
+	btConfig.BootPolicy, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, bootPolicyFile))
+	if err != nil {
+		return fmt.Errorf("cannot read boot policy, %v", err)
+	}
+
+	btConfig.WitnessPolicy, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, witnessPolicyFile))
+	if err != nil {
+		return fmt.Errorf("cannot read witness policy, %v", err)
+	}
+
+	btConfig.SubmitKey, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, submitKeyFile))
+	if err != nil {
+		return fmt.Errorf("cannot read log submitter key, %v", err)
+	}
+
+	btConfig.LogKey, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, logKeyFile))
+	if err != nil {
+		return fmt.Errorf("cannot read log key, %v", err)
+	}
+
+	btConfig.ProofBundle, err = fs.ReadFile(root, fmt.Sprintf("%s\\%s\\%s", transparencyRoot, entryPath, proofBundleFile))
+	if err != nil {
+		return fmt.Errorf("cannot read proof bundle, %v", err)
 	}
 
 	return

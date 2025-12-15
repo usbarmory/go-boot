@@ -7,96 +7,66 @@ package transparency
 
 import (
 	"fmt"
-	"io/fs"
 
+	"github.com/usbarmory/boot-transparency/artifact"
 	"github.com/usbarmory/boot-transparency/engine/sigsum"
 	"github.com/usbarmory/boot-transparency/policy"
 	"github.com/usbarmory/boot-transparency/transparency"
-	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
-// Boot transparency configuration.
-var Config struct {
-	Status string
-
-	bootPolicy    []byte
-	witnessPolicy []byte
-	proofBundle   []byte
-	submitKey     []byte
-	logKey        []byte
-}
+// Defines boot-transparency status codes
+type BtStatus int
 
 const (
-	bootPolicyPath    = `\transparency\policy.json`
-	witnessPolicyPath = `\transparency\trust_policy`
-	proofBundlePath   = `\transparency\proof-bundle.json`
-	submitKeyPath     = `\transparency\submit-key.pub`
-	logKeyPath        = `\transparency\log-key.pub`
+    None BtStatus = iota
+    Offline
+    Online
 )
 
-func init() {
-	Config.Status = "none"
+// Defines boot-transparency status names
+var BtStatusName = map[BtStatus]string {
+    None:    "none",
+    Offline: "offline",
+    Online:  "online",
 }
 
-// Load boot-transparency configuration from files on disk.
-func LoadConfig() (err error) {
-	root, err := x64.UEFI.Root()
-
-	if err != nil {
-		return fmt.Errorf("could not open root volume, %v", err)
-	}
-
-	Config.bootPolicy, err = fs.ReadFile(root, bootPolicyPath)
-	if err != nil {
-		return fmt.Errorf("cannot read boot policy, %v", err)
-	}
-
-	Config.witnessPolicy, err = fs.ReadFile(root, witnessPolicyPath)
-	if err != nil {
-		return fmt.Errorf("cannot read witness policy, %v", err)
-	}
-
-	Config.submitKey, err = fs.ReadFile(root, submitKeyPath)
-	if err != nil {
-		return fmt.Errorf("cannot read log submitter key, %v", err)
-	}
-
-	Config.logKey, err = fs.ReadFile(root, logKeyPath)
-	if err != nil {
-		return fmt.Errorf("cannot read log key, %v", err)
-	}
-
-	Config.proofBundle, err = fs.ReadFile(root, proofBundlePath)
-	if err != nil {
-		return fmt.Errorf("cannot read proof bundle, %v", err)
-	}
-
-	return
+// Defines boot-transparency configuration
+type BtConfig struct {
+	Status        BtStatus
+	BootPolicy    []byte
+	WitnessPolicy []byte
+	ProofBundle   []byte
+	SubmitKey     []byte
+	LogKey        []byte
 }
 
-// Cleanup boot-transparency configuration.
-func CleanupConfig() {
-	Config.bootPolicy = nil
-	Config.witnessPolicy = nil
-	Config.submitKey = nil
-	Config.logKey = nil
-	Config.proofBundle = nil
+// Defines boot-transparency requirements for a given boot artifact
+type BtArtifact struct {
+        Category     uint
+        Requirements []byte
 }
 
-// Validate the transparency inclusion proof and consistency
-// between the boot policy and the logged claims.
-func Validate() (err error) {
+// Validate the inclusion proof and the consistency between the
+// boot policy and the logged claims.
+// The function takes as input the pointers to the boot-transparency
+// configuration and file hashes of the boot artifacts.
+// Returns error if the boot artifacts are not passing the validation.
+func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
+	if c.Status == None {
+		return
+	}
+
 	te, err := transparency.GetEngine(transparency.Sigsum)
 	if err != nil {
 		return fmt.Errorf("unable to configure the transparency engine, %w", err)
 	}
 
-	err = te.SetKey([]string{string(Config.logKey)}, []string{string(Config.submitKey)})
+	err = te.SetKey([]string{string(c.LogKey)}, []string{string(c.SubmitKey)})
 	if err != nil {
 		return
 	}
 
-	wp, err := te.ParseWitnessPolicy(Config.witnessPolicy)
+	wp, err := te.ParseWitnessPolicy(c.WitnessPolicy)
 	if err != nil {
 		return
 	}
@@ -107,15 +77,15 @@ func Validate() (err error) {
 	}
 
 	// Parse the proof bundle, which is expected to contain
-	// the logged statement and its inclusion proof, or the probe
-	// data to request the inclusion proof when operating with
-	// network access enabled.
-	pb, _, err := te.ParseProof(Config.proofBundle)
+	// the logged statement and its inclusion proof.
+	// The probe data is optionally required to request the inclusion
+	// proof only when operating in online mode.
+	pb, _, err := te.ParseProof(c.ProofBundle)
 	if err != nil {
 		return
 	}
 
-	if Config.Status == "online" {
+	if c.Status == Online {
 		// Probe the log to obtain a fresh inclusion proof.
 		pr, err := te.GetProof(pb)
 		if err != nil {
@@ -140,24 +110,72 @@ func Validate() (err error) {
 		}
 	}
 
-	r, err := policy.ParseRequirements(Config.bootPolicy)
+	requirements, err := policy.ParseRequirements(c.BootPolicy)
 	if err != nil {
 		return
 	}
 
 	b := pb.(*sigsum.ProofBundle)
 
-	c, err := policy.ParseStatement(b.Statement)
+	claims, err := policy.ParseStatement(b.Statement)
 	if err != nil {
 		return
 	}
 
-	// Check if the logged claims are matching the policy requirements.
-	if err = policy.Check(r, c); err != nil {
-		// The boot bundle is NOT authorized for boot.
+	if err = validateArtifacts(claims, a); err != nil {
+                return
+        }
+
+	// Validate the matching between the logged claims and the policy requirements.
+	if err = policy.Validate(requirements, claims); err != nil {
+		// The boot bundle is NOT authorized.
 		return
 	}
 
-	// All boot-transparency checks passed.
+	// boot-transparency validation passed, boot bundle is authorized.
 	return
+}
+
+// Ensure the matching between the boot artifacts and the ones included into a given proof bundle.
+// This step is vital to ensure the correspondency between the artifacts actually
+// loaded during the boot and the claims that will be validated by the  boot-transparency
+// policy function.
+func validateArtifacts(s *policy.Statement, btArtifacts *[]BtArtifact) (err error) {
+        var h artifact.Handler
+
+        for _, btArtifact := range *btArtifacts {
+                found := false
+                for _, a := range s.Artifacts {
+                        if btArtifact.Category == a.Category {
+                                h, err = artifact.GetHandler(a.Category)
+                                if err != nil {
+                                        return
+                                }
+
+                                r, err := h.ParseRequirements([]byte(btArtifact.Requirements))
+                                if err != nil {
+                                        return err
+                                }
+
+                                c, err := h.ParseClaims([]byte(a.Claims))
+                                if err != nil {
+                                        return err
+                                }
+
+                                err = h.Validate(r, c)
+                                if err != nil {
+                                        return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, file hash mistmatch")
+                                }
+
+                                found = true
+                                break
+                        }
+                }
+
+                if !found {
+                        return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, one or more artifacts are not present in the proof bundle")
+                }
+        }
+
+        return
 }
