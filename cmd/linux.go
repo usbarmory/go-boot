@@ -287,7 +287,7 @@ func btValidateLinuxEntry(entry *uapi.Entry) (err error) {
 	}
 
 	// constructs a unique path for a given Linux boot entry (kernel, initrd)
-	entryPath := fmt.Sprintf("%s-%s", hex.EncodeToString(linuxHash)[0:7], hex.EncodeToString(initrdHash)[0:7])
+	entryPath := fmt.Sprintf("%s-%s", hex.EncodeToString(linuxHash)[0:8], hex.EncodeToString(initrdHash)[0:8])
 	if err = btLoadConfig(entryPath); err != nil {
 		return
 	}
