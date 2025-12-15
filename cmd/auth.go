@@ -61,7 +61,7 @@ func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 }
 
 // Load the boot transparency configuration from files on disk.
-// The entryPath argument allows per-bundle combinations.
+// The entryPath argument allows per-bundle configurations.
 func btLoadConfig(entryPath string) (err error) {
 	root, err := x64.UEFI.Root()
 

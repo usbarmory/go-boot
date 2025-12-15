@@ -3,6 +3,9 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
+// Package transparency implements an interface to the
+// boot-transparency library functions to ease boot bundle
+// validation.
 package transparency
 
 import (
@@ -14,7 +17,7 @@ import (
 	"github.com/usbarmory/boot-transparency/transparency"
 )
 
-// Defines boot-transparency status codes
+// BtStatus represents boot-transparency status codes
 type BtStatus int
 
 const (
@@ -23,14 +26,14 @@ const (
     Online
 )
 
-// Defines boot-transparency status names
+// BtStatusName represents boot-transparency status names
 var BtStatusName = map[BtStatus]string {
     None:    "none",
     Offline: "offline",
     Online:  "online",
 }
 
-// Defines boot-transparency configuration
+// BtConfig represents boot-transparency configuration
 type BtConfig struct {
 	Status        BtStatus
 	BootPolicy    []byte
@@ -40,16 +43,21 @@ type BtConfig struct {
 	LogKey        []byte
 }
 
-// Defines boot-transparency requirements for a given boot artifact
+// BtArtifact represents boot-transparency requirements for a boot artifact.
+// Requirements are expressed in JSON format, following the same key:value
+// syntax supported by boot-transparency to define boot policy requirements.
+// Category should be consistent with the artifact categories supported
+// by boot-transparency.
 type BtArtifact struct {
         Category     uint
         Requirements []byte
 }
 
-// Validate the inclusion proof and the consistency between the
-// boot policy and the logged claims.
+// Validate validates the transparency inclusion proof and the consistency
+// between the boot policy and the logged artifact claims.
 // The function takes as input the pointers to the boot-transparency
-// configuration and file hashes of the boot artifacts.
+// configuration and to the artifacts requirements which contain the
+// file hashes for the loaded boot artifacts.
 // Returns error if the boot artifacts are not passing the validation.
 func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
 	if c.Status == None {
@@ -76,10 +84,6 @@ func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
 		return
 	}
 
-	// Parse the proof bundle, which is expected to contain
-	// the logged statement and its inclusion proof.
-	// The probe data is optionally required to request the inclusion
-	// proof only when operating in online mode.
 	pb, _, err := te.ParseProof(c.ProofBundle)
 	if err != nil {
 		return
@@ -95,15 +99,15 @@ func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
 		freshBundle := pb.(*sigsum.ProofBundle)
 		freshBundle.Proof = string(pr)
 
-		// Inclusion proof verification with network access:
-		// use the inclusion proof fetched from the log.
+		// If network access is available the inclusion proof verification
+		// is performed using the proof fetched from the log.
 		err = te.VerifyProof(freshBundle)
 		if err != nil {
 			return err
 		}
 	} else {
-		// Inclusion proof verification without network access:
-		// use the inclusion proof included in the proof bundle.
+		// If network access is not available the inclusion proof verification
+		// is performed using the proof included in the proof bundle.
 		err = te.VerifyProof(pb)
 		if err != nil {
 			return err
@@ -136,10 +140,11 @@ func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
 	return
 }
 
-// Ensure the matching between the boot artifacts and the ones included into a given proof bundle.
-// This step is vital to ensure the correspondency between the artifacts actually
-// loaded during the boot and the claims that will be validated by the  boot-transparency
-// policy function.
+// Validate the matching between the boot artifacts and the ones included
+// in the proof bundle.
+// This step is vital to ensure the correspondency between the artifacts
+// loaded in memory during the boot and the claims that will be validated
+// by the boot-transparency policy function.
 func validateArtifacts(s *policy.Statement, btArtifacts *[]BtArtifact) (err error) {
         var h artifact.Handler
 

@@ -251,10 +251,9 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", errors.New("empty kernel entry")
 	}
 
-	// boot-transparency validation
 	if btConfig.Status != transparency.None {
 		if err = btValidateLinuxEntry(entry); err != nil {
-			return "", fmt.Errorf("boot transparency validation failed\n%v", err)
+			return "", fmt.Errorf("boot transparency validation failed, %v", err)
 		}
 	}
 
@@ -286,7 +285,7 @@ func btValidateLinuxEntry(entry *uapi.Entry) (err error) {
 		{Category: artifact.Initrd, Requirements: requiredInitrd},
 	}
 
-	// unique path for any given Linux boot entry (kernel, initrd)
+	// constructs a unique path for a given Linux boot entry (kernel, initrd)
 	entryPath := fmt.Sprintf("%s-%s", hex.EncodeToString(linuxHash)[0:7], hex.EncodeToString(initrdHash)[0:7])
 	if err = btLoadConfig(entryPath); err != nil {
 		return
