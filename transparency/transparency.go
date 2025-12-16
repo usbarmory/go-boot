@@ -9,6 +9,9 @@
 package transparency
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"path"
@@ -21,13 +24,13 @@ import (
 	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
-// Represents boot-transparency status.
-type BtStatus int
+// Represents the status of the transparency functionality.
+type Status int
 
-// Represents boot-transparency status codes.
+// Represents transparency status codes.
 const (
 	// Transparency disabled.
-	None BtStatus = iota
+	None Status = iota
 
 	// Transparency enabled in offline mode.
 	Offline
@@ -36,24 +39,24 @@ const (
 	Online
 )
 
-// ToString resolves BtStatus codes into a human-readable strings.
-func (s BtStatus) ToString() string {
-	var btStatusName = map[BtStatus]string{
+// Resolve resolves Status codes into a human-readable strings.
+func (s Status) Resolve() string {
+	statusName := map[Status]string{
 		None:    "none",
 		Offline: "offline",
 		Online:  "online",
 	}
 
-	return btStatusName[s]
+	return statusName[s]
 }
 
-// BtConfig represents boot-transparency configuration.
-type BtConfig struct {
-	// Status represents boot-transparency status.
-	Status BtStatus
+// Config represents the configuration for the transparency functionality.
+type Config struct {
+	// Status represents the status of the transparency functionality.
+	Status Status
 
 	// BootPolicy represents the boot policy in JSON format
-	// following the boot-transparency policy syntax.
+	// following the policy syntax supported by boot-transparency library.
 	BootPolicy []byte
 
 	// WitnessPolicy represents the witness policy following
@@ -61,28 +64,27 @@ type BtConfig struct {
 	WitnessPolicy []byte
 
 	// ProofBundle represents the proof bundle in JSON format
-	// following the boot-transparency proof bundle syntax.
+	// following the proof bundle format supported by boot-transparency library.
 	ProofBundle []byte
 
-	// SubmitKey represents the log submitter public key.
+	// SubmitKey represents the log submitter public key in·OpenSSH·format.
 	SubmitKey []byte
 
-	// LogKey represents the log public key.
+	// LogKey represents the log public key in OpenSSH format.
 	LogKey []byte
 }
 
-// BtArtifact represents boot-transparency requirements for a boot artifact.
-type BtArtifact struct {
+// Artifact represents a boot artifact.
+type Artifact struct {
 	// Category should be consistent with the artifact categories supported
 	// by boot-transparency.
 	Category uint
 
-	// Requirements are expressed in JSON format, following the same key:value
-	// syntax supported by boot-transparency to define boot policy requirements.
-	Requirements []byte
+	// SHA-256 hash of the artifact
+	Hash string
 }
 
-// boot-transparency configuration filenames
+// Transparency configuration filenames
 const (
 	transparencyRoot  = `/transparency`
 	bootPolicyFile    = `policy.json`
@@ -92,63 +94,38 @@ const (
 	logKeyFile        = `log-key.pub`
 )
 
-// Load reads the boot-transparency configuration files from disk.
-// The entry argument allows per-bundle configurations.
-func (c *BtConfig) Load(entry string) (err error) {
-	entryPath := path.Join(transparencyRoot, entry)
+// Hash performs data hashing via the same algoritm
+// used by boot-transparency library (i.e. SHA-256).
+// Returns the computed hash as hex string.
+func Hash(data *[]byte) (hexHash string) {
+	h := sha256.New()
+	h.Write(*data)
+	hash := h.Sum(nil)
 
-	bootPolicyPath := path.Join(entryPath, bootPolicyFile)
-	bootPolicyPath = strings.ReplaceAll(bootPolicyPath, `/`, `\`)
-
-	witnessPolicyPath := path.Join(entryPath, witnessPolicyFile)
-	witnessPolicyPath = strings.ReplaceAll(witnessPolicyPath, `/`, `\`)
-
-	submitKeyPath := path.Join(entryPath, submitKeyFile)
-	submitKeyPath = strings.ReplaceAll(submitKeyPath, `/`, `\`)
-
-	logKeyPath := path.Join(entryPath, logKeyFile)
-	logKeyPath = strings.ReplaceAll(logKeyPath, `/`, `\`)
-
-	proofBundlePath := path.Join(entryPath, proofBundleFile)
-	proofBundlePath = strings.ReplaceAll(proofBundlePath, `/`, `\`)
-
-	root, err := x64.UEFI.Root()
-	if err != nil {
-		return fmt.Errorf("could not open root volume, %v", err)
-	}
-
-	if c.BootPolicy, err = fs.ReadFile(root, bootPolicyPath); err != nil {
-		return fmt.Errorf("cannot read boot policy, %v", err)
-	}
-
-	if c.WitnessPolicy, err = fs.ReadFile(root, witnessPolicyPath); err != nil {
-		return fmt.Errorf("cannot read witness policy, %v", err)
-	}
-
-	if c.SubmitKey, err = fs.ReadFile(root, submitKeyPath); err != nil {
-		return fmt.Errorf("cannot read log submitter key, %v", err)
-	}
-
-	if c.LogKey, err = fs.ReadFile(root, logKeyPath); err != nil {
-		return fmt.Errorf("cannot read log key, %v", err)
-	}
-
-	if c.ProofBundle, err = fs.ReadFile(root, proofBundlePath); err != nil {
-		return fmt.Errorf("cannot read proof bundle, %v", err)
-	}
-
-	return
+	return hex.EncodeToString(hash)
 }
 
 // Validate the transparency inclusion proof and the consistency
 // between the boot policy and the logged artifact claims.
-// The function takes as input the pointers to the boot-transparency
+// The function takes as input the pointers to the transparency
 // configuration and to the artifacts requirements which contain the
 // file hashes for the loaded boot artifacts.
 // Returns error if the boot artifacts are not passing the validation.
-func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
+func Validate(c *Config, a *[]Artifact) (err error) {
 	if c.Status == None {
 		return
+	}
+
+	if a == nil && len (*a) != 0 {
+		return fmt.Errorf("got an invalid pointer to boot artifacts")
+	}
+
+	// Get the tranparency configuration path for the given boot entry (i.e. set of artifacts)
+	entryPath := c.EntryPath(a)
+
+	// Load the configuration from disk
+	if err = c.load(entryPath); err != nil {
+		return fmt.Errorf("cannot load boot transparency configuration, %v", err)
 	}
 
 	te, err := transparency.GetEngine(transparency.Sigsum)
@@ -209,7 +186,7 @@ func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
 		return
 	}
 
-	if err = validateArtifacts(claims, a); err != nil {
+	if err = validateProofHashes(claims, a); err != nil {
 		return
 	}
 
@@ -223,44 +200,114 @@ func Validate(c *BtConfig, a *[]BtArtifact) (err error) {
 	return
 }
 
-// Validate the matching between the boot artifacts and the ones included
-// in the proof bundle.
+// EntryPath returns the unique configuration loading path
+// for a given boot entry (i.e. set of artifacts)
+func (c *Config) EntryPath(a *[]Artifact) (entryPath string) {
+	entryPath = transparencyRoot
+
+	for _, artifact := range *a {
+		entryPath = path.Join(entryPath, artifact.Hash)
+	}
+
+	return strings.ReplaceAll(entryPath, `/`, `\`)
+}
+
+// Load reads the transparency configuration files from disk.
+// The entry argument allows per-bundle configurations.
+func (c *Config) load(entryPath string) (err error) {
+	bootPolicyPath := path.Join(entryPath, bootPolicyFile)
+	bootPolicyPath = strings.ReplaceAll(bootPolicyPath, `/`, `\`)
+
+	witnessPolicyPath := path.Join(entryPath, witnessPolicyFile)
+	witnessPolicyPath = strings.ReplaceAll(witnessPolicyPath, `/`, `\`)
+
+	submitKeyPath := path.Join(entryPath, submitKeyFile)
+	submitKeyPath = strings.ReplaceAll(submitKeyPath, `/`, `\`)
+
+	logKeyPath := path.Join(entryPath, logKeyFile)
+	logKeyPath = strings.ReplaceAll(logKeyPath, `/`, `\`)
+
+	proofBundlePath := path.Join(entryPath, proofBundleFile)
+	proofBundlePath = strings.ReplaceAll(proofBundlePath, `/`, `\`)
+
+	root, err := x64.UEFI.Root()
+	if err != nil {
+		return fmt.Errorf("could not open root volume, %v", err)
+	}
+
+	if c.BootPolicy, err = fs.ReadFile(root, bootPolicyPath); err != nil {
+		return fmt.Errorf("cannot read boot policy, %v", err)
+	}
+
+	if c.WitnessPolicy, err = fs.ReadFile(root, witnessPolicyPath); err != nil {
+		return fmt.Errorf("cannot read witness policy, %v", err)
+	}
+
+	if c.SubmitKey, err = fs.ReadFile(root, submitKeyPath); err != nil {
+		return fmt.Errorf("cannot read log submitter key, %v", err)
+	}
+
+	if c.LogKey, err = fs.ReadFile(root, logKeyPath); err != nil {
+		return fmt.Errorf("cannot read log key, %v", err)
+	}
+
+	if c.ProofBundle, err = fs.ReadFile(root, proofBundlePath); err != nil {
+		return fmt.Errorf("cannot read proof bundle, %v", err)
+	}
+
+	return
+}
+
+
+
+// Validate the matching between the file hashes of the boot artifacts
+// and the ones claimed in the proof bundle.
 // This step is vital to ensure the correspondency between the artifacts
 // loaded in memory during the boot and the claims that will be validated
 // by the boot-transparency policy function.
-func validateArtifacts(s *policy.Statement, btArtifacts *[]BtArtifact) (err error) {
+func validateProofHashes(s *policy.Statement, artifacts *[]Artifact) (err error) {
+	for _, a := range *artifacts {
+		if err = validateClaimedHash(s, a); err != nil {
+			return err
+		}
+	}
+
+	return
+}
+
+func validateClaimedHash(s *policy.Statement, a Artifact) (err error) {
 	var h artifact.Handler
+	var found = false
 
-	for _, btArtifact := range *btArtifacts {
-		found := false
-		for _, a := range s.Artifacts {
-			if btArtifact.Category == a.Category {
-				if h, err = artifact.GetHandler(a.Category); err != nil {
-					return
-				}
-
-				r, err := h.ParseRequirements([]byte(btArtifact.Requirements))
-				if err != nil {
-					return err
-				}
-
-				c, err := h.ParseClaims([]byte(a.Claims))
-				if err != nil {
-					return err
-				}
-
-				if err = h.Validate(r, c); err != nil {
-					return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, file hash mistmatch")
-				}
-
-				found = true
-				break
+	for _, claimedArtifact := range s.Artifacts {
+		if a.Category == claimedArtifact.Category {
+			if h, err = artifact.GetHandler(a.Category); err != nil {
+				return
 			}
-		}
 
-		if !found {
-			return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, one or more artifacts are not present in the proof bundle")
+			// boot-transparency expect to parse requirements in JSON format
+			requirements, _ := json.Marshal(map[string]string{"file_hash": a.Hash})
+			r, err := h.ParseRequirements([]byte(requirements))
+			if err != nil {
+				return err
+			}
+
+			c, err := h.ParseClaims([]byte(claimedArtifact.Claims))
+			if err != nil {
+				return err
+			}
+
+			if err = h.Validate(r, c); err != nil {
+				return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, file hash mistmatch")
+			}
+
+			found = true
+			break
 		}
+	}
+
+	if !found {
+		return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, one or more artifacts are not present in the proof bundle")
 	}
 
 	return

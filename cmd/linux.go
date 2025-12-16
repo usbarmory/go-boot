@@ -6,9 +6,6 @@
 package cmd
 
 import (
-	"crypto/sha512"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -251,8 +248,20 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", errors.New("empty kernel entry")
 	}
 
+	// boot-transparency validation (if enabled)
 	if btConfig.Status != transparency.None {
-		if err = btValidateLinuxEntry(entry); err != nil {
+		btArtifacts := []transparency.Artifact{
+			{
+				Category:     artifact.LinuxKernel,
+				Hash:         transparency.Hash(&entry.Linux),
+			},
+			{
+				Category:     artifact.Initrd,
+				Hash:         transparency.Hash(&entry.Initrd),
+			},
+		}
+
+		if err = transparency.Validate(&btConfig, &btArtifacts); err != nil {
 			return "", fmt.Errorf("boot-transparency validation failed, %v", err)
 		}
 	}
@@ -264,43 +273,4 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	return "", boot(image)
-}
-
-// btValidateLinuxEntry validates the boot entry according with the loaded
-// boot-transparency configuration and the loaded artifacts identified with
-// their file hashes.
-func btValidateLinuxEntry(entry *uapi.Entry) (err error) {
-	h := sha512.New()
-	h.Write(entry.Linux)
-	linuxHash := h.Sum(nil)
-
-	h = sha512.New()
-	h.Write(entry.Initrd)
-	initrdHash := h.Sum(nil)
-
-	requiredLinuxKernel, _ := json.Marshal(map[string]string{"file_hash": hex.EncodeToString(linuxHash)})
-	requiredInitrd, _ := json.Marshal(map[string]string{"file_hash": hex.EncodeToString(initrdHash)})
-
-	btArtifacts := []transparency.BtArtifact{
-		{
-			Category:     artifact.LinuxKernel,
-			Requirements: requiredLinuxKernel,
-		},
-		{
-			Category:     artifact.Initrd,
-			Requirements: requiredInitrd,
-		},
-	}
-
-	// constructs a unique path for a given Linux boot entry (kernel, initrd)
-	entryPath := fmt.Sprintf("%s-%s", hex.EncodeToString(linuxHash)[0:8], hex.EncodeToString(initrdHash)[0:8])
-	if err = btConfig.Load(entryPath); err != nil {
-		return
-	}
-
-	if err = transparency.Validate(&btConfig, &btArtifacts); err != nil {
-		return
-	}
-
-	return
 }

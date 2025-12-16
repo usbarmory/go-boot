@@ -14,7 +14,7 @@ import (
 	"github.com/usbarmory/go-boot/transparency"
 )
 
-var btConfig transparency.BtConfig
+var btConfig transparency.Config
 
 func init() {
 	shell.Add(shell.Cmd{
@@ -43,7 +43,7 @@ func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	case transparency.None:
 		return fmt.Sprintf("boot-transparency is disabled\n"), nil
 	case transparency.Offline, transparency.Online:
-		return fmt.Sprintf("boot-transparency is enabled in %s mode\n", btConfig.Status.ToString()), nil
+		return fmt.Sprintf("boot-transparency is enabled in %s mode\n", btConfig.Status.Resolve()), nil
 	}
 
 	return
