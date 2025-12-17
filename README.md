@@ -236,8 +236,8 @@ continue
 Cloud deployments
 =================
 
-The following example demonstrates how to create, and deploy, a UEFI-bootable image
-for Google Compute Engine:
+The following example demonstrates how to create, and deploy, a UEFI-bootable
+image for cloud deployments:
 
 * [Google Compute Engine](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine)
 
