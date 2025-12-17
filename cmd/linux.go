@@ -250,18 +250,18 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	// boot transparency validation (if enabled)
 	if btConfig.Status != transparency.None {
-		btArtifacts := []transparency.Artifact{
-			{
+		btEntry := transparency.BootEntry{
+			transparency.Artifact{
 				Category: artifact.LinuxKernel,
 				Hash:     transparency.Hash(&entry.Linux),
 			},
-			{
+			transparency.Artifact{
 				Category: artifact.Initrd,
 				Hash:     transparency.Hash(&entry.Initrd),
 			},
 		}
 
-		if err = transparency.Validate(&btConfig, &btArtifacts); err != nil {
+		if err = transparency.Validate(&btEntry, &btConfig); err != nil {
 			return "", fmt.Errorf("boot transparency validation failed, %v", err)
 		}
 	}

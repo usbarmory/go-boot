@@ -85,6 +85,9 @@ type Artifact struct {
 	Hash string
 }
 
+// BootEntry represent a boot antry as a set of artifacts.
+type BootEntry []Artifact
+
 // Boot transparency configuration filenames.
 const (
 	transparencyRoot  = `/transparency`
@@ -110,12 +113,12 @@ func Hash(data *[]byte) (hexHash string) {
 // for a given set of artifacts (i.e. boot entry).
 // Returns error if one of the artifacts does not include
 // a valid SHA-256 hash.
-func ConfigPath(a *[]Artifact) (entryPath string, err error) {
-	if a == nil && len(*a) != 0 {
-		return "", fmt.Errorf("cannot build configuration path, got an invalid artifacts pointer")
+func (b *BootEntry) ConfigPath() (entryPath string, err error) {
+	if len(*b) == 0 {
+		return "", fmt.Errorf("cannot build configuration path, got an invalid boot entry pointer")
 	}
 
-	artifacts := *a
+	artifacts := *b
 
 	// Sort the passed artifacts, by their Category, to ensure
 	// consistency in the way the entry path is build.
@@ -142,18 +145,18 @@ func ConfigPath(a *[]Artifact) (entryPath string, err error) {
 // Takes as input the pointers to the transparency configuration and,
 // to the information on the loaded boot artifacts.
 // Returns error if the boot artifacts are not passing the validation.
-func Validate(c *Config, a *[]Artifact) (err error) {
+func Validate(entry *BootEntry, c *Config) (err error) {
 	if c.Status == None {
 		return
 	}
 
-	if a == nil && len(*a) != 0 {
-		return fmt.Errorf("got an invalid artifacts pointer")
+	if entry == nil || len(*entry) == 0 {
+		return fmt.Errorf("got an invalid boot entry pointer")
 	}
 
 	// Get the boot transparency configuration path for a given
-	// set of artifacts.
-	entryPath, err := ConfigPath(a)
+	// boot entry.
+	entryPath, err := entry.ConfigPath()
 	if err != nil {
 		return
 	}
@@ -222,7 +225,7 @@ func Validate(c *Config, a *[]Artifact) (err error) {
 
 	// Validate the matching between loaded artifact hashes and
 	// the ones included in the proof bundle.
-	if err = validateProofHashes(claims, a); err != nil {
+	if err = validateProofHashes(claims, entry); err != nil {
 		return
 	}
 
@@ -287,8 +290,8 @@ func (c *Config) load(entryPath string) (err error) {
 // This step is vital to ensure the correspondence between the artifacts
 // loaded in memory during the boot and the claims that will be validated
 // by the boot-transparency policy function.
-func validateProofHashes(s *policy.Statement, artifacts *[]Artifact) (err error) {
-	for _, a := range *artifacts {
+func validateProofHashes(s *policy.Statement, b *BootEntry) (err error) {
+	for _, a := range *b {
 		if err = validateClaimedHash(s, a); err != nil {
 			return err
 		}
