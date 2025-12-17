@@ -248,21 +248,21 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", errors.New("empty kernel entry")
 	}
 
-	// boot-transparency validation (if enabled)
+	// boot transparency validation (if enabled)
 	if btConfig.Status != transparency.None {
 		btArtifacts := []transparency.Artifact{
 			{
-				Category:     artifact.LinuxKernel,
-				Hash:         transparency.Hash(&entry.Linux),
+				Category: artifact.LinuxKernel,
+				Hash:     transparency.Hash(&entry.Linux),
 			},
 			{
-				Category:     artifact.Initrd,
-				Hash:         transparency.Hash(&entry.Initrd),
+				Category: artifact.Initrd,
+				Hash:     transparency.Hash(&entry.Initrd),
 			},
 		}
 
 		if err = transparency.Validate(&btConfig, &btArtifacts); err != nil {
-			return "", fmt.Errorf("boot-transparency validation failed, %v", err)
+			return "", fmt.Errorf("boot transparency validation failed, %v", err)
 		}
 	}
 

@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/usbarmory/boot-transparency/artifact"
@@ -24,18 +25,18 @@ import (
 	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
-// Represents the status of the transparency functionality.
+// Represents the status of the boot transparency functionality.
 type Status int
 
-// Represents transparency status codes.
+// Represents boot transparency status codes.
 const (
-	// Transparency disabled.
+	// Boot transparency disabled.
 	None Status = iota
 
-	// Transparency enabled in offline mode.
+	// Boot transparency enabled in offline mode.
 	Offline
 
-	// Transparency enabled in online mode.
+	// Boot transparency enabled in online mode.
 	Online
 )
 
@@ -50,9 +51,9 @@ func (s Status) Resolve() string {
 	return statusName[s]
 }
 
-// Config represents the configuration for the transparency functionality.
+// Config represents the configuration for the boot transparency functionality.
 type Config struct {
-	// Status represents the status of the transparency functionality.
+	// Status represents the status of the boot transparency functionality.
 	Status Status
 
 	// BootPolicy represents the boot policy in JSON format
@@ -76,15 +77,15 @@ type Config struct {
 
 // Artifact represents a boot artifact.
 type Artifact struct {
-	// Category should be consistent with the artifact categories supported
-	// by boot-transparency.
+	// Category must be consistent with the artifact categories
+	// supported by boot-transparency library.
 	Category uint
 
-	// SHA-256 hash of the artifact
+	// SHA-256 hash of the artifact.
 	Hash string
 }
 
-// Transparency configuration filenames
+// Boot transparency configuration filenames.
 const (
 	transparencyRoot  = `/transparency`
 	bootPolicyFile    = `policy.json`
@@ -94,8 +95,8 @@ const (
 	logKeyFile        = `log-key.pub`
 )
 
-// Hash performs data hashing via the same algoritm
-// used by boot-transparency library (i.e. SHA-256).
+// Hash performs data hashing using SHA-256, which is
+// the same algorithm used by boot-transparency library.
 // Returns the computed hash as hex string.
 func Hash(data *[]byte) (hexHash string) {
 	h := sha256.New()
@@ -105,25 +106,59 @@ func Hash(data *[]byte) (hexHash string) {
 	return hex.EncodeToString(hash)
 }
 
-// Validate the transparency inclusion proof and the consistency
-// between the boot policy and the logged artifact claims.
-// The function takes as input the pointers to the transparency
-// configuration and to the artifacts requirements which contain the
-// file hashes for the loaded boot artifacts.
+// ConfigPath returns a unique configuration loading path
+// for a given set of artifacts (i.e. boot entry).
+// Returns error if one of the artifacts does not include
+// a valid SHA-256 hash.
+func ConfigPath(a *[]Artifact) (entryPath string, err error) {
+	if a == nil && len(*a) != 0 {
+		return "", fmt.Errorf("cannot build configuration path, got an invalid artifacts pointer")
+	}
+
+	artifacts := *a
+
+	// Sort the passed artifacts, by their Category, to ensure
+	// consistency in the way the entry path is build.
+	sort.Slice(artifacts, func(i, j int) bool {
+		return artifacts[i].Category < artifacts[j].Category
+	})
+
+	entryPath = transparencyRoot
+	for _, artifact := range artifacts {
+		h, err := hex.DecodeString(artifact.Hash)
+
+		if err != nil || len(h) != sha256.Size {
+			return "", fmt.Errorf("cannot build configuration path, got an invalid artifact hash")
+		}
+
+		entryPath = path.Join(entryPath, artifact.Hash)
+	}
+
+	return strings.ReplaceAll(entryPath, `/`, `\`), nil
+}
+
+// Validate the transparency inclusion proof and, the consistency
+// between the boot policy and the logged claims for the boot artifacts.
+// Takes as input the pointers to the transparency configuration and,
+// to the information on the loaded boot artifacts.
 // Returns error if the boot artifacts are not passing the validation.
 func Validate(c *Config, a *[]Artifact) (err error) {
 	if c.Status == None {
 		return
 	}
 
-	if a == nil && len (*a) != 0 {
-		return fmt.Errorf("got an invalid pointer to boot artifacts")
+	if a == nil && len(*a) != 0 {
+		return fmt.Errorf("got an invalid artifacts pointer")
 	}
 
-	// Get the tranparency configuration path for the given boot entry (i.e. set of artifacts)
-	entryPath := c.EntryPath(a)
+	// Get the boot transparency configuration path for a given
+	// set of artifacts.
+	entryPath, err := ConfigPath(a)
+	if err != nil {
+		return
+	}
 
-	// Load the configuration from disk
+	// Loads the configuration from disk.
 	if err = c.load(entryPath); err != nil {
 		return fmt.Errorf("cannot load boot transparency configuration, %v", err)
 	}
@@ -151,8 +186,9 @@ func Validate(c *Config, a *[]Artifact) (err error) {
 		return fmt.Errorf("unable to parse proof bundle, %v", err)
 	}
 
+	// If network access is available the inclusion proof verification
+	// is performed using the proof fetched from the log.
 	if c.Status == Online {
-		// Probe the log to obtain a fresh inclusion proof.
 		pr, err := te.GetProof(pb)
 		if err != nil {
 			return err
@@ -161,8 +197,6 @@ func Validate(c *Config, a *[]Artifact) (err error) {
 		freshBundle := pb.(*sigsum.ProofBundle)
 		freshBundle.Proof = string(pr)
 
-		// If network access is available the inclusion proof verification
-		// is performed using the proof fetched from the log.
 		if err = te.VerifyProof(freshBundle); err != nil {
 			return err
 		}
@@ -186,6 +220,8 @@ func Validate(c *Config, a *[]Artifact) (err error) {
 		return
 	}
 
+	// Validate the matching between loaded artifact hashes and
+	// the ones included in the proof bundle.
 	if err = validateProofHashes(claims, a); err != nil {
 		return
 	}
@@ -198,18 +234,6 @@ func Validate(c *Config, a *[]Artifact) (err error) {
 
 	// boot-transparency validation passed, boot bundle is authorized.
 	return
-}
-
-// EntryPath returns the unique configuration loading path
-// for a given boot entry (i.e. set of artifacts)
-func (c *Config) EntryPath(a *[]Artifact) (entryPath string) {
-	entryPath = transparencyRoot
-
-	for _, artifact := range *a {
-		entryPath = path.Join(entryPath, artifact.Hash)
-	}
-
-	return strings.ReplaceAll(entryPath, `/`, `\`)
 }
 
 // Load reads the transparency configuration files from disk.
@@ -258,11 +282,9 @@ func (c *Config) load(entryPath string) (err error) {
 	return
 }
 
-
-
-// Validate the matching between the file hashes of the boot artifacts
-// and the ones claimed in the proof bundle.
-// This step is vital to ensure the correspondency between the artifacts
+// Validate the matching between loaded artifact hashes and
+// the ones included in the proof bundle.
+// This step is vital to ensure the correspondence between the artifacts
 // loaded in memory during the boot and the claims that will be validated
 // by the boot-transparency policy function.
 func validateProofHashes(s *policy.Statement, artifacts *[]Artifact) (err error) {
@@ -277,33 +299,41 @@ func validateProofHashes(s *policy.Statement, artifacts *[]Artifact) (err error)
 
 func validateClaimedHash(s *policy.Statement, a Artifact) (err error) {
 	var h artifact.Handler
-	var found = false
+	var found bool
 
 	for _, claimedArtifact := range s.Artifacts {
-		if a.Category == claimedArtifact.Category {
-			if h, err = artifact.GetHandler(a.Category); err != nil {
-				return
-			}
-
-			// boot-transparency expect to parse requirements in JSON format
-			requirements, _ := json.Marshal(map[string]string{"file_hash": a.Hash})
-			r, err := h.ParseRequirements([]byte(requirements))
-			if err != nil {
-				return err
-			}
-
-			c, err := h.ParseClaims([]byte(claimedArtifact.Claims))
-			if err != nil {
-				return err
-			}
-
-			if err = h.Validate(r, c); err != nil {
-				return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, file hash mistmatch")
-			}
-
-			found = true
-			break
+		// The claims are referring to a different artifact
+		// category, try with next block of claims in the statement.
+		if a.Category != claimedArtifact.Category {
+			continue
 		}
+
+		if h, err = artifact.GetHandler(a.Category); err != nil {
+			return
+		}
+
+		// boot-transparency expect to parse requirements in JSON format.
+		requirements, _ := json.Marshal(map[string]string{"file_hash": a.Hash})
+
+		r, err := h.ParseRequirements([]byte(requirements))
+		if err != nil {
+			return err
+		}
+
+		c, err := h.ParseClaims([]byte(claimedArtifact.Claims))
+		if err != nil {
+			return err
+		}
+
+		// The validation logic is safe in the sense that error is returned
+		// if a file hash requested by the boot loader is not present in the
+		// statement for a given artifact category.
+		if err = h.Validate(r, c); err != nil {
+			return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, file hash mismatch")
+		}
+
+		found = true
+		break
 	}
 
 	if !found {
