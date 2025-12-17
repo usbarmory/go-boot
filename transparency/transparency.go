@@ -91,6 +91,7 @@ type BootEntry []Artifact
 // Boot transparency configuration filenames.
 const (
 	transparencyRoot  = `/transparency`
+
 	bootPolicyFile    = `policy.json`
 	witnessPolicyFile = `trust_policy`
 	proofBundleFile   = `proof-bundle.json`
@@ -242,41 +243,42 @@ func Validate(entry *BootEntry, c *Config) (err error) {
 // Load reads the transparency configuration files from disk.
 // The entry argument allows per-bundle configurations.
 func (c *Config) load(entryPath string) (err error) {
-	bootPolicyPath := path.Join(entryPath, bootPolicyFile)
-	bootPolicyPath = strings.ReplaceAll(bootPolicyPath, `/`, `\`)
-
-	witnessPolicyPath := path.Join(entryPath, witnessPolicyFile)
-	witnessPolicyPath = strings.ReplaceAll(witnessPolicyPath, `/`, `\`)
-
-	submitKeyPath := path.Join(entryPath, submitKeyFile)
-	submitKeyPath = strings.ReplaceAll(submitKeyPath, `/`, `\`)
-
-	logKeyPath := path.Join(entryPath, logKeyFile)
-	logKeyPath = strings.ReplaceAll(logKeyPath, `/`, `\`)
-
-	proofBundlePath := path.Join(entryPath, proofBundleFile)
-	proofBundlePath = strings.ReplaceAll(proofBundlePath, `/`, `\`)
-
 	root, err := x64.UEFI.Root()
+
 	if err != nil {
 		return fmt.Errorf("could not open root volume, %v", err)
 	}
+
+	bootPolicyPath := path.Join(entryPath, bootPolicyFile)
+	bootPolicyPath = strings.ReplaceAll(bootPolicyPath, `/`, `\`)
 
 	if c.BootPolicy, err = fs.ReadFile(root, bootPolicyPath); err != nil {
 		return fmt.Errorf("cannot read boot policy, %v", err)
 	}
 
+	witnessPolicyPath := path.Join(entryPath, witnessPolicyFile)
+	witnessPolicyPath = strings.ReplaceAll(witnessPolicyPath, `/`, `\`)
+
 	if c.WitnessPolicy, err = fs.ReadFile(root, witnessPolicyPath); err != nil {
 		return fmt.Errorf("cannot read witness policy, %v", err)
 	}
+
+	submitKeyPath := path.Join(entryPath, submitKeyFile)
+	submitKeyPath = strings.ReplaceAll(submitKeyPath, `/`, `\`)
 
 	if c.SubmitKey, err = fs.ReadFile(root, submitKeyPath); err != nil {
 		return fmt.Errorf("cannot read log submitter key, %v", err)
 	}
 
+	logKeyPath := path.Join(entryPath, logKeyFile)
+	logKeyPath = strings.ReplaceAll(logKeyPath, `/`, `\`)
+
 	if c.LogKey, err = fs.ReadFile(root, logKeyPath); err != nil {
 		return fmt.Errorf("cannot read log key, %v", err)
 	}
+
+	proofBundlePath := path.Join(entryPath, proofBundleFile)
+	proofBundlePath = strings.ReplaceAll(proofBundlePath, `/`, `\`)
 
 	if c.ProofBundle, err = fs.ReadFile(root, proofBundlePath); err != nil {
 		return fmt.Errorf("cannot read proof bundle, %v", err)
