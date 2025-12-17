@@ -13,7 +13,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"path"
 	"sort"
 	"strings"
@@ -22,58 +21,7 @@ import (
 	"github.com/usbarmory/boot-transparency/engine/sigsum"
 	"github.com/usbarmory/boot-transparency/policy"
 	"github.com/usbarmory/boot-transparency/transparency"
-	"github.com/usbarmory/go-boot/uefi/x64"
 )
-
-// Represents the status of the boot transparency functionality.
-type Status int
-
-// Represents boot transparency status codes.
-const (
-	// Boot transparency disabled.
-	None Status = iota
-
-	// Boot transparency enabled in offline mode.
-	Offline
-
-	// Boot transparency enabled in online mode.
-	Online
-)
-
-// Resolve resolves Status codes into a human-readable strings.
-func (s Status) Resolve() string {
-	statusName := map[Status]string{
-		None:    "none",
-		Offline: "offline",
-		Online:  "online",
-	}
-
-	return statusName[s]
-}
-
-// Config represents the configuration for the boot transparency functionality.
-type Config struct {
-	// Status represents the status of the boot transparency functionality.
-	Status Status
-
-	// BootPolicy represents the boot policy in JSON format
-	// following the policy syntax supported by boot-transparency library.
-	BootPolicy []byte
-
-	// WitnessPolicy represents the witness policy following
-	// the Sigsum plaintext witness policy format.
-	WitnessPolicy []byte
-
-	// ProofBundle represents the proof bundle in JSON format
-	// following the proof bundle format supported by boot-transparency library.
-	ProofBundle []byte
-
-	// SubmitKey represents the log submitter public key in·OpenSSH·format.
-	SubmitKey []byte
-
-	// LogKey represents the log public key in OpenSSH format.
-	LogKey []byte
-}
 
 // Artifact represents a boot artifact.
 type Artifact struct {
@@ -87,28 +35,6 @@ type Artifact struct {
 
 // BootEntry represent a boot antry as a set of artifacts.
 type BootEntry []Artifact
-
-// Boot transparency configuration filenames.
-const (
-	transparencyRoot  = `/transparency`
-
-	bootPolicyFile    = `policy.json`
-	witnessPolicyFile = `trust_policy`
-	proofBundleFile   = `proof-bundle.json`
-	submitKeyFile     = `submit-key.pub`
-	logKeyFile        = `log-key.pub`
-)
-
-// Hash performs data hashing using SHA-256, which is
-// the same algorithm used by boot-transparency library.
-// Returns the computed hash as hex string.
-func Hash(data *[]byte) (hexHash string) {
-	h := sha256.New()
-	h.Write(*data)
-	hash := h.Sum(nil)
-
-	return hex.EncodeToString(hash)
-}
 
 // ConfigPath returns a unique configuration loading path
 // for a given set of artifacts (i.e. boot entry).
@@ -143,21 +69,21 @@ func (b *BootEntry) ConfigPath() (entryPath string, err error) {
 
 // Validate the transparency inclusion proof and, the consistency
 // between the boot policy and the logged claims for the boot artifacts.
-// Takes as input the pointers to the transparency configuration and,
-// to the information on the loaded boot artifacts.
+// Takes as input the pointer to the boot transparency configuration
+// to validate the artifacts of the boot entry.
 // Returns error if the boot artifacts are not passing the validation.
-func Validate(entry *BootEntry, c *Config) (err error) {
+func (b *BootEntry) Validate(c *Config) (err error) {
 	if c.Status == None {
 		return
 	}
 
-	if entry == nil || len(*entry) == 0 {
+	if b == nil || len(*b) == 0 {
 		return fmt.Errorf("got an invalid boot entry pointer")
 	}
 
 	// Get the boot transparency configuration path for a given
 	// boot entry.
-	entryPath, err := entry.ConfigPath()
+	entryPath, err := b.ConfigPath()
 	if err != nil {
 		return
 	}
@@ -217,16 +143,16 @@ func Validate(entry *BootEntry, c *Config) (err error) {
 		return
 	}
 
-	b := pb.(*sigsum.ProofBundle)
+	proof := pb.(*sigsum.ProofBundle)
 
-	claims, err := policy.ParseStatement(b.Statement)
+	claims, err := policy.ParseStatement(proof.Statement)
 	if err != nil {
 		return
 	}
 
 	// Validate the matching between loaded artifact hashes and
 	// the ones included in the proof bundle.
-	if err = validateProofHashes(claims, entry); err != nil {
+	if err = b.validateProofHashes(claims); err != nil {
 		return
 	}
 
@@ -240,51 +166,15 @@ func Validate(entry *BootEntry, c *Config) (err error) {
 	return
 }
 
-// Load reads the transparency configuration files from disk.
-// The entry argument allows per-bundle configurations.
-func (c *Config) load(entryPath string) (err error) {
-	root, err := x64.UEFI.Root()
+// Hash performs data hashing using SHA-256, which is
+// the same algorithm used by boot-transparency library.
+// Returns the computed hash as hex string.
+func Hash(data *[]byte) (hexHash string) {
+	h := sha256.New()
+	h.Write(*data)
+	hash := h.Sum(nil)
 
-	if err != nil {
-		return fmt.Errorf("could not open root volume, %v", err)
-	}
-
-	bootPolicyPath := path.Join(entryPath, bootPolicyFile)
-	bootPolicyPath = strings.ReplaceAll(bootPolicyPath, `/`, `\`)
-
-	if c.BootPolicy, err = fs.ReadFile(root, bootPolicyPath); err != nil {
-		return fmt.Errorf("cannot read boot policy, %v", err)
-	}
-
-	witnessPolicyPath := path.Join(entryPath, witnessPolicyFile)
-	witnessPolicyPath = strings.ReplaceAll(witnessPolicyPath, `/`, `\`)
-
-	if c.WitnessPolicy, err = fs.ReadFile(root, witnessPolicyPath); err != nil {
-		return fmt.Errorf("cannot read witness policy, %v", err)
-	}
-
-	submitKeyPath := path.Join(entryPath, submitKeyFile)
-	submitKeyPath = strings.ReplaceAll(submitKeyPath, `/`, `\`)
-
-	if c.SubmitKey, err = fs.ReadFile(root, submitKeyPath); err != nil {
-		return fmt.Errorf("cannot read log submitter key, %v", err)
-	}
-
-	logKeyPath := path.Join(entryPath, logKeyFile)
-	logKeyPath = strings.ReplaceAll(logKeyPath, `/`, `\`)
-
-	if c.LogKey, err = fs.ReadFile(root, logKeyPath); err != nil {
-		return fmt.Errorf("cannot read log key, %v", err)
-	}
-
-	proofBundlePath := path.Join(entryPath, proofBundleFile)
-	proofBundlePath = strings.ReplaceAll(proofBundlePath, `/`, `\`)
-
-	if c.ProofBundle, err = fs.ReadFile(root, proofBundlePath); err != nil {
-		return fmt.Errorf("cannot read proof bundle, %v", err)
-	}
-
-	return
+	return hex.EncodeToString(hash)
 }
 
 // Validate the matching between loaded artifact hashes and
@@ -292,9 +182,9 @@ func (c *Config) load(entryPath string) (err error) {
 // This step is vital to ensure the correspondence between the artifacts
 // loaded in memory during the boot and the claims that will be validated
 // by the boot-transparency policy function.
-func validateProofHashes(s *policy.Statement, b *BootEntry) (err error) {
+func (b *BootEntry) validateProofHashes(s *policy.Statement) (err error) {
 	for _, a := range *b {
-		if err = validateClaimedHash(s, a); err != nil {
+		if err = a.validateClaimedHash(s); err != nil {
 			return err
 		}
 	}
@@ -302,7 +192,7 @@ func validateProofHashes(s *policy.Statement, b *BootEntry) (err error) {
 	return
 }
 
-func validateClaimedHash(s *policy.Statement, a Artifact) (err error) {
+func (a Artifact) validateClaimedHash(s *policy.Statement) (err error) {
 	var h artifact.Handler
 	var found bool
 
