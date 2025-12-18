@@ -15,9 +15,7 @@ import (
 	"unicode/utf16"
 )
 
-var (
-	EFI_FILE_INFO_ID = MustParseGUID("09576e92-6d3f-11d2-8e39-00a0c969723b")
-)
+var EFI_FILE_INFO_ID = MustParseGUID("09576e92-6d3f-11d2-8e39-00a0c969723b")
 
 const (
 	EFI_FILE_PROTOCOL_REVISION  = 0x00010000
