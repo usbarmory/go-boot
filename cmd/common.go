@@ -119,7 +119,7 @@ func dateCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		date(t.UnixNano())
 	}
 
-	return fmt.Sprintf("%s", time.Now().Format(time.RFC3339)), nil
+	return fmt.Sprintf("%s\n", time.Now().Format(time.RFC3339)), nil
 }
 
 func uptimeCmd(_ *shell.Interface, _ []string) (string, error) {

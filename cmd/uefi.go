@@ -210,7 +210,7 @@ func locateCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("invalid GUID provided: %v", e)
 	}
 	addr, err := x64.UEFI.Boot.LocateProtocol(g)
-	return fmt.Sprintf("%s: %#08x", arg[0], addr), err
+	return fmt.Sprintf("%s: %#08x\n", arg[0], addr), err
 }
 
 func catCmd(_ *shell.Interface, arg []string) (res string, err error) {
