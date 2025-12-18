@@ -184,7 +184,7 @@ func Hash(data *[]byte) (hexHash string) {
 // by the boot-transparency policy function.
 func (b *BootEntry) validateProofHashes(s *policy.Statement) (err error) {
 	for _, a := range *b {
-		if err = a.validateClaimedHash(s); err != nil {
+		if err = a.validateProofHash(s); err != nil {
 			return err
 		}
 	}
@@ -192,7 +192,7 @@ func (b *BootEntry) validateProofHashes(s *policy.Statement) (err error) {
 	return
 }
 
-func (a Artifact) validateClaimedHash(s *policy.Statement) (err error) {
+func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 	var h artifact.Handler
 	var found bool
 
