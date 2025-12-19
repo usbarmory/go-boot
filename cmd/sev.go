@@ -33,7 +33,7 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		return "", errors.New("AMD SEV-SNP unavailable")
 	}
 
-	if snp, _ = x64.UEFI.GetSNPConfiguration(); snp != nil {
+	if snp, _ = x64.UEFI.GetSNPConfiguration(); err != nil {
 		return "", errors.New("could find AMD SEV-SNP pages")
 	}
 
@@ -41,8 +41,20 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	fmt.Fprintf(&buf, "Secrets Page .......: %x (%d)\n", snp.SecretsPagePhysicalAddress, snp.SecretsPageSize)
 	fmt.Fprintf(&buf, "  CPUID Page .......: %x (%d)\n", snp.CPUIDPagePhysicalAddress, snp.CPUIDPageSize)
 
-	if snp.Version != 2 {
-		return
+	secrets := &svm.SNPSecrets{}
+
+	if err = secrets.Init(uint(snp.SecretsPagePhysicalAddress), int(snp.SecretsPageSize)); err != nil {
+		return "", errors.New("could parse AMD SEV-SNP secrets")
+	}
+
+	for i := 0; i < 4; i++ {
+		vmpck, err := secrets.VMPCK(i)
+
+		if err != nil {
+			return "", fmt.Errorf("could parse VMPCK%d, %v", i, err)
+		}
+
+		fmt.Fprintf(&buf, " VMPCK%d ...........: %x\n", i, vmpck)
 	}
 
 	ghcb := &svm.GHCB{}
@@ -51,5 +63,5 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	ghcb.Init()
 	ghcb.Yield()
 
-	return buf.String(), nil
+	return buf.String(), err
 }

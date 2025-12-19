@@ -45,8 +45,8 @@ func (s *Services) GetSNPConfiguration() (snp *SNPConfigurationTable, err error)
 		return nil, err
 	}
 
-	if snp.Header != snpSignature {
-		return nil, errors.New("EFI SNP Configuration Table is invalid")
+	if snp.Header != snpSignature || snp.Version < 2 {
+		return snp, errors.New("EFI SNP Configuration Table is invalid")
 	}
 
 	return
