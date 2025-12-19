@@ -44,14 +44,14 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	secrets := &svm.SNPSecrets{}
 
 	if err = secrets.Init(uint(snp.SecretsPagePhysicalAddress), int(snp.SecretsPageSize)); err != nil {
-		return "", errors.New("could parse AMD SEV-SNP secrets")
+		return "", errors.New("could not initialize AMD SEV-SNP secrets")
 	}
 
 	for i := 0; i < 4; i++ {
 		vmpck, err := secrets.VMPCK(i)
 
 		if err != nil {
-			return "", fmt.Errorf("could parse VMPCK%d, %v", i, err)
+			return "", fmt.Errorf("could not read VMPCK%d, %v", i, err)
 		}
 
 		fmt.Fprintf(&buf, " VMPCK%d ...........: %x\n", i, vmpck)
