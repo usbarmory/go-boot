@@ -37,7 +37,7 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		return "", errors.New("could find AMD SEV-SNP pages")
 	}
 
-	fmt.Fprintf(&buf, "Version ............: %d\n", snp.Version)
+	fmt.Fprintf(&buf, "Revision ...........: %d\n", snp.Version)
 	fmt.Fprintf(&buf, "Secrets Page .......: %x (%d)\n", snp.SecretsPagePhysicalAddress, snp.SecretsPageSize)
 	fmt.Fprintf(&buf, "  CPUID Page .......: %x (%d)\n", snp.CPUIDPagePhysicalAddress, snp.CPUIDPageSize)
 
@@ -54,7 +54,7 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 			return "", fmt.Errorf("could not read VMPCK%d, %v", i, err)
 		}
 
-		fmt.Fprintf(&buf, " VMPCK%d ...........: %x\n", i, vmpck)
+		fmt.Fprintf(&buf, "VMPCK%d ............: %x\n", i, vmpck)
 	}
 
 	ghcb := &svm.GHCB{}
