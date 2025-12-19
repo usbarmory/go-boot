@@ -7,6 +7,7 @@ package cmd
 
 import (
 	"bytes"
+	"crypto/rand"
 	"errors"
 	"fmt"
 
@@ -28,6 +29,8 @@ func init() {
 func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var buf bytes.Buffer
 	var snp *uefi.SNPConfigurationTable
+	var key []byte
+	var report []byte
 
 	if !x64.AMD64.Features().SNP {
 		return "", errors.New("AMD SEV-SNP unavailable")
@@ -47,21 +50,24 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		return "", errors.New("could not initialize AMD SEV-SNP secrets")
 	}
 
-	for i := 0; i < 4; i++ {
-		vmpck, err := secrets.VMPCK(i)
-
-		if err != nil {
-			return "", fmt.Errorf("could not read VMPCK%d, %v", i, err)
-		}
-
-		fmt.Fprintf(&buf, "VMPCK%d ............: %x\n", i, vmpck)
+	if key, err = secrets.VMPCK(0); err != nil {
+		return
 	}
 
-	ghcb := &svm.GHCB{}
-	x64.AllocateDMA(svm.GHCBSize)
+	// DMA region must be allocated before GHCB initialization
+	x64.AllocateDMA(1 << 20)
 
+	ghcb := &svm.GHCB{}
 	ghcb.Init()
-	ghcb.Yield()
+
+	data := make([]byte, 64)
+	rand.Read(data)
+
+	if report, err = ghcb.GetAttestationReport(data, key, 0); err != nil {
+		return
+	}
+
+	fmt.Fprintf(&buf, "Attestation Report .: %x\n", report)
 
 	return buf.String(), err
 }
