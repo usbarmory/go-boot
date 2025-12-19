@@ -43,6 +43,17 @@ func (s Status) Resolve() string {
 	return statusName[s]
 }
 
+// Boot transparency configuration root directory and filenames.
+const (
+	transparencyRoot = `/transparency`
+
+	bootPolicy    = `policy.json`
+	witnessPolicy = `trust_policy`
+	proofBundle   = `proof-bundle.json`
+	submitKey     = `submit-key.pub`
+	logKey        = `log-key.pub`
+)
+
 // Config represents the configuration for the boot transparency functionality.
 type Config struct {
 	// Status represents the status of the boot transparency functionality.
@@ -67,17 +78,6 @@ type Config struct {
 	LogKey []byte
 }
 
-// Boot transparency configuration filenames.
-const (
-	transparencyRoot = `/transparency`
-
-	bootPolicyFile    = `policy.json`
-	witnessPolicyFile = `trust_policy`
-	proofBundleFile   = `proof-bundle.json`
-	submitKeyFile     = `submit-key.pub`
-	logKeyFile        = `log-key.pub`
-)
-
 // Load reads the transparency configuration files from disk.
 // The entry argument allows per-bundle configurations.
 func (c *Config) load(entryPath string) (err error) {
@@ -87,39 +87,21 @@ func (c *Config) load(entryPath string) (err error) {
 		return fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	bootPolicyPath := path.Join(entryPath, bootPolicyFile)
-	bootPolicyPath = strings.ReplaceAll(bootPolicyPath, `/`, `\`)
-
-	if c.BootPolicy, err = fs.ReadFile(root, bootPolicyPath); err != nil {
-		return fmt.Errorf("cannot read boot policy, %v", err)
+	assets := map[string]*[]byte{
+		bootPolicy:    &c.BootPolicy,
+		witnessPolicy: &c.WitnessPolicy,
+		submitKey:     &c.SubmitKey,
+		logKey:        &c.LogKey,
+		proofBundle:   &c.ProofBundle,
 	}
 
-	witnessPolicyPath := path.Join(entryPath, witnessPolicyFile)
-	witnessPolicyPath = strings.ReplaceAll(witnessPolicyPath, `/`, `\`)
+	for filename, dst := range assets {
+		p := path.Join(entryPath, filename)
+		p = strings.ReplaceAll(p, `/`, `\`)
 
-	if c.WitnessPolicy, err = fs.ReadFile(root, witnessPolicyPath); err != nil {
-		return fmt.Errorf("cannot read witness policy, %v", err)
-	}
-
-	submitKeyPath := path.Join(entryPath, submitKeyFile)
-	submitKeyPath = strings.ReplaceAll(submitKeyPath, `/`, `\`)
-
-	if c.SubmitKey, err = fs.ReadFile(root, submitKeyPath); err != nil {
-		return fmt.Errorf("cannot read log submitter key, %v", err)
-	}
-
-	logKeyPath := path.Join(entryPath, logKeyFile)
-	logKeyPath = strings.ReplaceAll(logKeyPath, `/`, `\`)
-
-	if c.LogKey, err = fs.ReadFile(root, logKeyPath); err != nil {
-		return fmt.Errorf("cannot read log key, %v", err)
-	}
-
-	proofBundlePath := path.Join(entryPath, proofBundleFile)
-	proofBundlePath = strings.ReplaceAll(proofBundlePath, `/`, `\`)
-
-	if c.ProofBundle, err = fs.ReadFile(root, proofBundlePath); err != nil {
-		return fmt.Errorf("cannot read proof bundle, %v", err)
+		if *dst, err = fs.ReadFile(root, p); err != nil {
+			return fmt.Errorf("cannot load configuration file: %v", filename)
+		}
 	}
 
 	return
