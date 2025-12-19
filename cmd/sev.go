@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/usbarmory/tamago/dma"
 	"github.com/usbarmory/tamago/kvm/svm"
 
 	"github.com/usbarmory/go-boot/shell"
@@ -24,6 +25,9 @@ func init() {
 		Help: "AMD SEV-SNP information",
 		Fn:   sevCmd,
 	})
+
+	// DMA region must be allocated before GHCB initialization
+	x64.AllocateDMA(1 << 20) // FIXME: C-bit
 }
 
 func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
@@ -55,11 +59,13 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		return
 	}
 
-	// DMA region must be allocated before GHCB initialization
-	x64.AllocateDMA(1 << 20)
+	ghcb := &svm.GHCB{
+		SharedMemory: dma.Default(),
+	}
 
-	ghcb := &svm.GHCB{}
-	ghcb.Init()
+	if err = ghcb.Init(); err != nil {
+		return
+	}
 
 	data := make([]byte, 64)
 	rand.Read(data)
