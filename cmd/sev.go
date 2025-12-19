@@ -28,9 +28,10 @@ func init() {
 
 func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var buf bytes.Buffer
-	var snp *uefi.SNPConfigurationTable
 	var key []byte
-	var report []byte
+
+	var snp *uefi.SNPConfigurationTable
+	var report *svm.AttestationReport
 
 	if !x64.AMD64.Features().SNP {
 		return "", errors.New("AMD SEV-SNP unavailable")
@@ -67,7 +68,7 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		return
 	}
 
-	fmt.Fprintf(&buf, "Attestation Report .: %x\n", report)
+	fmt.Fprintf(&buf, "Attestation Report:\n%+v\n", report)
 
 	return buf.String(), err
 }
