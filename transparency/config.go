@@ -9,8 +9,6 @@
 package transparency
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io/fs"
 	"path"
@@ -104,10 +102,8 @@ func (c *Config) Path(b *BootEntry) (entryPath string, err error) {
 
 	entryPath = transparencyRoot
 	for _, artifact := range artifacts {
-		h, err := hex.DecodeString(artifact.Hash)
-
-		if err != nil || len(h) != sha256.Size {
-			return "", fmt.Errorf("cannot build configuration path, got an invalid artifact hash")
+		if err = artifact.hasValidHash(); err != nil {
+			return "", fmt.Errorf("cannot build configuration path, %v", err)
 		}
 
 		entryPath = path.Join(entryPath, artifact.Hash)
@@ -131,6 +127,10 @@ func (c *Config) loadFromUefiRoot(entryPath string) (err error) {
 		submitKey:     &c.SubmitKey,
 		logKey:        &c.LogKey,
 		proofBundle:   &c.ProofBundle,
+	}
+
+	if c.UefiRoot == nil {
+		return fmt.Errorf("cannot open uefi root filesystem")
 	}
 
 	for filename, dst := range assets {

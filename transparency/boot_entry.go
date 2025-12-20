@@ -163,6 +163,10 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 	var h artifact.Handler
 	var found bool
 
+	if err = a.hasValidHash(); err != nil {
+		return
+	}
+
 	for _, claimedArtifact := range s.Artifacts {
 		// The claims are referring to a different artifact
 		// category, try with next block of claims in the statement.
@@ -200,6 +204,16 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 
 	if !found {
 		return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, one or more artifacts are not present in the proof bundle")
+	}
+
+	return
+}
+
+func (a Artifact) hasValidHash() (err error) {
+	h, err := hex.DecodeString(a.Hash)
+
+	if err != nil || len(h) != sha256.Size {
+		return fmt.Errorf("invalid artifact hash")
 	}
 
 	return
