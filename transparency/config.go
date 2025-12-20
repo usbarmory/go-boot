@@ -60,9 +60,8 @@ type Config struct {
 	// Status represents the status of the boot transparency functionality.
 	Status Status
 
-	// UefiRoot represents the root of the UEFI filesystem that should
-	// be used to "automatically" load the configuration files when running
-	// within the boot loader context.
+	// UefiRoot represents the UEFI filesystem to "automatically" load the
+	// configuration files when running within the boot loader context.
 	// If the transparency pkg is imported "externally" by user-space tools
 	// this field is not set.
 	UefiRoot fs.FS
