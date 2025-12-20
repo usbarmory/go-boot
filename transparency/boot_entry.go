@@ -14,8 +14,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/usbarmory/go-boot/uefi/x64"
-
 	"github.com/usbarmory/boot-transparency/artifact"
 	"github.com/usbarmory/boot-transparency/engine/sigsum"
 	"github.com/usbarmory/boot-transparency/policy"
@@ -51,13 +49,13 @@ func (b *BootEntry) Validate(c *Config) (err error) {
 
 	// Automatically load the configuration from the UEFI partition
 	// when the function is used within the UEFI boot loader.
-	if x64.UEFI.Runtime != nil {
+	if c.UefiRoot != nil {
 		entryPath, err := c.Path(b)
 		if err != nil {
 			return fmt.Errorf("cannot load boot transparency configuration, %v", err)
 		}
 
-		if err = c.loadFromUefiPart(entryPath); err != nil {
+		if err = c.loadFromUefiRoot(entryPath); err != nil {
 			return fmt.Errorf("cannot load boot transparency configuration, %v", err)
 		}
 	}

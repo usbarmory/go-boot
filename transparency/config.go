@@ -16,8 +16,6 @@ import (
 	"path"
 	"sort"
 	"strings"
-
-	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
 // Represents the status of the boot transparency functionality.
@@ -61,6 +59,13 @@ const (
 type Config struct {
 	// Status represents the status of the boot transparency functionality.
 	Status Status
+
+	// UefiRoot represents the root of the UEFI filesystem that should
+	// be used to "automatically" load the configuration files when running
+	// within the boot loader context.
+	// If the transparency pkg is imported "externally" by user-space tools
+	// this field is not set.
+	UefiRoot fs.FS
 
 	// BootPolicy represents the boot policy in JSON format
 	// following the policy syntax supported by boot-transparency library.
@@ -109,24 +114,18 @@ func (c *Config) Path(b *BootEntry) (entryPath string, err error) {
 		entryPath = path.Join(entryPath, artifact.Hash)
 	}
 
-	// Do not rewrite paths when the pkg is used externally to
-	// the UEFI boot loader (i.e. installers or user-space tools).
-	if x64.UEFI.Runtime != nil {
+	// Rewrite paths only when the pkg is used in the context
+	// of the UEFI boot loader.
+	if c.UefiRoot != nil {
 		entryPath = strings.ReplaceAll(entryPath, `/`, `\`)
 	}
 
 	return
 }
 
-// loadFromUefiPart reads the transparency configuration files from
+// loadFromUefiRoot reads the transparency configuration files from
 // the UEFI partition. The entry argument allows per-bundle configurations.
-func (c *Config) loadFromUefiPart(entryPath string) (err error) {
-	root, err := x64.UEFI.Root()
-
-	if err != nil {
-		return fmt.Errorf("could not open root volume, %v", err)
-	}
-
+func (c *Config) loadFromUefiRoot(entryPath string) (err error) {
 	assets := map[string]*[]byte{
 		bootPolicy:    &c.BootPolicy,
 		witnessPolicy: &c.WitnessPolicy,
@@ -139,7 +138,7 @@ func (c *Config) loadFromUefiPart(entryPath string) (err error) {
 		p := path.Join(entryPath, filename)
 		p = strings.ReplaceAll(p, `/`, `\`)
 
-		if *dst, err = fs.ReadFile(root, p); err != nil {
+		if *dst, err = fs.ReadFile(c.UefiRoot, p); err != nil {
 			return fmt.Errorf("cannot load configuration file: %v", filename)
 		}
 	}
