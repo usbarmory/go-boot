@@ -13,9 +13,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"path"
-	"sort"
-	"strings"
 
 	"github.com/usbarmory/boot-transparency/artifact"
 	"github.com/usbarmory/boot-transparency/engine/sigsum"
@@ -36,41 +33,10 @@ type Artifact struct {
 // BootEntry represent a boot antry as a set of artifacts.
 type BootEntry []Artifact
 
-// ConfigPath returns a unique configuration loading path
-// for a given set of artifacts (i.e. boot entry).
-// Returns error if one of the artifacts does not include
-// a valid SHA-256 hash.
-func (b *BootEntry) ConfigPath() (entryPath string, err error) {
-	if len(*b) == 0 {
-		return "", fmt.Errorf("cannot build configuration path, got an invalid boot entry pointer")
-	}
-
-	artifacts := *b
-
-	// Sort the passed artifacts, by their Category, to ensure
-	// consistency in the way the entry path is build.
-	sort.Slice(artifacts, func(i, j int) bool {
-		return artifacts[i].Category < artifacts[j].Category
-	})
-
-	entryPath = transparencyRoot
-	for _, artifact := range artifacts {
-		h, err := hex.DecodeString(artifact.Hash)
-
-		if err != nil || len(h) != sha256.Size {
-			return "", fmt.Errorf("cannot build configuration path, got an invalid artifact hash")
-		}
-
-		entryPath = path.Join(entryPath, artifact.Hash)
-	}
-
-	return strings.ReplaceAll(entryPath, `/`, `\`), nil
-}
-
 // Validate the transparency inclusion proof and, the consistency
 // between the boot policy and the logged claims for the boot artifacts.
 // Takes as input the pointer to the boot transparency configuration
-// to validate the artifacts of the boot entry.
+// to validate the boot entry artifacts.
 // Returns error if the boot artifacts are not passing the validation.
 func (b *BootEntry) Validate(c *Config) (err error) {
 	if c.Status == None {
@@ -81,16 +47,17 @@ func (b *BootEntry) Validate(c *Config) (err error) {
 		return fmt.Errorf("got an invalid boot entry pointer")
 	}
 
-	// Get the boot transparency configuration path for a given
-	// boot entry.
-	entryPath, err := b.ConfigPath()
-	if err != nil {
-		return
-	}
+	// Automatically load the configuration from the UEFI partition
+	// if no external loader is set.
+	if !c.ExternalLoader {
+		entryPath, err := c.Path(b)
+		if err != nil {
+			return fmt.Errorf("cannot load boot transparency configuration, %v", err)
+		}
 
-	// Loads the configuration from disk.
-	if err = c.load(entryPath); err != nil {
-		return fmt.Errorf("cannot load boot transparency configuration, %v", err)
+		if err = c.loadFromUefiPart(entryPath); err != nil {
+			return fmt.Errorf("cannot load boot transparency configuration, %v", err)
+		}
 	}
 
 	te, err := transparency.GetEngine(transparency.Sigsum)
