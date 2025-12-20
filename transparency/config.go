@@ -62,12 +62,6 @@ type Config struct {
 	// Status represents the status of the boot transparency functionality.
 	Status Status
 
-	// ExternalLoader is set to true when the transparency pkg is used
-	// externally to a boot loader context (e.g. installers or user-space tools).
-	// In such cases, the configuration files are not loaded automatically
-	// from the UEFI partition during artifact(s) validation.
-	ExternalLoader bool
-
 	// BootPolicy represents the boot policy in JSON format
 	// following the policy syntax supported by boot-transparency library.
 	BootPolicy []byte
@@ -117,7 +111,7 @@ func (c *Config) Path(b *BootEntry) (entryPath string, err error) {
 
 	// Do not rewrite paths when the pkg is used externally to
 	// the UEFI boot loader (i.e. installers or user-space tools).
-	if c.ExternalLoader {
+	if x64.UEFI.Runtime != nil {
 		entryPath = strings.ReplaceAll(entryPath, `/`, `\`)
 	}
 
