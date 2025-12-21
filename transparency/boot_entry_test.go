@@ -79,7 +79,7 @@ func TestOfflineValidateInvalidBootEntry(t *testing.T) {
 	kernelHash := "4551848b4ab43cb4321c4d6ba98e1d215f950cee21bfd82c8c82ab64e34ec9a6"
 
 	c := Config{
-		Status: Online,
+		Status: Offline,
 
 		BootPolicy:    testBootPolicy,
 		WitnessPolicy: testWitnessPolicy,
@@ -116,7 +116,7 @@ func TestOfflineValidateHashMismatch(t *testing.T) {
 	initrdHash := "337630b74e55eae241f460faadf5a2f9a2157d6de2853d4106c35769e4acf538"
 
 	c := Config{
-		Status: Online,
+		Status: Offline,
 
 		BootPolicy:    testBootPolicy,
 		WitnessPolicy: testWitnessPolicy,
@@ -153,7 +153,7 @@ func TestOfflineValidatePolicyNotMet(t *testing.T) {
 	initrdHash := "337630b74e55eae241f460faadf5a2f9a2157d6de2853d4106c35769e4acf538"
 
 	c := Config{
-		Status: Online,
+		Status: Offline,
 
 		BootPolicy:    testBootPolicyUnauthorized,
 		WitnessPolicy: testWitnessPolicy,
