@@ -49,3 +49,20 @@ func (d *SystemTable) ConfigurationTables() (c []*ConfigurationTable, err error)
 
 	return
 }
+
+// LocateConfiguration locates an EFI Configuration Table.
+func (d *SystemTable) LocateConfiguration(guid GUID) (t *ConfigurationTable, err error) {
+	var c []*ConfigurationTable
+
+	if c, err = d.ConfigurationTables(); err != nil {
+		return
+	}
+
+	for _, t := range c {
+		if t.GUID == guid {
+			return t, nil
+		}
+	}
+
+	return nil, errors.New("could not find configuration table")
+}
