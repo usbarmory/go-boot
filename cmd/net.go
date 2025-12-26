@@ -21,6 +21,9 @@ import (
 	"github.com/usbarmory/go-boot/shell"
 	"github.com/usbarmory/go-boot/uefi"
 	"github.com/usbarmory/go-boot/uefi/x64"
+
+	// maintained set of TLD roots for any potential TLS client request
+	_ "golang.org/x/crypto/x509roots/fallback"
 )
 
 // Resolver represents the default name server

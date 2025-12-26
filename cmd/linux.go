@@ -15,10 +15,13 @@ import (
 
 	"github.com/usbarmory/armory-boot/exec"
 	"github.com/usbarmory/go-boot/shell"
+	"github.com/usbarmory/go-boot/transparency"
 	"github.com/usbarmory/go-boot/uapi"
 	"github.com/usbarmory/go-boot/uefi"
 	"github.com/usbarmory/go-boot/uefi/x64"
 	"github.com/usbarmory/tamago/dma"
+
+	"github.com/usbarmory/boot-transparency/artifact"
 )
 
 const (
@@ -243,6 +246,25 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	if len(entry.Linux) == 0 {
 		return "", errors.New("empty kernel entry")
+	}
+
+	// boot transparency validation (if enabled)
+	if btConfig.Status != transparency.None {
+		btEntry := transparency.BootEntry{
+			transparency.Artifact{
+				Category: artifact.LinuxKernel,
+				Hash:     transparency.Hash(&entry.Linux),
+			},
+			transparency.Artifact{
+				Category: artifact.Initrd,
+				Hash:     transparency.Hash(&entry.Initrd),
+			},
+		}
+
+		btConfig.UefiRoot = root
+		if err = btEntry.Validate(&btConfig); err != nil {
+			return "", fmt.Errorf("boot transparency validation failed, %v", err)
+		}
 	}
 
 	image := &exec.LinuxImage{
