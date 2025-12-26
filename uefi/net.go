@@ -159,22 +159,25 @@ func (sn *SimpleNetwork) GetStatus() (interruptStatus uint32, txBuf uintptr, err
 // [TransmitTimeout] before returning.
 func (sn *SimpleNetwork) Transmit(buf []byte) (err error) {
 	var txBuf uintptr
-
-	status := callService(sn.base+transmit,
-		[]uint64{
-			sn.base,
-			0,
-			uint64(len(buf)),
-			ptrval(&buf[0]),
-			0,
-			0,
-			0,
-		},
-	)
-
-	start := time.Now()
+	var start time.Time
 
 	for {
+		status := callService(sn.base+transmit,
+			[]uint64{
+				sn.base,
+				0,
+				uint64(len(buf)),
+				ptrval(&buf[0]),
+				0,
+				0,
+				0,
+			},
+		)
+
+		if start.IsZero() {
+			start = time.Now()
+		}
+
 		if status&0xff == EFI_NOT_READY {
 			continue
 		}
