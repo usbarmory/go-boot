@@ -56,6 +56,8 @@ var (
 	UART0 = &uart.UART{
 		Index: 1,
 		Base:  COM1,
+		DTR:   true,
+		RTS:   true,
 	}
 
 	// UEFI services
