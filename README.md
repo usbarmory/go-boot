@@ -55,8 +55,8 @@ lspci                                    # list PCI devices
 memmap          (e820)?                  # show UEFI memory map
 mode            <mode>                   # set screen mode
 net             <ip> <mac> <gw> (debug)? # start UEFI networking
-peek            <hex offset> <size>      # memory display (use with caution)
-poke            <hex offset> <hex value> # memory write   (use with caution)
+peek            <hex addr> <size>        # memory display (use with caution)
+poke            <hex addr> <hex value>   # memory write   (use with caution)
 protocol        <registry format GUID>   # locate UEFI protocol
 reset           (cold|warm)?             # reset system
 stack                                    # goroutine stack trace (current)
