@@ -54,7 +54,7 @@ ls              (path)?                  # list directory contents
 lspci                                    # list PCI devices
 memmap          (e820)?                  # show UEFI memory map
 mode            <mode>                   # set screen mode
-msr             <hex register>           # read model-specific register
+msr             <hex addr>               # read model-specific register
 net             <ip> <mac> <gw> (debug)? # start UEFI networking
 peek            <hex addr> <size>        # memory display (use with caution)
 poke            <hex addr> <hex value>   # memory write   (use with caution)

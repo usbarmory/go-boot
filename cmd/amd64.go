@@ -39,7 +39,7 @@ func init() {
 		Name:    "msr",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^msr\s+([[:xdigit:]]+)$`),
-		Syntax:  "<hex register>",
+		Syntax:  "<hex addr>",
 		Help:    "read model-specific register",
 		Fn:      msrCmd,
 	})
@@ -109,7 +109,6 @@ func msrCmd(_ *shell.Interface, arg []string) (string, error) {
 	}
 
 	val := x64.AMD64.MSR(addr)
-
 	fmt.Fprintf(&res, "%x", val)
 
 	return res.String(), nil
