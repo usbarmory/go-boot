@@ -60,6 +60,8 @@ peek            <hex addr> <size>        # memory display (use with caution)
 poke            <hex addr> <hex value>   # memory write   (use with caution)
 protocol        <registry format GUID>   # locate UEFI protocol
 reset           (cold|warm)?             # reset system
+sev                                      # AMD SEV-SNP information
+sev-report                               # AMD SEV-SNP attestation report
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
 stat            <path>                   # show file information
