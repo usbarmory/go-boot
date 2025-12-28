@@ -8,7 +8,6 @@ package cmd
 import (
 	"bytes"
 	"crypto/rand"
-	"errors"
 	"fmt"
 
 	"github.com/usbarmory/tamago/dma"
@@ -37,6 +36,11 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var snp *uefi.SNPConfigurationTable
 	var report *svm.AttestationReport
 
+	defer func() {
+		res = buf.String()
+		err = nil
+	}()
+
 	features := svm.Features(x64.AMD64)
 
 	fmt.Fprintf(&buf, "SEV ................: %v\n", features.SEV.SEV)
@@ -44,11 +48,12 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	fmt.Fprintf(&buf, "SEV-SNP ............: %v\n", features.SEV.SNP)
 
 	if !features.SEV.SNP {
-		return buf.String(), nil
+		return
 	}
 
 	if snp, err = x64.UEFI.GetSNPConfiguration(); err != nil {
-		return "", fmt.Errorf("could find AMD SEV-SNP pages, %v", err)
+		fmt.Fprintf(&buf, " could not find AMD SEV-SNP pages, %v", err)
+		return
 	}
 
 	fmt.Fprintf(&buf, "Revision ...........: %d\n", snp.Version)
@@ -61,11 +66,6 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	}
 
 	fmt.Fprintf(&buf, "Attestation Report:\n")
-
-	defer func() {
-		res = buf.String()
-		err = nil
-	}()
 
 	if err = secrets.Init(); err != nil {
 		fmt.Fprintf(&buf, " could not initialize AMD SEV-SNP secrets, %v", err)

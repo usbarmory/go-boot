@@ -9,7 +9,10 @@ import (
 	"errors"
 )
 
-const snpSignature = 0x45444d41
+const (
+	snpSignature = 0x45444d41
+	snpVersion   = 1 // 2.00
+)
 
 // AMD SEV-ES Guest-Hypervisor Communication Block Standardization
 var EFI_SEV_SNP_CC_BLOB_GUID = MustParseGUID("067b1f5f-cf26-44c5-8554-93d777912d42")
@@ -47,7 +50,7 @@ func (s *Services) GetSNPConfiguration() (snp *SNPConfigurationTable, err error)
 		return nil, err
 	}
 
-	if snp.Header != snpSignature || snp.Version < 2 {
+	if snp.Header != snpSignature || snp.Version != snpVersion {
 		return snp, errors.New("EFI SNP Configuration Table is invalid")
 	}
 
