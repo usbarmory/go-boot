@@ -43,7 +43,7 @@ func (s *Services) GetSNPConfiguration() (snp *SNPConfigurationTable, err error)
 
 	snp = &SNPConfigurationTable{}
 
-	if err = decode(&snp, t.VendorTable); err != nil {
+	if err = decode(snp, t.VendorTable); err != nil {
 		return nil, err
 	}
 
