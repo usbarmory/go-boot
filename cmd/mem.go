@@ -23,7 +23,7 @@ func init() {
 		Name:    "peek",
 		Args:    2,
 		Pattern: regexp.MustCompile(`^peek ([[:xdigit:]]+) (\d+)$`),
-		Syntax:  "<hex offset> <size>",
+		Syntax:  "<hex addr> <size>",
 		Help:    "memory display (use with caution)",
 		Fn:      memReadCmd,
 	})
@@ -32,7 +32,7 @@ func init() {
 		Name:    "poke",
 		Args:    2,
 		Pattern: regexp.MustCompile(`^poke ([[:xdigit:]]+) ([[:xdigit:]]+)$`),
-		Syntax:  "<hex offset> <hex value>",
+		Syntax:  "<hex addr> <hex value>",
 		Help:    "memory write   (use with caution)",
 		Fn:      memWriteCmd,
 	})
