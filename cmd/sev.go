@@ -48,7 +48,7 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	}
 
 	if snp, err = x64.UEFI.GetSNPConfiguration(); err != nil {
-		return "", errors.New("could find AMD SEV-SNP pages")
+		return "", fmt.Errorf("could find AMD SEV-SNP pages, %v", err)
 	}
 
 	fmt.Fprintf(&buf, "Revision ...........: %d\n", snp.Version)
