@@ -37,11 +37,17 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var snp *uefi.SNPConfigurationTable
 	var report *svm.AttestationReport
 
-	if !x64.AMD64.Features().SNP {
-		return "", errors.New("AMD SEV-SNP unavailable")
+	features := svm.Features(x64.AMD64)
+
+	fmt.Fprintf(&buf, "SEV ................: %v\n", features.SEV.SEV)
+	fmt.Fprintf(&buf, "SEV-ES .............: %v\n", features.SEV.ES)
+	fmt.Fprintf(&buf, "SEV-SNP ............: %v\n", features.SEV.SNP)
+
+	if !features.SEV.SNP {
+		return buf.String(), nil
 	}
 
-	if snp, _ = x64.UEFI.GetSNPConfiguration(); err != nil {
+	if snp, err = x64.UEFI.GetSNPConfiguration(); err != nil {
 		return "", errors.New("could find AMD SEV-SNP pages")
 	}
 
@@ -49,13 +55,25 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	fmt.Fprintf(&buf, "Secrets Page .......: %x (%d)\n", snp.SecretsPagePhysicalAddress, snp.SecretsPageSize)
 	fmt.Fprintf(&buf, "  CPUID Page .......: %x (%d)\n", snp.CPUIDPagePhysicalAddress, snp.CPUIDPageSize)
 
-	secrets := &svm.SNPSecrets{}
+	secrets := &svm.SNPSecrets{
+		Address: uint(snp.SecretsPagePhysicalAddress),
+		Size:    int(snp.SecretsPageSize),
+	}
 
-	if err = secrets.Init(uint(snp.SecretsPagePhysicalAddress), int(snp.SecretsPageSize)); err != nil {
-		return "", errors.New("could not initialize AMD SEV-SNP secrets")
+	fmt.Fprintf(&buf, "Attestation Report:\n")
+
+	defer func() {
+		res = buf.String()
+		err = nil
+	}()
+
+	if err = secrets.Init(); err != nil {
+		fmt.Fprintf(&buf, " could not initialize AMD SEV-SNP secrets, %v", err)
+		return
 	}
 
 	if key, err = secrets.VMPCK(0); err != nil {
+		fmt.Fprintf(&buf, " could not get VMPCK0, %v", err)
 		return
 	}
 
@@ -64,6 +82,7 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	}
 
 	if err = ghcb.Init(); err != nil {
+		fmt.Fprintf(&buf, " could not initialize GHCB, %v", err)
 		return
 	}
 
@@ -71,10 +90,10 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	rand.Read(data)
 
 	if report, err = ghcb.GetAttestationReport(data, key, 0); err != nil {
+		fmt.Fprintf(&buf, " could not get report, %v", err)
 		return
 	}
 
-	fmt.Fprintf(&buf, "Attestation Report:\n%+v\n", report)
-
-	return buf.String(), err
+	fmt.Fprintf(&buf, "%+v", report)
+	return
 }
