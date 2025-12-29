@@ -37,9 +37,6 @@ func init() {
 		Help: "AMD SEV-SNP attestation report",
 		Fn:   attestationCmd,
 	})
-
-	// DMA region must be allocated before GHCB initialization
-	x64.AllocateDMA(1 << 20) // FIXME: C-bit
 }
 
 func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
@@ -92,17 +89,27 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 }
 
 func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
+	var ghcbAddr uint64
 	var report *svm.AttestationReport
 
 	if len(vmpck0) == 0 {
 		return "", errors.New("AMD SEV-SNP secrsts unavailable, run `sev` first")
 	}
 
-	ghcb := &svm.GHCB{
-		SharedMemory: dma.Default(),
+	ghcb := &svm.GHCB{}
+
+	// OVMF already allocates 2 shared pages, the first for GHCB and the
+	// second for per-CPU variables, we re-use them four our purposes.
+
+	if ghcbAddr = x64.AMD64.MSR(svm.MSR_AMD_GHCB); ghcbAddr == 0 {
+		return "", errors.New("could not find GHCB address")
 	}
 
-	if err = ghcb.Init(); err != nil {
+	if ghcb.SharedMemory, err = dma.NewRegion(uint(ghcbAddr), 4096*2, false); err != nil {
+		return "", fmt.Errorf("could not allocate GHCB, %v", err)
+	}
+
+	if err = ghcb.Init(false); err != nil {
 		return "", fmt.Errorf("could not initialize GHCB, %v", err)
 	}
 
