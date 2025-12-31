@@ -91,6 +91,7 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 }
 
 func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
+	var buf bytes.Buffer
 	var ghcbAddr uint64
 	var report *svm.AttestationReport
 
@@ -105,19 +106,15 @@ func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	// OVMF allocates 2*ncpu contiguous pages, a first shared page
 	// for GHCB and a second private one for vCPU variables.
 	//
-	// We are running on CPU0, so we obtain the first GHCB page and use
-	// unencrypted GHCB pages allocated for the 2nd and 3rd core as
-	// request/response buffers, sparing us from MMU  re-configuration.
-	//
-	// TODO: test shared request/response buffer.
-	ghcbGPA := uint(ghcbAddr)
-	reqGPA := ghcbGPA + uefi.PageSize*2
-	resGPA := reqGPA + uefi.PageSize*2
-
-	if amd64.NumCPU() < 4 {
+	// We are running on CPU0, so we obtain the first GHCB page and use the
+	// unencrypted GHCB page allocated for CPU1 as request/response buffer,
+	// sparing us from MMU re-configuration.
+	if amd64.NumCPU() < 2 {
 		return "", errors.New("cannot hijack unencrypted pages on single-core")
 	}
 
+	ghcbGPA := uint(ghcbAddr)
+	reqGPA := ghcbGPA + uefi.PageSize*2
 	ghcb := &svm.GHCB{}
 
 	if ghcb.GHCBPage, err = dma.NewRegion(ghcbGPA, uefi.PageSize, false); err != nil {
@@ -126,10 +123,6 @@ func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
 
 	if ghcb.RequestPage, err = dma.NewRegion(reqGPA, uefi.PageSize, false); err != nil {
 		return "", fmt.Errorf("could not allocate GHCB request page, %v", err)
-	}
-
-	if ghcb.ResponsePage, err = dma.NewRegion(resGPA, uefi.PageSize, false); err != nil {
-		return "", fmt.Errorf("could not allocate GHCB response page, %v", err)
 	}
 
 	if err = ghcb.Init(false); err != nil {
@@ -143,5 +136,15 @@ func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		return "", fmt.Errorf("could not get report, %v", err)
 	}
 
-	return fmt.Sprintf("%+v", report), nil
+	fmt.Fprintf(&buf, "Version ......: %x\n", report.Version)
+	fmt.Fprintf(&buf, "VMPL .........: %x\n", report.VMPL)
+	fmt.Fprintf(&buf, "SignatureAlgo : %x\n", report.SignatureAlgo)
+	fmt.Fprintf(&buf, "CurrentTCB ...: %x\n", report.CurrentTCB)
+	fmt.Fprintf(&buf, "ReportedTCB ..: %x\n", report.ReportedTCB)
+	fmt.Fprintf(&buf, "CommittedTCB .: %x\n", report.CommittedTCB)
+	fmt.Fprintf(&buf, "Measurement ..: %x\n", report.Measurement)
+	fmt.Fprintf(&buf, "SignatureR ...: %x\n", report.Signature[1:1+48])
+	fmt.Fprintf(&buf, "SignatureS ...: %x\n", report.Signature[73:73+48])
+
+	return buf.String(), nil
 }
