@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/usbarmory/tamago/amd64"
 	"github.com/usbarmory/tamago/dma"
 	"github.com/usbarmory/tamago/kvm/svm"
 
@@ -53,6 +54,7 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	fmt.Fprintf(&buf, "SEV ................: %v\n", features.SEV.SEV)
 	fmt.Fprintf(&buf, "SEV-ES .............: %v\n", features.SEV.ES)
 	fmt.Fprintf(&buf, "SEV-SNP ............: %v\n", features.SEV.SNP)
+	fmt.Fprintf(&buf, "Encryption bit .....: %d\n", features.EncryptionBit)
 
 	if !features.SEV.SNP {
 		return
@@ -96,17 +98,38 @@ func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		return "", errors.New("AMD SEV-SNP secrsts unavailable, run `sev` first")
 	}
 
-	ghcb := &svm.GHCB{}
-
-	// OVMF already allocates 2 shared pages, the first for GHCB and the
-	// second for per-CPU variables, we re-use them four our purposes.
-
 	if ghcbAddr = x64.AMD64.MSR(svm.MSR_AMD_GHCB); ghcbAddr == 0 {
 		return "", errors.New("could not find GHCB address")
 	}
 
-	if ghcb.SharedMemory, err = dma.NewRegion(uint(ghcbAddr), 4096*2, false); err != nil {
-		return "", fmt.Errorf("could not allocate GHCB, %v", err)
+	// OVMF allocates 2*ncpu contiguous pages, a first shared page
+	// for GHCB and a second private one for vCPU variables.
+	//
+	// We are running on CPU0, so we obtain the first GHCB page and use
+	// unencrypted GHCB pages allocated for the 2nd and 3rd core as
+	// request/response buffers, sparing us from MMU  re-configuration.
+	//
+	// TODO: test shared request/response buffer.
+	ghcbGPA := uint(ghcbAddr)
+	reqGPA := ghcbGPA + uefi.PageSize*2
+	resGPA := reqGPA + uefi.PageSize*2
+
+	if amd64.NumCPU() < 4 {
+		return "", errors.New("cannot hijack unencrypted pages on single-core")
+	}
+
+	ghcb := &svm.GHCB{}
+
+	if ghcb.GHCBPage, err = dma.NewRegion(ghcbGPA, uefi.PageSize, false); err != nil {
+		return "", fmt.Errorf("could not allocate GHCB layout page, %v", err)
+	}
+
+	if ghcb.RequestPage, err = dma.NewRegion(reqGPA, uefi.PageSize, false); err != nil {
+		return "", fmt.Errorf("could not allocate GHCB request page, %v", err)
+	}
+
+	if ghcb.ResponsePage, err = dma.NewRegion(resGPA, uefi.PageSize, false); err != nil {
+		return "", fmt.Errorf("could not allocate GHCB response page, %v", err)
 	}
 
 	if err = ghcb.Init(false); err != nil {
