@@ -20,7 +20,10 @@ import (
 	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
-var vmpck0 []byte
+var (
+	ghcb   *svm.GHCB
+	vmpck0 []byte
+)
 
 func init() {
 	if !svm.Features(x64.AMD64).SEV.SEV {
@@ -90,17 +93,19 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	return
 }
 
-func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
-	var buf bytes.Buffer
+func initGHCB() (err error) {
 	var ghcbAddr uint64
-	var report *svm.AttestationReport
+
+	if ghcb != nil {
+		return
+	}
 
 	if len(vmpck0) == 0 {
-		return "", errors.New("AMD SEV-SNP secrsts unavailable, run `sev` first")
+		return errors.New("AMD SEV-SNP secrsts unavailable, run `sev` first")
 	}
 
 	if ghcbAddr = x64.AMD64.MSR(svm.MSR_AMD_GHCB); ghcbAddr == 0 {
-		return "", errors.New("could not find GHCB address")
+		return errors.New("could not find GHCB address")
 	}
 
 	// OVMF allocates 2*ncpu contiguous pages, a first shared page
@@ -110,22 +115,29 @@ func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	// unencrypted GHCB page allocated for CPU1 as request/response buffer,
 	// sparing us from MMU re-configuration.
 	if amd64.NumCPU() < 2 {
-		return "", errors.New("cannot hijack unencrypted pages on single-core")
+		return errors.New("cannot hijack unencrypted pages on single-core")
 	}
 
 	ghcbGPA := uint(ghcbAddr)
 	reqGPA := ghcbGPA + uefi.PageSize*2
-	ghcb := &svm.GHCB{}
+	ghcb = &svm.GHCB{}
 
 	if ghcb.GHCBPage, err = dma.NewRegion(ghcbGPA, uefi.PageSize, false); err != nil {
-		return "", fmt.Errorf("could not allocate GHCB layout page, %v", err)
+		return fmt.Errorf("could not allocate GHCB layout page, %v", err)
 	}
 
 	if ghcb.RequestPage, err = dma.NewRegion(reqGPA, uefi.PageSize, false); err != nil {
-		return "", fmt.Errorf("could not allocate GHCB request page, %v", err)
+		return fmt.Errorf("could not allocate GHCB request page, %v", err)
 	}
 
-	if err = ghcb.Init(false); err != nil {
+	return ghcb.Init(false)
+}
+
+func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
+	var buf bytes.Buffer
+	var report *svm.AttestationReport
+
+	if err = initGHCB(); err != nil {
 		return "", fmt.Errorf("could not initialize GHCB, %v", err)
 	}
 
