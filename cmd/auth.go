@@ -6,7 +6,9 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"net"
 	"regexp"
 	"strings"
 
@@ -35,6 +37,9 @@ func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		case "offline":
 			btConfig.Status = transparency.Offline
 		case "online":
+			if net.SocketFunc == nil {
+				return "", errors.New("network unavailable")
+			}
 			btConfig.Status = transparency.Online
 		}
 	}
