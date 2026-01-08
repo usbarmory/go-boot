@@ -30,7 +30,7 @@ func TestPath(t *testing.T) {
 		},
 	}
 
-	p, err := c.Path(&b)
+	p, err := c.Path(b)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestPathInvalidHash(t *testing.T) {
 	}
 
 	// Error expected due to the invalid hash in the test entry.
-	if _, err := c.Path(&b); err == nil {
+	if _, err := c.Path(b); err == nil {
 		t.Fatal(err)
 	}
 }

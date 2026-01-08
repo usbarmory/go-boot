@@ -87,12 +87,12 @@ type Config struct {
 // artifacts (i.e. boot entry).
 // Returns error if one of the artifacts does not include a valid
 // SHA-256 hash.
-func (c *Config) Path(b *BootEntry) (entryPath string, err error) {
-	if len(*b) == 0 {
-		return "", fmt.Errorf("cannot build configuration path, got an invalid boot entry pointer")
+func (c *Config) Path(b BootEntry) (entryPath string, err error) {
+	if len(b) == 0 {
+		return "", fmt.Errorf("cannot build configuration path, got an invalid boot entry")
 	}
 
-	artifacts := *b
+	artifacts := b
 
 	// Sort the passed artifacts, by their Category, to ensure
 	// consistency in the way the entry path is build.

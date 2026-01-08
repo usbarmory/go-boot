@@ -38,13 +38,13 @@ type BootEntry []Artifact
 // Takes as input the pointer to the boot transparency configuration
 // to validate the boot entry artifacts.
 // Returns error if the boot artifacts are not passing the validation.
-func (b *BootEntry) Validate(c *Config) (err error) {
+func (b BootEntry) Validate(c *Config) (err error) {
 	if c.Status == None {
 		return
 	}
 
-	if b == nil || len(*b) == 0 {
-		return fmt.Errorf("got an invalid boot entry pointer")
+	if len(b) == 0 {
+		return fmt.Errorf("got an invalid boot entry")
 	}
 
 	// Automatically load the configuration from the UEFI partition
@@ -149,8 +149,8 @@ func Hash(data *[]byte) (hexHash string) {
 // This step is vital to ensure the correspondence between the artifacts
 // loaded in memory during the boot and the claims that will be validated
 // by the boot-transparency policy function.
-func (b *BootEntry) validateProofHashes(s *policy.Statement) (err error) {
-	for _, a := range *b {
+func (b BootEntry) validateProofHashes(s *policy.Statement) (err error) {
+	for _, a := range b {
 		if err = a.validateProofHash(s); err != nil {
 			return err
 		}
