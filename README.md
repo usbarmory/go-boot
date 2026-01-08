@@ -247,8 +247,7 @@ Boot transparency
 The interaction with a transparency ecosystem for boot loading operations is provided
 by the [boot-transparency](https://github.com/usbarmory/boot-transparency) Go library.
 
-The following example demonstrates how to enable, and configure, the firmware
-transparency support:
+The following example demonstrates how to enable, and configure, the boot transparency support:
 
 * [Boot transparency](https://github.com/usbarmory/go-boot/wiki/Boot-Transparency)
 
