@@ -155,8 +155,8 @@ func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	fmt.Fprintf(&buf, "ReportedTCB ..: %x\n", report.ReportedTCB)
 	fmt.Fprintf(&buf, "CommittedTCB .: %x\n", report.CommittedTCB)
 	fmt.Fprintf(&buf, "Measurement ..: %x\n", report.Measurement)
-	fmt.Fprintf(&buf, "SignatureR ...: %x\n", report.Signature[1:1+48])
-	fmt.Fprintf(&buf, "SignatureS ...: %x\n", report.Signature[73:73+48])
+	fmt.Fprintf(&buf, "SignatureR ...: %x\n", report.Signature[0:48])
+	fmt.Fprintf(&buf, "SignatureS ...: %x\n", report.Signature[72:72+48])
 
 	return buf.String(), nil
 }
