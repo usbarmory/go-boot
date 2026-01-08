@@ -261,8 +261,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 			},
 		}
 
-		btConfig.UefiRoot = root
-		if err = btEntry.Validate(&btConfig); err != nil {
+		if err = btValidate(btEntry, root); err != nil {
 			return "", fmt.Errorf("boot transparency validation failed, %v", err)
 		}
 	}

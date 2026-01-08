@@ -8,6 +8,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"regexp"
 	"strings"
@@ -52,4 +53,10 @@ func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	return
+}
+
+func btValidate(entry transparency.BootEntry, root fs.FS) (err error) {
+	btConfig.UefiRoot = root
+
+	return entry.Validate(&btConfig)
 }
