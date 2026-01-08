@@ -13,7 +13,7 @@ import (
 
 	"github.com/usbarmory/tamago/amd64"
 	"github.com/usbarmory/tamago/dma"
-	"github.com/usbarmory/tamago/kvm/svm"
+	"github.com/usbarmory/tamago/kvm/sev"
 
 	"github.com/usbarmory/go-boot/shell"
 	"github.com/usbarmory/go-boot/uefi"
@@ -21,12 +21,12 @@ import (
 )
 
 var (
-	ghcb   *svm.GHCB
+	ghcb   *sev.GHCB
 	vmpck0 []byte
 )
 
 func init() {
-	if !svm.Features(x64.AMD64).SEV.SEV {
+	if !sev.Features(x64.AMD64).SEV.SEV {
 		return
 	}
 
@@ -52,7 +52,7 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		err = nil
 	}()
 
-	features := svm.Features(x64.AMD64)
+	features := sev.Features(x64.AMD64)
 
 	fmt.Fprintf(&buf, "SEV ................: %v\n", features.SEV.SEV)
 	fmt.Fprintf(&buf, "SEV-ES .............: %v\n", features.SEV.ES)
@@ -72,7 +72,7 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	fmt.Fprintf(&buf, "Secrets Page .......: %#x (%d bytes)\n", snp.SecretsPagePhysicalAddress, snp.SecretsPageSize)
 	fmt.Fprintf(&buf, "CPUID Page .........: %#x (%d bytes)\n", snp.CPUIDPagePhysicalAddress, snp.CPUIDPageSize)
 
-	secrets := &svm.SNPSecrets{
+	secrets := &sev.SNPSecrets{
 		Address: uint(snp.SecretsPagePhysicalAddress),
 		Size:    int(snp.SecretsPageSize),
 	}
@@ -104,7 +104,7 @@ func initGHCB() (err error) {
 		return errors.New("AMD SEV-SNP secrsts unavailable, run `sev` first")
 	}
 
-	if ghcbAddr = x64.AMD64.MSR(svm.MSR_AMD_GHCB); ghcbAddr == 0 {
+	if ghcbAddr = x64.AMD64.MSR(sev.MSR_AMD_GHCB); ghcbAddr == 0 {
 		return errors.New("could not find GHCB address")
 	}
 
@@ -120,7 +120,7 @@ func initGHCB() (err error) {
 
 	ghcbGPA := uint(ghcbAddr)
 	reqGPA := ghcbGPA + uefi.PageSize*2
-	ghcb = &svm.GHCB{}
+	ghcb = &sev.GHCB{}
 
 	if ghcb.GHCBPage, err = dma.NewRegion(ghcbGPA, uefi.PageSize, false); err != nil {
 		return fmt.Errorf("could not allocate GHCB layout page, %v", err)
@@ -135,7 +135,7 @@ func initGHCB() (err error) {
 
 func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var buf bytes.Buffer
-	var report *svm.AttestationReport
+	var report *sev.AttestationReport
 
 	if err = initGHCB(); err != nil {
 		return "", fmt.Errorf("could not initialize GHCB, %v", err)
