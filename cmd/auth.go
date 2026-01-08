@@ -24,7 +24,7 @@ func init() {
 		Args:    1,
 		Pattern: regexp.MustCompile(`^(?:bt)( none| offline| online)?$`),
 		Syntax:  "(none|offline|online)?",
-		Help:    "show/set boot-transparency status",
+		Help:    "show/change boot-transparency status",
 		Fn:      btCmd,
 	})
 }
