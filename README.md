@@ -54,11 +54,14 @@ ls              (path)?                  # list directory contents
 lspci                                    # list PCI devices
 memmap          (e820)?                  # show UEFI memory map
 mode            <mode>                   # set screen mode
+msr             <hex addr>               # read model-specific register
 net             <ip> <mac> <gw> (debug)? # start UEFI networking
-peek            <hex offset> <size>      # memory display (use with caution)
-poke            <hex offset> <hex value> # memory write   (use with caution)
+peek            <hex addr> <size>        # memory display (use with caution)
+poke            <hex addr> <hex value>   # memory write   (use with caution)
 protocol        <registry format GUID>   # locate UEFI protocol
 reset           (cold|warm)?             # reset system
+sev                                      # AMD SEV-SNP information
+sev-report                               # AMD SEV-SNP attestation report
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
 stat            <path>                   # show file information
@@ -240,6 +243,7 @@ The following example demonstrates how to create, and deploy, a UEFI-bootable
 image for cloud deployments:
 
 * [Google Compute Engine](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine)
+* [Google Compute Engine - Confidential VM (AMD SEV-SNP)](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine-(AMD-SEV%E2%80%90SNP))
 
 License
 =======
