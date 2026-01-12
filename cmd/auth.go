@@ -13,8 +13,10 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/usbarmory/boot-transparency/artifact"
 	"github.com/usbarmory/go-boot/shell"
 	"github.com/usbarmory/go-boot/transparency"
+	"github.com/usbarmory/go-boot/uapi"
 )
 
 var btConfig transparency.Config
@@ -55,8 +57,23 @@ func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	return
 }
 
-func btValidate(entry transparency.BootEntry, root fs.FS) (err error) {
+func btValidateLinux(entry *uapi.Entry, root fs.FS) (err error) {
+	if entry == nil || len(entry.Linux) == 0 {
+		return errors.New("invalid kernel entry")
+	}
+
 	btConfig.UefiRoot = root
 
-	return entry.Validate(&btConfig)
+	btEntry := transparency.BootEntry{
+		transparency.Artifact{
+			Category: artifact.LinuxKernel,
+			Hash:     transparency.Hash(&entry.Linux),
+		},
+		transparency.Artifact{
+			Category: artifact.Initrd,
+			Hash:     transparency.Hash(&entry.Initrd),
+		},
+	}
+
+	return btEntry.Validate(&btConfig)
 }

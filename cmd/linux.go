@@ -20,8 +20,6 @@ import (
 	"github.com/usbarmory/go-boot/uefi"
 	"github.com/usbarmory/go-boot/uefi/x64"
 	"github.com/usbarmory/tamago/dma"
-
-	"github.com/usbarmory/boot-transparency/artifact"
 )
 
 const (
@@ -250,18 +248,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	// boot transparency validation (if enabled)
 	if btConfig.Status != transparency.None {
-		btEntry := transparency.BootEntry{
-			transparency.Artifact{
-				Category: artifact.LinuxKernel,
-				Hash:     transparency.Hash(&entry.Linux),
-			},
-			transparency.Artifact{
-				Category: artifact.Initrd,
-				Hash:     transparency.Hash(&entry.Initrd),
-			},
-		}
-
-		if err = btValidate(btEntry, root); err != nil {
+		if err = btValidateLinux(entry, root); err != nil {
 			return "", fmt.Errorf("boot transparency validation failed, %v", err)
 		}
 	}
