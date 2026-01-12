@@ -9,7 +9,7 @@ require (
 	github.com/u-root/u-root v0.15.0
 	github.com/usbarmory/armory-boot v0.0.0-20251106084515-0ad568ddb5ff
 	github.com/usbarmory/go-net v0.0.0-20251003201608-93d9ffe808de
-	github.com/usbarmory/tamago v1.25.6-0.20251213215730-dfeae5a6d030
+	github.com/usbarmory/tamago v1.25.6-0.20260112115240-f6a2117cc336
 	golang.org/x/term v0.37.0
 )
 

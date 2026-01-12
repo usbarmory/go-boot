@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/usbarmory/tamago/amd64"
 	"github.com/usbarmory/tamago/dma"
@@ -21,8 +22,8 @@ import (
 )
 
 var (
-	ghcb   *sev.GHCB
-	vmpck0 []byte
+	ghcb    *sev.GHCB
+	secrets *sev.SecretsPage
 )
 
 func init() {
@@ -37,9 +38,12 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
-		Name: "sev-report",
-		Help: "AMD SEV-SNP attestation report",
-		Fn:   attestationCmd,
+		Name:    "sev-report",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^sev-report(?: (raw))?$`),
+		Syntax:  "(raw)?",
+		Help:    "AMD SEV-SNP attestation report",
+		Fn:      attestationCmd,
 	})
 }
 
@@ -68,27 +72,23 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		return
 	}
 
-	fmt.Fprintf(&buf, "Revision ...........: %d\n", snp.Version)
+	fmt.Fprintf(&buf, "SNP Version ........: %d\n\n", snp.Version)
 	fmt.Fprintf(&buf, "Secrets Page .......: %#x (%d bytes)\n", snp.SecretsPagePhysicalAddress, snp.SecretsPageSize)
-	fmt.Fprintf(&buf, "CPUID Page .........: %#x (%d bytes)\n", snp.CPUIDPagePhysicalAddress, snp.CPUIDPageSize)
 
-	secrets := &sev.SNPSecrets{
-		Address: uint(snp.SecretsPagePhysicalAddress),
-		Size:    int(snp.SecretsPageSize),
-	}
+	secrets = &sev.SecretsPage{}
 
-	if err = secrets.Init(); err != nil {
+	if err = secrets.Init(uint(snp.SecretsPagePhysicalAddress), int(snp.SecretsPageSize)); err != nil {
 		fmt.Fprintf(&buf, " could not initialize AMD SEV-SNP secrets, %v", err)
 		return
 	}
 
-	if vmpck0, err = secrets.VMPCK(0); err != nil {
-		fmt.Fprintf(&buf, " could not get VMPCK0, %v", err)
-		return
-	}
-
-	n := len(vmpck0)
-	fmt.Fprintf(&buf, "VMPCK0 .............: %x -- %x (%d bytes)\n", vmpck0[0], vmpck0[n-1], n)
+	fmt.Fprintf(&buf, "Secrets Version ....: %d\n", secrets.Version)
+	fmt.Fprintf(&buf, "TSC Factor .........: %#x\n", secrets.TSCFactor)
+	fmt.Fprintf(&buf, "Launch Mitigations .: %#x\n", secrets.LaunchMitVector)
+	fmt.Fprintf(&buf, "VMPCK0 .............: %#02x -- %#02x\n", secrets.VMPCK0[0], secrets.VMPCK0[31])
+	fmt.Fprintf(&buf, "VMPCK1 .............: %#02x -- %#02x\n", secrets.VMPCK1[0], secrets.VMPCK1[31])
+	fmt.Fprintf(&buf, "VMPCK2 .............: %#02x -- %#02x\n", secrets.VMPCK2[0], secrets.VMPCK2[31])
+	fmt.Fprintf(&buf, "VMPCK3 .............: %#02x -- %#02x\n", secrets.VMPCK3[0], secrets.VMPCK3[31])
 
 	return
 }
@@ -100,7 +100,7 @@ func initGHCB() (err error) {
 		return
 	}
 
-	if len(vmpck0) == 0 {
+	if secrets == nil || secrets.Version == 0 {
 		return errors.New("AMD SEV-SNP secrsts unavailable, run `sev` first")
 	}
 
@@ -133,7 +133,7 @@ func initGHCB() (err error) {
 	return ghcb.Init(false)
 }
 
-func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
+func attestationCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	var buf bytes.Buffer
 	var report *sev.AttestationReport
 
@@ -144,19 +144,25 @@ func attestationCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	data := make([]byte, 64)
 	rand.Read(data)
 
-	if report, err = ghcb.GetAttestationReport(data, vmpck0, 0); err != nil {
+	if report, err = ghcb.GetAttestationReport(data, secrets.VMPCK0[:], 0); err != nil {
 		return "", fmt.Errorf("could not get report, %v", err)
 	}
 
-	fmt.Fprintf(&buf, "Version ......: %x\n", report.Version)
-	fmt.Fprintf(&buf, "VMPL .........: %x\n", report.VMPL)
-	fmt.Fprintf(&buf, "SignatureAlgo : %x\n", report.SignatureAlgo)
-	fmt.Fprintf(&buf, "CurrentTCB ...: %x\n", report.CurrentTCB)
-	fmt.Fprintf(&buf, "ReportedTCB ..: %x\n", report.ReportedTCB)
-	fmt.Fprintf(&buf, "CommittedTCB .: %x\n", report.CommittedTCB)
-	fmt.Fprintf(&buf, "Measurement ..: %x\n", report.Measurement)
-	fmt.Fprintf(&buf, "SignatureR ...: %x\n", report.Signature[0:48])
-	fmt.Fprintf(&buf, "SignatureS ...: %x\n", report.Signature[72:72+48])
+	if len(arg[0]) != 0 {
+		return fmt.Sprintf("%x", report.Bytes()), nil
+	}
+
+	fmt.Fprintf(&buf, "Version ............: %x\n", report.Version)
+	fmt.Fprintf(&buf, "VMPL ...............: %x\n", report.VMPL)
+	fmt.Fprintf(&buf, "SignatureAlgo ......: %x\n", report.SignatureAlgo)
+	fmt.Fprintf(&buf, "CurrentTCB .........: %x\n", report.CurrentTCB)
+	fmt.Fprintf(&buf, "Measurement ........: %x\n", report.Measurement)
+	fmt.Fprintf(&buf, "ReportedTCB ........: %x\n", report.ReportedTCB)
+	fmt.Fprintf(&buf, "CommittedTCB .......: %x\n", report.CommittedTCB)
+	fmt.Fprintf(&buf, "Launch  Mitigations : %#x\n", report.LaunchMitVector)
+	fmt.Fprintf(&buf, "Current Mitigations : %#x\n", report.CurrentMitVector)
+	fmt.Fprintf(&buf, "SignatureR .........: %x\n", report.Signature[0:48])
+	fmt.Fprintf(&buf, "SignatureS .........: %x\n", report.Signature[72:72+48])
 
 	return buf.String(), nil
 }
