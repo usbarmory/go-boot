@@ -37,6 +37,7 @@ initializing console (text)
 go-boot • tamago/amd64 (go1.24.1) • UEFI x64
 
 .               <path>                   # load and start EFI image
+bt              (none|offline|online)?   # show/set boot-transparency status
 build                                    # build information
 cat             <path>                   # show file contents
 clear                                    # clear screen
@@ -244,6 +245,16 @@ image for cloud deployments:
 
 * [Google Compute Engine](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine)
 * [Google Compute Engine - Confidential VM (AMD SEV-SNP)](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine-(AMD-SEV%E2%80%90SNP))
+
+Boot transparency
+=================
+
+The interaction with a transparency ecosystem for boot loading operations is provided
+by the [boot-transparency](https://github.com/usbarmory/boot-transparency) Go library.
+
+The following example demonstrates how to enable, and configure, the boot transparency support:
+
+* [Boot transparency](https://github.com/usbarmory/go-boot/wiki/Boot-Transparency)
 
 License
 =======
