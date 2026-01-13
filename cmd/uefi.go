@@ -220,7 +220,7 @@ func catCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	arg[0] = strings.ReplaceAll(arg[0], `/`, `\`)
+	arg[0] = strings.ReplaceAll(arg[0], `\`, `/`)
 	buf, err := fs.ReadFile(root, arg[0])
 
 	if err != nil {
@@ -246,7 +246,7 @@ func lsCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	path = strings.ReplaceAll(path, `/`, `\`)
+	path = strings.ReplaceAll(path, `\`, `/`)
 	entries, err := fs.ReadDir(root, path)
 
 	if err != nil {
@@ -277,7 +277,7 @@ func statCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not open root volume, %v", err)
 	}
 
-	arg[0] = strings.ReplaceAll(arg[0], `/`, `\`)
+	arg[0] = strings.ReplaceAll(arg[0], `\`, `/`)
 	f, err := root.Open(arg[0])
 
 	if err != nil {
@@ -298,7 +298,7 @@ func statCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not read file, %v", err)
 	}
 
-	return fmt.Sprintf("Size:%d ModTime:%s IsDir:%v Sys:%#x Sum256:%x",
+	return fmt.Sprintf("Size:%d ModTime:%s IsDir:%v Sys:%#x Sum256:%x\n",
 		stat.Size(),
 		stat.ModTime(),
 		stat.IsDir(),

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"strings"
 )
 
 // EFI system partition (FAT) limits
@@ -101,6 +102,8 @@ func (root *FS) Open(name string) (fs.File, error) {
 	if root.volume == nil || root.volume.file == nil || root.volume.addr == 0 {
 		return nil, errors.New("invalid file system instance")
 	}
+
+	name = strings.ReplaceAll(name, `/`, `\`)
 
 	if f.file, f.addr, err = root.volume.file.open(root.volume.addr, name, EFI_FILE_MODE_READ); err != nil {
 		return nil, err
