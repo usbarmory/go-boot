@@ -112,14 +112,15 @@ func initGHCB() (err error) {
 	// for GHCB and a second private one for vCPU variables.
 	//
 	// We are running on CPU0, so we obtain the first GHCB page and use the
-	// unencrypted GHCB page allocated for CPU1 as request/response buffer,
-	// sparing us from MMU re-configuration.
-	if amd64.NumCPU() < 2 {
-		return errors.New("cannot hijack unencrypted pages on single-core")
+	// next two GHCB pages allocated for CPU1/CPU2 as request/response
+	// buffers, sparing us from MMU re-configuration.
+	if amd64.NumCPU() < 3 {
+		return errors.New("cannot hijack unencrypted")
 	}
 
 	ghcbGPA := uint(ghcbAddr)
 	reqGPA := ghcbGPA + uefi.PageSize*2
+	resGPA := ghcbGPA + uefi.PageSize*4
 	ghcb = &sev.GHCB{}
 
 	if ghcb.GHCBPage, err = dma.NewRegion(ghcbGPA, uefi.PageSize, false); err != nil {
@@ -128,6 +129,10 @@ func initGHCB() (err error) {
 
 	if ghcb.RequestPage, err = dma.NewRegion(reqGPA, uefi.PageSize, false); err != nil {
 		return fmt.Errorf("could not allocate GHCB request page, %v", err)
+	}
+
+	if ghcb.ResponsePage, err = dma.NewRegion(resGPA, uefi.PageSize, false); err != nil {
+		return fmt.Errorf("could not allocate GHCB response page, %v", err)
 	}
 
 	return ghcb.Init(false)
@@ -148,7 +153,7 @@ func attestationCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not get report, %v", err)
 	}
 
-	if len(arg[0]) != 0 {
+	if len(arg[0]) > 0 {
 		return fmt.Sprintf("%x", report.Bytes()), nil
 	}
 
