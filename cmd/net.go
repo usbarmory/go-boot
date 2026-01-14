@@ -121,5 +121,5 @@ func dnsCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("query error: %v", err)
 	}
 
-	return fmt.Sprintf("%+v", cname), nil
+	return fmt.Sprintf("%+v\n", cname), nil
 }
