@@ -102,7 +102,7 @@ func (c *Config) Path(b BootEntry) (entryPath string, err error) {
 
 	entryPath = transparencyRoot
 	for _, artifact := range artifacts {
-		if err = artifact.hasValidHash(); err != nil {
+		if err = artifact.validHash(); err != nil {
 			return "", fmt.Errorf("cannot build configuration path, %v", err)
 		}
 

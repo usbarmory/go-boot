@@ -162,7 +162,7 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 	var h artifact.Handler
 	var found bool
 
-	if err = a.hasValidHash(); err != nil {
+	if err = a.validHash(); err != nil {
 		return
 	}
 
@@ -208,7 +208,7 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 	return
 }
 
-func (a Artifact) hasValidHash() (err error) {
+func (a Artifact) validHash() (err error) {
 	h, err := hex.DecodeString(a.Hash)
 
 	if err != nil || len(h) != sha256.Size {
