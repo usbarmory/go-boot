@@ -16,18 +16,18 @@ import (
 	"strings"
 )
 
-// Represents the status of the boot transparency functionality.
+// Represents the status of the boot-transparency functionality.
 type Status int
 
-// Represents boot transparency status codes.
+// Represents boot-transparency status codes.
 const (
-	// Boot transparency disabled.
+	// Boot-transparency disabled.
 	None Status = iota
 
-	// Boot transparency enabled in offline mode.
+	// Boot-transparency enabled in offline mode.
 	Offline
 
-	// Boot transparency enabled in online mode.
+	// Boot-transparency enabled in online mode.
 	Online
 )
 
@@ -42,7 +42,7 @@ func (s Status) Resolve() string {
 	return statusName[s]
 }
 
-// Boot transparency configuration root directory and filenames.
+// Boot-transparency configuration root directory and filenames.
 const (
 	transparencyRoot = `/transparency`
 
@@ -53,9 +53,9 @@ const (
 	logKey        = `log-key.pub`
 )
 
-// Config represents the configuration for the boot transparency functionality.
+// Config represents the configuration for the boot-transparency functionality.
 type Config struct {
-	// Status represents the status of the boot transparency functionality.
+	// Status represents the status of the boot-transparency functionality.
 	Status Status
 
 	// UefiRoot represents the UEFI filesystem to "automatically" load the

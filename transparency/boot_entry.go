@@ -22,21 +22,20 @@ import (
 
 // Artifact represents a boot artifact.
 type Artifact struct {
-	// Category must be consistent with the artifact categories
-	// supported by boot-transparency library.
+	// Category represents the artifact category as defined
+	// in the boot-transparency library.
 	Category uint
 
-	// SHA-256 hash of the artifact.
+	// Hash represents the SHA-256 hash of the artifact.
 	Hash string
 }
 
-// BootEntry represent a boot antry as a set of artifacts.
+// BootEntry represent a boot entry as a set of artifacts.
 type BootEntry []Artifact
 
-// Validate the transparency inclusion proof and, the consistency
-// between the boot policy and the logged claims for the boot artifacts.
-// Takes as input the pointer to the boot transparency configuration
-// to validate the boot entry artifacts.
+// Validate applies boot-transparency validation (e.g. inclusion proof,
+// boot policy and claims consistency) for the argument [Config] representing
+// the boot artifacts.
 // Returns error if the boot artifacts are not passing the validation.
 func (b BootEntry) Validate(c *Config) (err error) {
 	if c.Status == None {
@@ -44,7 +43,7 @@ func (b BootEntry) Validate(c *Config) (err error) {
 	}
 
 	if len(b) == 0 {
-		return fmt.Errorf("got an invalid boot entry")
+		return fmt.Errorf("invalid boot entry")
 	}
 
 	// Automatically load the configuration from the UEFI partition
@@ -52,11 +51,11 @@ func (b BootEntry) Validate(c *Config) (err error) {
 	if c.UefiRoot != nil {
 		entryPath, err := c.Path(b)
 		if err != nil {
-			return fmt.Errorf("cannot load boot transparency configuration, %v", err)
+			return fmt.Errorf("cannot load boot-transparency configuration, %v", err)
 		}
 
 		if err = c.loadFromUefiRoot(entryPath); err != nil {
-			return fmt.Errorf("cannot load boot transparency configuration, %v", err)
+			return fmt.Errorf("cannot load boot-transparency configuration, %v", err)
 		}
 	}
 
