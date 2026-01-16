@@ -28,6 +28,7 @@ LDFLAGS += -X 'github.com/usbarmory/go-boot/cmd.DefaultLinuxEntry=${DEFAULT_LINU
 GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "${LDFLAGS}"
 GOENV := GOOS=tamago GOARCH=amd64
 
+OVMF ?= OVMF.fd
 OVMFCODE ?= OVMF_CODE.fd
 OVMFVARS ?=
 LOG ?= qemu.log
@@ -38,6 +39,17 @@ QEMU ?= qemu-system-x86_64 \
         -drive if=pflash,format=raw,readonly,file=$(OVMFCODE) \
         -global isa-debugcon.iobase=0x402 \
         -serial stdio -vga virtio \
+        # -debugcon file:$(LOG)
+
+QEMU_SNP ?= qemu-system-x86_64 \
+        -enable-kvm -cpu host,invtsc=on -smp 4 \
+        -machine q35,confidential-guest-support=sev0,vmport=off,memory-backend=ram1 \
+        -object memory-backend-memfd,id=ram1,size=4G,share=true,prealloc=false \
+        -drive file=fat:rw:$(CURDIR)/qemu-disk \
+        -bios $(OVMF) \
+        -global isa-debugcon.iobase=0x402 \
+        -serial stdio -nographic -monitor none \
+        -object sev-snp-guest,id=sev0,cbitpos=51,reduced-phys-bits=1,policy=0xb0000
         # -debugcon file:$(LOG)
 
 ifneq ($(OVMFVARS),)
@@ -61,6 +73,10 @@ efi: $(APP).efi
 qemu: $(APP).efi
 	mkdir -p $(CURDIR)/qemu-disk/efi/boot && cp $(CURDIR)/$(APP).efi $(CURDIR)/qemu-disk/efi/boot/bootx64.efi
 	$(QEMU)
+
+qemu-snp: $(APP).efi
+	mkdir -p $(CURDIR)/qemu-disk/efi/boot && cp $(CURDIR)/$(APP).efi $(CURDIR)/qemu-disk/efi/boot/bootx64.efi
+	$(QEMU_SNP)
 
 qemu-gdb: GOFLAGS := $(GOFLAGS:-w=)
 qemu-gdb: GOFLAGS := $(GOFLAGS:-s=)

@@ -236,6 +236,13 @@ b cpuinit
 continue
 ```
 
+Confidential VMs
+----------------
+
+The `qemu-snp` target provides an example of execution under
+[AMD Secure Encrypted Virtualization (SEV)](https://www.qemu.org/docs/master/system/i386/amd-memory-encryption.html)
+and can be used on [compatible hardware](https://www.amd.com/en/developer/sev.html).
+
 Cloud deployments
 =================
 
