@@ -32,7 +32,7 @@ func init() {
 }
 
 func main() {
-	iface := &shell.Interface{
+	console := &shell.Interface{
 		Banner:  cmd.Banner,
 		Console: x64.UEFI.Console,
 	}
@@ -42,14 +42,14 @@ func main() {
 
 	switch Console {
 	case "COM1", "com1", "":
-		iface.ReadWriter = x64.UART0
-		iface.Start(true)
+		console.ReadWriter = x64.UART0
+		console.Start(true)
 	case "TEXT", "text":
-		iface.Console.EnableCursor(true)
-		iface.Pagination = true
+		console.Console.EnableCursor(true)
+		console.Pagination = true
 
-		iface.ReadWriter = x64.UEFI.Console
-		iface.Start(false)
+		console.ReadWriter = x64.UEFI.Console
+		console.Start(false)
 	}
 
 	log.Print("exit")
