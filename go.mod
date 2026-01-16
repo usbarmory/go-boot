@@ -1,6 +1,6 @@
 module github.com/usbarmory/go-boot
 
-go 1.25.4
+go 1.25.6
 
 require (
 	github.com/arl/statsviz v0.8.0
@@ -9,7 +9,7 @@ require (
 	github.com/u-root/u-root v0.15.0
 	github.com/usbarmory/armory-boot v0.0.0-20251106084515-0ad568ddb5ff
 	github.com/usbarmory/go-net v0.0.0-20251003201608-93d9ffe808de
-	github.com/usbarmory/tamago v1.25.6-0.20260114122054-6f4e8f67041c
+	github.com/usbarmory/tamago v1.25.6
 	golang.org/x/crypto/x509roots/fallback v0.0.0-20260113154411-7d0074ccc6f1
 	golang.org/x/term v0.37.0
 )
