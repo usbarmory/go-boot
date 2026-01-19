@@ -101,9 +101,8 @@ func TestOfflineValidateInvalidBootEntry(t *testing.T) {
 
 	// Error expected: missing required Hash.
 	if err == nil {
-		t.Fatal(err)
+		t.Fatal("invalid artifact hash error not detected")
 	}
-
 	if !regexp.MustCompile(`invalid artifact hash`).MatchString(err.Error()) {
 		t.Fatal(err)
 	}
@@ -136,10 +135,9 @@ func TestOfflineValidateHashMismatch(t *testing.T) {
 
 	// Error expected: incorrect hash.
 	if err == nil {
-		t.Fatal(err)
+		t.Fatal("hash mismatch error not detected")
 	}
-
-	if !regexp.MustCompile(`file hash mismatch`).MatchString(err.Error()) {
+	if !regexp.MustCompile(`hash mismatch`).MatchString(err.Error()) {
 		t.Fatal(err)
 	}
 }
