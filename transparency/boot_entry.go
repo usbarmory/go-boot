@@ -130,11 +130,6 @@ func Hash(data *[]byte) (hexHash string) {
 	return hex.EncodeToString(hash)
 }
 
-// Validate the matching between loaded artifact hashes and
-// the ones included in the proof bundle.
-// This step is vital to ensure the correspondence between the artifacts
-// loaded in memory during the boot and the claims that will be validated
-// by the boot-transparency policy function.
 func (b BootEntry) validateProofHashes(s *policy.Statement) (err error) {
 	for _, a := range b {
 		if err = a.validateProofHash(s); err != nil {
@@ -145,6 +140,11 @@ func (b BootEntry) validateProofHashes(s *policy.Statement) (err error) {
 	return
 }
 
+// Validate the matching between loaded artifact hash and the one included
+// in the proof bundle.
+// This step is vital to ensure the correspondence between the artifacts
+// loaded in memory during the boot and the claims that will be validated
+// by the boot-transparency policy function.
 func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 	var h artifact.Handler
 	var found bool
