@@ -77,7 +77,7 @@ func (b BootEntry) Validate(c *Config) (err error) {
 	}
 
 	if format != c.Engine {
-		return fmt.Errorf("proof bundle format is not matching the selected transparency engine.")
+		return fmt.Errorf("proof bundle format doesn't match the transparency engine.")
 	}
 
 	// If network access is available the inclusion proof verification
@@ -181,7 +181,7 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 		// if a file hash requested by the boot loader is not present in the
 		// statement for a given artifact category.
 		if err = h.Validate(r, c); err != nil {
-			return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, file hash mismatch")
+			return fmt.Errorf("hash mismatch for artifact category %d %q", a.Category, a.Hash)
 		}
 
 		found = true
@@ -189,7 +189,7 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 	}
 
 	if !found {
-		return fmt.Errorf("loaded boot artifacts do not correspond to the proof bundle ones, one or more artifacts are not present in the proof bundle")
+		return fmt.Errorf("one or more artifacts are not present in the proof bundle")
 	}
 
 	return
