@@ -13,11 +13,15 @@ import (
 	"testing"
 
 	"github.com/usbarmory/boot-transparency/artifact"
+	"github.com/usbarmory/boot-transparency/transparency"
+	_ "github.com/usbarmory/boot-transparency/engine/sigsum"
+	_ "github.com/usbarmory/boot-transparency/engine/tessera"
 )
 
 func TestOfflineValidate(t *testing.T) {
 	c := Config{
 		Status: Offline,
+		Engine: transparency.Sigsum,
 
 		BootPolicy:    []byte(testBootPolicy),
 		WitnessPolicy: []byte(testWitnessPolicy),
@@ -45,6 +49,7 @@ func TestOfflineValidate(t *testing.T) {
 func TestOnlineValidate(t *testing.T) {
 	c := Config{
 		Status: Online,
+		Engine: transparency.Sigsum,
 
 		BootPolicy:    []byte(testBootPolicy),
 		WitnessPolicy: []byte(testWitnessPolicy),
@@ -72,6 +77,7 @@ func TestOnlineValidate(t *testing.T) {
 func TestOfflineValidateInvalidBootEntry(t *testing.T) {
 	c := Config{
 		Status: Offline,
+		Engine: transparency.Sigsum,
 
 		BootPolicy:    []byte(testBootPolicy),
 		WitnessPolicy: []byte(testWitnessPolicy),
@@ -106,6 +112,7 @@ func TestOfflineValidateInvalidBootEntry(t *testing.T) {
 func TestOfflineValidateHashMismatch(t *testing.T) {
 	c := Config{
 		Status: Offline,
+		Engine: transparency.Sigsum,
 
 		BootPolicy:    []byte(testBootPolicy),
 		WitnessPolicy: []byte(testWitnessPolicy),
@@ -140,6 +147,7 @@ func TestOfflineValidateHashMismatch(t *testing.T) {
 func TestOfflineValidatePolicyNotMet(t *testing.T) {
 	c := Config{
 		Status: Offline,
+		Engine: transparency.Sigsum,
 
 		BootPolicy:    []byte(testBootPolicyUnauthorized),
 		WitnessPolicy: []byte(testWitnessPolicy),

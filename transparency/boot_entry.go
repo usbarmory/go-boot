@@ -15,7 +15,6 @@ import (
 	"fmt"
 
 	"github.com/usbarmory/boot-transparency/artifact"
-	"github.com/usbarmory/boot-transparency/engine/sigsum"
 	"github.com/usbarmory/boot-transparency/policy"
 	"github.com/usbarmory/boot-transparency/transparency"
 )
@@ -59,49 +58,39 @@ func (b BootEntry) Validate(c *Config) (err error) {
 		}
 	}
 
-	te, err := transparency.GetEngine(transparency.Sigsum)
+	te, err := transparency.GetEngine(c.Engine)
 	if err != nil {
-		return fmt.Errorf("unable to configure the transparency engine, %w", err)
+		return fmt.Errorf("unable to get transparency engine, %v", err)
 	}
 
 	if err = te.SetKey([]string{string(c.LogKey)}, []string{string(c.SubmitKey)}); err != nil {
 		return fmt.Errorf("unable to set log and submitter keys, %v", err)
 	}
 
-	wp, err := te.ParseWitnessPolicy(c.WitnessPolicy)
-	if err != nil {
-		return fmt.Errorf("unable to parse witness policy, %v", err)
-	}
-
-	if err = te.SetWitnessPolicy(wp); err != nil {
+	if err = te.SetWitnessPolicy(c.WitnessPolicy); err != nil {
 		return fmt.Errorf("unable to set witness policy, %v", err)
 	}
 
-	pb, _, err := te.ParseProof(c.ProofBundle)
+	format, statement, proof, probe, _, err := transparency.ParseProofBundle(c.ProofBundle)
 	if err != nil {
-		return fmt.Errorf("unable to parse proof bundle, %v", err)
+		return fmt.Errorf("unable to parse the proof bundle, %v", err)
+	}
+
+	if format != c.Engine {
+		return fmt.Errorf("proof bundle format is not matching the selected transparency engine.")
 	}
 
 	// If network access is available the inclusion proof verification
 	// is performed using the proof fetched from the log.
 	if c.Status == Online {
-		pr, err := te.GetProof(pb)
+		proof, err = te.GetProof(statement, probe)
 		if err != nil {
 			return err
 		}
+	}
 
-		freshBundle := pb.(*sigsum.ProofBundle)
-		freshBundle.Proof = string(pr)
-
-		if err = te.VerifyProof(freshBundle); err != nil {
-			return err
-		}
-	} else {
-		// If network access is not available the inclusion proof verification
-		// is performed using the proof included in the proof bundle.
-		if err = te.VerifyProof(pb); err != nil {
-			return err
-		}
+	if err = te.VerifyProof(statement, proof, nil); err != nil {
+		return err
 	}
 
 	requirements, err := policy.ParseRequirements(c.BootPolicy)
@@ -109,9 +98,7 @@ func (b BootEntry) Validate(c *Config) (err error) {
 		return
 	}
 
-	proof := pb.(*sigsum.ProofBundle)
-
-	claims, err := policy.ParseStatement(proof.Statement)
+	claims, err := policy.ParseStatement(statement)
 	if err != nil {
 		return
 	}

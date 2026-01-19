@@ -12,11 +12,13 @@ import (
 	"testing"
 
 	"github.com/usbarmory/boot-transparency/artifact"
+	"github.com/usbarmory/boot-transparency/transparency"
 )
 
 func TestPath(t *testing.T) {
 	c := Config{
 		Status: Offline,
+		Engine: transparency.Sigsum,
 	}
 
 	b := BootEntry{
@@ -43,6 +45,7 @@ func TestPath(t *testing.T) {
 func TestPathInvalidHash(t *testing.T) {
 	c := Config{
 		Status: Offline,
+		Engine: transparency.Sigsum,
 	}
 
 	b := BootEntry{
@@ -65,6 +68,7 @@ func TestPathInvalidHash(t *testing.T) {
 func TestLoadFromUefiRoot(t *testing.T) {
 	c := Config{
 		Status:   Offline,
+		Engine:   transparency.Sigsum,
 		UefiRoot: testUefiRoot,
 	}
 

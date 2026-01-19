@@ -14,6 +14,8 @@ import (
 	"path"
 	"sort"
 	"strings"
+
+	"github.com/usbarmory/boot-transparency/transparency"
 )
 
 // Represents the status of the boot-transparency functionality.
@@ -55,6 +57,10 @@ const (
 
 // Config represents the configuration for the boot-transparency functionality.
 type Config struct {
+	// Engine represents the transparency engine chosen among the ones
+	// supported by boot-transparency library.
+	Engine transparency.EngineCode
+
 	// Status represents the status of the boot-transparency functionality.
 	Status Status
 
