@@ -78,10 +78,14 @@ type Config struct {
 	// the Sigsum plaintext witness policy format.
 	WitnessPolicy []byte
 
-	// SubmitKey represents the log submitter public key in·OpenSSH·format.
+	// SubmitKey represents the log submitter public keys.
+	// The format should match the one(s) supported by the
+	// chosen transparency engine.
 	SubmitKey []byte
 
-	// LogKey represents the log public key in OpenSSH format.
+	// LogKey represents the log public keys.
+	// The format should match the one(s) supported by the
+	// chosen transparency engine.
 	LogKey []byte
 
 	// ProofBundle represents the proof bundle in JSON format
