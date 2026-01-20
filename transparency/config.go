@@ -99,7 +99,7 @@ type Config struct {
 // SHA-256 hash.
 func (c *Config) Path(b BootEntry) (entryPath string, err error) {
 	if len(b) == 0 {
-		return "", errors.New("invalid boot entry")
+		return "", fmt.Errorf("invalid boot entry")
 	}
 
 	artifacts := b
