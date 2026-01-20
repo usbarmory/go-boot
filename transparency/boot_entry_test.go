@@ -97,14 +97,9 @@ func TestOfflineValidateInvalidBootEntry(t *testing.T) {
 		},
 	}
 
-	err := b.Validate(&c)
-
 	// Error expected: missing required Hash.
-	if err == nil {
-		t.Fatal("invalid artifact hash error not detected")
-	}
-	if !regexp.MustCompile(`invalid artifact hash`).MatchString(err.Error()) {
-		t.Fatal(err)
+	if err := b.Validate(&c); err == nil || !regexp.MustCompile(`invalid artifact hash`).MatchString(err.Error()) {
+		t.Fatal("invalid artifact hash error not correctly returned")
 	}
 }
 
@@ -131,14 +126,9 @@ func TestOfflineValidateHashMismatch(t *testing.T) {
 		},
 	}
 
-	err := b.Validate(&c)
-
 	// Error expected: incorrect hash.
-	if err == nil {
-		t.Fatal("hash mismatch error not detected")
-	}
-	if !regexp.MustCompile(`hash mismatch`).MatchString(err.Error()) {
-		t.Fatal(err)
+	if err := b.Validate(&c); err == nil || !regexp.MustCompile(`hash mismatch`).MatchString(err.Error()) {
+		t.Fatal("incorrect hash error not correctly returned")
 	}
 }
 
