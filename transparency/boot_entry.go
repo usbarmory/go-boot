@@ -63,7 +63,7 @@ func (b BootEntry) Validate(c *Config) (err error) {
 		return fmt.Errorf("unable to get transparency engine, %v", err)
 	}
 
-	if err = te.SetKey([]string{string(c.LogKey)}, []string{string(c.SubmitKey)}); err != nil {
+	if err = te.SetKey(c.LogKey, c.SubmitKey); err != nil {
 		return fmt.Errorf("unable to set log and submitter keys, %v", err)
 	}
 
