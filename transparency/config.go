@@ -18,10 +18,10 @@ import (
 	"github.com/usbarmory/boot-transparency/transparency"
 )
 
-// Represents the status of the boot-transparency functionality.
+// Status represents the status of the boot-transparency functionality.
 type Status int
 
-// Represents boot-transparency status codes.
+// Status codes.
 const (
 	// Boot-transparency disabled.
 	None Status = iota
@@ -99,13 +99,13 @@ type Config struct {
 // SHA-256 hash.
 func (c *Config) Path(b BootEntry) (entryPath string, err error) {
 	if len(b) == 0 {
-		return "", fmt.Errorf("cannot build configuration path, got an invalid boot entry")
+		return "", errors.New("invalid boot entry")
 	}
 
 	artifacts := b
 
 	// Sort the passed artifacts, by their Category, to ensure
-	// consistency in the way the entry path is build.
+	// consistency in the way the entry path is built.
 	sort.Slice(artifacts, func(i, j int) bool {
 		return artifacts[i].Category < artifacts[j].Category
 	})
