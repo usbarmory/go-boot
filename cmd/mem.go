@@ -96,7 +96,7 @@ func memWriteCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	buf := make([]byte, 8)
-	binary.BigEndian.PutUint32(buf, uint32(val))
+	binary.BigEndian.PutUint64(buf, val)
 
 	mem(uint(addr), 8, buf)
 
