@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/usbarmory/tamago/amd64"
 	"github.com/usbarmory/tamago/dma"
 	"github.com/usbarmory/tamago/kvm/sev"
 
@@ -22,8 +21,9 @@ import (
 )
 
 var (
-	ghcb    *sev.GHCB
-	secrets *sev.SecretsPage
+	features sev.SVMFeatures
+	ghcb     *sev.GHCB
+	secrets  *sev.SecretsPage
 )
 
 func init() {
@@ -51,6 +51,12 @@ func init() {
 		Help: "AMD SEV-SNP key derivation",
 		Fn:   kdfCmd,
 	})
+
+	shell.Add(shell.Cmd{
+		Name: "sev-tsc",
+		Help: "AMD SEV-SNP Secure TSC",
+		Fn:   tscCmd,
+	})
 }
 
 func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
@@ -62,12 +68,12 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 		err = nil
 	}()
 
-	features := sev.Features(x64.AMD64)
+	features = sev.Features(x64.AMD64)
 
 	fmt.Fprintf(&buf, "SEV ................: %v\n", features.SEV.SEV)
 	fmt.Fprintf(&buf, "SEV-ES .............: %v\n", features.SEV.ES)
 	fmt.Fprintf(&buf, "SEV-SNP ............: %v\n", features.SEV.SNP)
-	fmt.Fprintf(&buf, "Encryption bit .....: %d\n", features.EncryptionBit)
+	fmt.Fprintf(&buf, "Encrypted bit ......: %d\n", features.EncryptedBit)
 
 	if !features.SEV.SNP {
 		return
@@ -99,6 +105,33 @@ func sevCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	return
 }
 
+func initSharedDMA(dmaSize int) (err error) {
+	// align to 2MB page
+	dmaStart := int(x64.RamSize) - dmaSize
+	dmaSize += dmaStart % (2 << 20)
+
+	if err = x64.AllocateDMA(dmaSize); err != nil {
+		return
+	}
+
+	start := uint64(dma.Default().Start())
+	end := uint64(dma.Default().End())
+
+	// disable encryption for DMA region
+	if err = sev.SetEncryptedBit(x64.AMD64, start, end, features.EncryptedBit, false); err != nil {
+		return
+	}
+
+	return // FIXME
+
+	// notify hypervisor to update Reverse Map Table
+	if err = ghcb.PageStateChange(start, end, sev.PAGE_SIZE_2M, false); err != nil {
+		return
+	}
+
+	return
+}
+
 func initGHCB() (err error) {
 	var ghcbAddr uint64
 
@@ -107,41 +140,33 @@ func initGHCB() (err error) {
 	}
 
 	if secrets == nil || secrets.Version == 0 {
-		return errors.New("AMD SEV-SNP secrsts unavailable, run `sev` first")
+		return errors.New("AMD SEV-SNP secrets unavailable, run `sev` first")
 	}
 
+	// OVMF allocates 2*ncpu contiguous pages, a first shared page for GHCB
+	// (which we re-use) and a second private one for vCPU variables.
 	if ghcbAddr = x64.AMD64.MSR(sev.MSR_AMD_GHCB); ghcbAddr == 0 {
 		return errors.New("could not find GHCB address")
 	}
 
-	// OVMF allocates 2*ncpu contiguous pages, a first shared page
-	// for GHCB and a second private one for vCPU variables.
-	//
-	// We are running on CPU0, so we obtain the first GHCB page and use the
-	// next two GHCB pages allocated for CPU1/CPU2 as request/response
-	// buffers, sparing us from MMU re-configuration.
-	if amd64.NumCPU() < 3 {
-		return errors.New("cannot hijack unencrypted")
-	}
-
 	ghcbGPA := uint(ghcbAddr)
-	reqGPA := ghcbGPA + uefi.PageSize*2
-	resGPA := ghcbGPA + uefi.PageSize*4
 	ghcb = &sev.GHCB{}
 
 	if ghcb.GHCBPage, err = dma.NewRegion(ghcbGPA, uefi.PageSize, false); err != nil {
 		return fmt.Errorf("could not allocate GHCB layout page, %v", err)
 	}
 
-	if ghcb.RequestPage, err = dma.NewRegion(reqGPA, uefi.PageSize, false); err != nil {
-		return fmt.Errorf("could not allocate GHCB request page, %v", err)
+	if err = ghcb.Init(false); err != nil {
+		return fmt.Errorf("could not initialize GHCB, %v", err)
 	}
 
-	if ghcb.ResponsePage, err = dma.NewRegion(resGPA, uefi.PageSize, false); err != nil {
-		return fmt.Errorf("could not allocate GHCB response page, %v", err)
+	if err = initSharedDMA(10 << 20); err != nil {
+		return fmt.Errorf("could not allocate shared DMA region, %v", err)
 	}
 
-	return ghcb.Init(false)
+	ghcb.Region = dma.Default()
+
+	return
 }
 
 func attestationCmd(_ *shell.Interface, arg []string) (res string, err error) {
@@ -178,6 +203,7 @@ func attestationCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	return buf.String(), nil
 }
 
+// TODO: https://www.qemu.org/docs/master/system/i386/amd-memory-encryption.html#calculating-expected-guest-launch-measurement
 func kdfCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	var key []byte
 
@@ -197,4 +223,18 @@ func kdfCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	return fmt.Sprintf("%x", key), nil
+}
+
+func tscCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	var tsc *sev.TSCInfo
+
+	if err = initGHCB(); err != nil {
+		return "", fmt.Errorf("could not initialize GHCB, %v", err)
+	}
+
+	if tsc, err = ghcb.SecureTSC(secrets.VMPCK0[:], 0); err != nil {
+		return "", fmt.Errorf("could not request TSC, %v", err)
+	}
+
+	return fmt.Sprintf("%+v", tsc), nil
 }
