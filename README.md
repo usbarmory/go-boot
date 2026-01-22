@@ -63,7 +63,6 @@ reset           (cold|warm)?             # reset system
 sev                                      # AMD SEV-SNP information
 sev-kdf                                  # AMD SEV-SNP key derivation
 sev-report      (raw)?                   # AMD SEV-SNP attestation report
-sev-tsc                                  # AMD SEV-SNP TSC information
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
 stat            <path>                   # show file information

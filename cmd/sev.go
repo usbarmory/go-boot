@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	features sev.SVMFeatures
+	features *sev.SVMFeatures
 	ghcb     *sev.GHCB
 	secrets  *sev.SecretsPage
 )
@@ -50,12 +50,6 @@ func init() {
 		Name: "sev-kdf",
 		Help: "AMD SEV-SNP key derivation",
 		Fn:   kdfCmd,
-	})
-
-	shell.Add(shell.Cmd{
-		Name: "sev-tsc",
-		Help: "AMD SEV-SNP TSC information",
-		Fn:   tscCmd,
 	})
 }
 
@@ -117,8 +111,18 @@ func initSharedDMA(dmaSize int) (err error) {
 	start := uint64(dma.Default().Start())
 	end := uint64(dma.Default().End())
 
+	// Invalidate memory before clearing encryption, do it in chunks to
+	// avoid dealing with hypervisor RMP fragmentation.
+	chunk := sev.MaxPSCEntries * uint64(4096)
+
+	for s := start; s < end; s += chunk {
+		if err = ghcb.PageStateChange(start,  start+chunk, sev.PAGE_SIZE_4K, false); err != nil {
+			return
+		}
+	}
+
 	// disable encryption for DMA region
-	return sev.SetEncryptedBit(x64.AMD64, start, end, features.EncryptedBit, false)
+	return x64.AMD64.SetEncryptedBit(start, end, features.EncryptedBit, false)
 }
 
 func initGHCB() (err error) {
@@ -141,8 +145,12 @@ func initGHCB() (err error) {
 	ghcbGPA := uint(ghcbAddr)
 	ghcb = &sev.GHCB{}
 
-	if ghcb.GHCBPage, err = dma.NewRegion(ghcbGPA, uefi.PageSize, false); err != nil {
+	if ghcb.Layout, err = dma.NewRegion(ghcbGPA, uefi.PageSize, false); err != nil {
 		return fmt.Errorf("could not allocate GHCB layout page, %v", err)
+	}
+
+	if err = ghcb.Init(); err != nil {
+		return
 	}
 
 	if err = initSharedDMA(1 << 20); err != nil {
@@ -151,7 +159,7 @@ func initGHCB() (err error) {
 
 	ghcb.Region = dma.Default()
 
-	return ghcb.Init()
+	return
 }
 
 func attestationCmd(_ *shell.Interface, arg []string) (res string, err error) {
@@ -207,23 +215,4 @@ func kdfCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	return fmt.Sprintf("%x\n", key), nil
-}
-
-func tscCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	var buf bytes.Buffer
-	var tsc *sev.TSCInfo
-
-	if err = initGHCB(); err != nil {
-		return "", fmt.Errorf("could not initialize GHCB, %v", err)
-	}
-
-	if tsc, err = ghcb.TSCInfo(secrets.VMPCK0[:], 0); err != nil {
-		return "", fmt.Errorf("could not request TSC, %v", err)
-	}
-
-	fmt.Fprintf(&buf, "Guest TSC Scale ....: %d\n", tsc.GuestTSCScale)
-	fmt.Fprintf(&buf, "Guest TSC Offset ...: %d\n", tsc.GuestTSCOffset)
-	fmt.Fprintf(&buf, "TSC Factor .........: %d\n", tsc.TSCFactor)
-
-	return buf.String(), nil
 }
