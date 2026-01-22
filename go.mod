@@ -30,5 +30,3 @@ require (
 	golang.org/x/time v0.7.0 // indirect
 	gvisor.dev/gvisor v0.0.0-20250911055229-61a46406f068 // indirect
 )
-
-replace github.com/usbarmory/tamago => /mnt/git/public/tamago
