@@ -145,17 +145,13 @@ func initGHCB() (err error) {
 		return fmt.Errorf("could not allocate GHCB layout page, %v", err)
 	}
 
-	if err = ghcb.Init(false); err != nil {
-		return fmt.Errorf("could not initialize GHCB, %v", err)
-	}
-
 	if err = initSharedDMA(1 << 20); err != nil {
 		return fmt.Errorf("could not allocate shared DMA region, %v", err)
 	}
 
 	ghcb.Region = dma.Default()
 
-	return
+	return ghcb.Init()
 }
 
 func attestationCmd(_ *shell.Interface, arg []string) (res string, err error) {
