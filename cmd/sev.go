@@ -54,7 +54,7 @@ func init() {
 
 	shell.Add(shell.Cmd{
 		Name: "sev-tsc",
-		Help: "AMD SEV-SNP Secure TSC",
+		Help: "AMD SEV-SNP TSC information",
 		Fn:   tscCmd,
 	})
 }
@@ -118,18 +118,7 @@ func initSharedDMA(dmaSize int) (err error) {
 	end := uint64(dma.Default().End())
 
 	// disable encryption for DMA region
-	if err = sev.SetEncryptedBit(x64.AMD64, start, end, features.EncryptedBit, false); err != nil {
-		return
-	}
-
-	return // FIXME
-
-	// notify hypervisor to update Reverse Map Table
-	if err = ghcb.PageStateChange(start, end, sev.PAGE_SIZE_2M, false); err != nil {
-		return
-	}
-
-	return
+	return sev.SetEncryptedBit(x64.AMD64, start, end, features.EncryptedBit, false)
 }
 
 func initGHCB() (err error) {
@@ -160,7 +149,7 @@ func initGHCB() (err error) {
 		return fmt.Errorf("could not initialize GHCB, %v", err)
 	}
 
-	if err = initSharedDMA(10 << 20); err != nil {
+	if err = initSharedDMA(1 << 20); err != nil {
 		return fmt.Errorf("could not allocate shared DMA region, %v", err)
 	}
 
@@ -203,7 +192,6 @@ func attestationCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	return buf.String(), nil
 }
 
-// TODO: https://www.qemu.org/docs/master/system/i386/amd-memory-encryption.html#calculating-expected-guest-launch-measurement
 func kdfCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	var key []byte
 
@@ -222,19 +210,24 @@ func kdfCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not derive key, %v", err)
 	}
 
-	return fmt.Sprintf("%x", key), nil
+	return fmt.Sprintf("%x\n", key), nil
 }
 
 func tscCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	var buf bytes.Buffer
 	var tsc *sev.TSCInfo
 
 	if err = initGHCB(); err != nil {
 		return "", fmt.Errorf("could not initialize GHCB, %v", err)
 	}
 
-	if tsc, err = ghcb.SecureTSC(secrets.VMPCK0[:], 0); err != nil {
+	if tsc, err = ghcb.TSCInfo(secrets.VMPCK0[:], 0); err != nil {
 		return "", fmt.Errorf("could not request TSC, %v", err)
 	}
 
-	return fmt.Sprintf("%+v", tsc), nil
+	fmt.Fprintf(&buf, "Guest TSC Scale ....: %d\n", tsc.GuestTSCScale)
+	fmt.Fprintf(&buf, "Guest TSC Offset ...: %d\n", tsc.GuestTSCOffset)
+	fmt.Fprintf(&buf, "TSC Factor .........: %d\n", tsc.TSCFactor)
+
+	return buf.String(), nil
 }
