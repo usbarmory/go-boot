@@ -65,7 +65,7 @@ func init() {
 	shell.Add(shell.Cmd{
 		Name:    "date",
 		Args:    1,
-		Pattern: regexp.MustCompile(`^date(.*)`),
+		Pattern: regexp.MustCompile(`^date(?: (.*))?$`),
 		Syntax:  "(time in RFC339 format)?",
 		Help:    "show/change runtime date and time",
 		Fn:      dateCmd,
@@ -109,8 +109,8 @@ func stackallCmd(_ *shell.Interface, _ []string) (string, error) {
 }
 
 func dateCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	if len(arg[0]) > 1 {
-		t, err := time.Parse(time.RFC3339, arg[0][1:])
+	if len(arg[0]) > 0 {
+		t, err := time.Parse(time.RFC3339, arg[0])
 
 		if err != nil {
 			return "", err

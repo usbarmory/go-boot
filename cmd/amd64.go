@@ -115,7 +115,7 @@ func msrCmd(_ *shell.Interface, arg []string) (string, error) {
 	}
 
 	val := x64.AMD64.MSR(addr)
-	fmt.Fprintf(&res, "%x", val)
+	fmt.Fprintf(&res, "%x\n", val)
 
 	return res.String(), nil
 }
