@@ -12,6 +12,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/usbarmory/boot-transparency/artifact"
@@ -29,8 +30,13 @@ type Artifact struct {
 	Hash string
 }
 
-// BootEntry represent a boot entry as a set of artifacts.
+// BootEntry represents a boot entry as a set of artifacts.
 type BootEntry []Artifact
+
+// ErrHashMismatch represents an hash mismatch error.
+var ErrHashMismatch = errors.New("hash mismatch")
+// ErrHashInvalid represents an hash invalid error.
+var ErrHashInvalid = errors.New("hash invalid")
 
 // Validate applies boot-transparency validation (e.g. inclusion proof,
 // boot policy and claims consistency) for the argument [Config] representing
@@ -181,7 +187,7 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 		// if a file hash requested by the boot loader is not present in the
 		// statement for a given artifact category.
 		if err = h.Validate(r, c); err != nil {
-			return fmt.Errorf("hash mismatch for artifact category %d %q", a.Category, a.Hash)
+			return fmt.Errorf("%w, artifact category %d hash %q", ErrHashMismatch, a.Category, a.Hash)
 		}
 
 		found = true
@@ -199,7 +205,7 @@ func (a Artifact) validHash() (err error) {
 	h, err := hex.DecodeString(a.Hash)
 
 	if err != nil || len(h) != sha256.Size {
-		return fmt.Errorf("invalid artifact hash")
+		return fmt.Errorf("%w, artifact category %d hash %q", ErrHashInvalid, a.Category, a.Hash)
 	}
 
 	return

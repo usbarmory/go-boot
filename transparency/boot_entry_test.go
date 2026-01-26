@@ -9,11 +9,12 @@
 package transparency
 
 import (
-	"regexp"
+	"errors"
 	"testing"
 
 	"github.com/usbarmory/boot-transparency/artifact"
 	"github.com/usbarmory/boot-transparency/transparency"
+	"github.com/usbarmory/boot-transparency/policy"
 	_ "github.com/usbarmory/boot-transparency/engine/sigsum"
 	_ "github.com/usbarmory/boot-transparency/engine/tessera"
 )
@@ -98,8 +99,8 @@ func TestOfflineValidateInvalidBootEntry(t *testing.T) {
 	}
 
 	// Error expected: missing required Hash.
-	if err := b.Validate(&c); err == nil || !regexp.MustCompile(`invalid artifact hash`).MatchString(err.Error()) {
-		t.Fatal("invalid artifact hash error not correctly returned")
+	if err := b.Validate(&c); err == nil || !errors.Is(err, ErrHashInvalid) {
+		t.Fatal("missing invalid hash error")
 	}
 }
 
@@ -127,8 +128,8 @@ func TestOfflineValidateHashMismatch(t *testing.T) {
 	}
 
 	// Error expected: incorrect hash.
-	if err := b.Validate(&c); err == nil || !regexp.MustCompile(`hash mismatch`).MatchString(err.Error()) {
-		t.Fatal("incorrect hash error not correctly returned")
+	if err := b.Validate(&c); err == nil || !errors.Is(err, ErrHashMismatch) {
+		t.Fatal("missing incorrect hash error")
 	}
 }
 
@@ -156,13 +157,7 @@ func TestOfflineValidatePolicyNotMet(t *testing.T) {
 	}
 
 	// Error expected: requirement not met.
-	err := b.Validate(&c)
-
-	if err == nil {
-		t.Fatal(err)
-	}
-
-	if !regexp.MustCompile(`build args requirement .+ not met`).MatchString(err.Error()) {
-		t.Fatal(err)
+	if err := b.Validate(&c); err == nil || !errors.Is(err, policy.ErrValidate) {
+		t.Fatal("missing policy validation error")
 	}
 }
