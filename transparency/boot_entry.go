@@ -26,8 +26,8 @@ type Artifact struct {
 	// in the boot-transparency library.
 	Category uint
 
-	// Hash represents the SHA-256 hash of the artifact.
-	Hash string
+	// Hash represents the SHA256 checksum of the artifact.
+	Hash []byte
 }
 
 // BootEntry represents a boot entry as a set of artifacts.
@@ -125,15 +125,13 @@ func (b BootEntry) Validate(c *Config) (err error) {
 	return
 }
 
-// Hash performs data hashing using SHA-256, which is
-// the same algorithm used by boot-transparency library.
-// Returns the computed hash as hex string.
-func Hash(data *[]byte) (hexHash string) {
+// Sum returns the SHA256 checksum of the data, this is
+// the same hashing algorithm used by boot-transparency library.
+func Sum(b []byte) ([]byte) {
 	h := sha256.New()
-	h.Write(*data)
-	hash := h.Sum(nil)
+	h.Write(b)
 
-	return hex.EncodeToString(hash)
+	return h.Sum(nil)
 }
 
 func (b BootEntry) validateProofHashes(s *policy.Statement) (err error) {
@@ -171,7 +169,7 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 		}
 
 		// boot-transparency expect to parse requirements in JSON format.
-		requirements, _ := json.Marshal(map[string]string{"file_hash": a.Hash})
+		requirements, _ := json.Marshal(map[string]string{"file_hash": hex.EncodeToString(a.Hash)})
 
 		r, err := h.ParseRequirements([]byte(requirements))
 		if err != nil {
@@ -187,7 +185,7 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 		// if a file hash requested by the boot loader is not present in the
 		// statement for a given artifact category.
 		if err = h.Validate(r, c); err != nil {
-			return fmt.Errorf("%w, artifact category %d hash %q", ErrHashMismatch, a.Category, a.Hash)
+			return fmt.Errorf("%w for artifact category %d, hash %q", ErrHashMismatch, a.Category, hex.EncodeToString(a.Hash))
 		}
 
 		found = true
@@ -202,10 +200,8 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 }
 
 func (a Artifact) validHash() (err error) {
-	h, err := hex.DecodeString(a.Hash)
-
-	if err != nil || len(h) != sha256.Size {
-		return fmt.Errorf("%w, artifact category %d hash %q", ErrHashInvalid, a.Category, a.Hash)
+	if len(a.Hash) != sha256.Size {
+		err = fmt.Errorf("%w for artifact category %d", ErrHashInvalid, a.Category)
 	}
 
 	return

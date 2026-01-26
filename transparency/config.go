@@ -9,6 +9,7 @@
 package transparency
 
 import (
+	"encoding/hex"
 	"fmt"
 	"io/fs"
 	"path"
@@ -116,7 +117,7 @@ func (c *Config) Path(b BootEntry) (entryPath string, err error) {
 			return "", fmt.Errorf("cannot build configuration path, %v", err)
 		}
 
-		entryPath = path.Join(entryPath, artifact.Hash)
+		entryPath = path.Join(entryPath, hex.EncodeToString(artifact.Hash))
 	}
 
 	// Rewrite paths only when the pkg is used in the context

@@ -83,11 +83,11 @@ func btValidateLinux(entry *uapi.Entry, root fs.FS) (err error) {
 	btEntry := transparency.BootEntry{
 		transparency.Artifact{
 			Category: artifact.LinuxKernel,
-			Hash:     transparency.Hash(&entry.Linux),
+			Hash:     transparency.Sum(entry.Linux),
 		},
 		transparency.Artifact{
 			Category: artifact.Initrd,
-			Hash:     transparency.Hash(&entry.Initrd),
+			Hash:     transparency.Sum(entry.Initrd),
 		},
 	}
 
