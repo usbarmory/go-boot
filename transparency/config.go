@@ -33,8 +33,8 @@ const (
 	Online
 )
 
-// Resolve resolves Status codes into a human-readable strings.
-func (s Status) Resolve() string {
+// String resolves Status codes into a human-readable strings.
+func (s Status) String() string {
 	statusName := map[Status]string{
 		None:    "none",
 		Offline: "offline",

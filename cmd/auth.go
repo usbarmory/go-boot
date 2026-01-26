@@ -67,7 +67,7 @@ func btCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	case transparency.None:
 		res = fmt.Sprintf("boot-transparency is disabled\n")
 	case transparency.Offline, transparency.Online:
-		res = fmt.Sprintf("boot-transparency is enabled in %s mode, %s engine selected\n", btConfig.Status.Resolve(), btConfig.Engine.Resolve())
+		res = fmt.Sprintf("boot-transparency is enabled in %s mode, %s engine selected\n", btConfig.Status, btConfig.Engine)
 	}
 
 	return
