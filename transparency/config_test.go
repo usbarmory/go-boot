@@ -9,6 +9,7 @@
 package transparency
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"github.com/usbarmory/boot-transparency/artifact"
@@ -37,12 +38,14 @@ func TestPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if p != entryPath {
+	if p != testEntryPath {
 		t.Fatal("got an invalid path.")
 	}
 }
 
 func TestPathInvalidHash(t *testing.T) {
+	invalidKernelHash, _ := hex.DecodeString(testInvalidKernelHash)
+
 	c := Config{
 		Status: Offline,
 		Engine: transparency.Sigsum,

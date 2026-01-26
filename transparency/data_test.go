@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	kernelHash          = "4551848b4ab43cb4321c4d6ba98e1d215f950cee21bfd82c8c82ab64e34ec9a6"
-	initrdHash          = "337630b74e55eae241f460faadf5a2f9a2157d6de2853d4106c35769e4acf538"
-	invalidKernelHash   = "0672136965536be27980489b0388d864c96c74efd73d21432d0bcf10f9269f3"
-	incorrectKernelHash = "5551848b4ab43cb4321c4d6ba98e1d215f950cee21bfd82c8c82ab64e34ec9a6"
-	entryPath           = "/transparency/4551848b4ab43cb4321c4d6ba98e1d215f950cee21bfd82c8c82ab64e34ec9a6/337630b74e55eae241f460faadf5a2f9a2157d6de2853d4106c35769e4acf538"
+	testKernelHash          = "4551848b4ab43cb4321c4d6ba98e1d215f950cee21bfd82c8c82ab64e34ec9a6"
+	testInitrdHash          = "337630b74e55eae241f460faadf5a2f9a2157d6de2853d4106c35769e4acf538"
+	testIncorrectKernelHash = "5551848b4ab43cb4321c4d6ba98e1d215f950cee21bfd82c8c82ab64e34ec9a6"
+	testInvalidKernelHash   = "0672136965536be27980489b0388d864c96c74efd73d21432d0bcf10f9269f3"
+	testEntryPath           = "/transparency/4551848b4ab43cb4321c4d6ba98e1d215f950cee21bfd82c8c82ab64e34ec9a6/337630b74e55eae241f460faadf5a2f9a2157d6de2853d4106c35769e4acf538"
 
 	testBootPolicy = `[
 	{
