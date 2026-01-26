@@ -249,7 +249,7 @@ func linuxCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	// boot transparency validation (if enabled)
 	if btConfig.Status != transparency.None {
 		if err = btValidateLinux(entry, root); err != nil {
-			return "", fmt.Errorf("boot transparency validation failed, %v", err)
+			return "", fmt.Errorf("boot transparency, %v", err)
 		}
 	}
 
