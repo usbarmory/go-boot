@@ -32,13 +32,13 @@ func init() {
 }
 
 func main() {
+	// disable UEFI watchdog
+	x64.UEFI.Boot.SetWatchdogTimer(0)
+
 	console := &shell.Interface{
 		Banner:  cmd.Banner,
 		Console: x64.UEFI.Console,
 	}
-
-	// disable UEFI watchdog
-	x64.UEFI.Boot.SetWatchdogTimer(0)
 
 	switch Console {
 	case "COM1", "com1", "":
