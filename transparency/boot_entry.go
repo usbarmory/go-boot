@@ -9,7 +9,6 @@
 package transparency
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -125,15 +124,6 @@ func (b BootEntry) Validate(c *Config) (err error) {
 	return
 }
 
-// Sum returns the SHA256 checksum of the data, this is
-// the same hashing algorithm used by boot-transparency library.
-func Sum(b []byte) ([]byte) {
-	h := sha256.New()
-	h.Write(b)
-
-	return h.Sum(nil)
-}
-
 func (b BootEntry) validateProofHashes(s *policy.Statement) (err error) {
 	for _, a := range b {
 		if err = a.validateProofHash(s); err != nil {
@@ -200,7 +190,7 @@ func (a Artifact) validateProofHash(s *policy.Statement) (err error) {
 }
 
 func (a Artifact) validHash() (err error) {
-	if len(a.Hash) != sha256.Size {
+	if len(a.Hash) != artifact.HashSize {
 		err = fmt.Errorf("%w for artifact category %d", ErrHashInvalid, a.Category)
 	}
 
