@@ -15,6 +15,12 @@ The support of
 [boot-transparency](https://github.com/usbarmory/boot-transparency) is planned
 for future releases.
 
+The unikernel can be executed as:
+  * EFI application by an [existing loader](https://github.com/usbarmory/go-boot/tree/main?tab=readme-ov-file#executing-as-uefi-application) (e.g. [UEFI shell](https://github.com/pbatard/UEFI-Shell), [systemd-boot](https://www.freedesktop.org/wiki/Software/systemd/systemd-boot/))
+  * [EFI boot entry](https://github.com/usbarmory/go-boot/tree/main?tab=readme-ov-file#uefi-boot-manager-entry)
+  * QEMU [plain](https://github.com/usbarmory/go-boot/?tab=readme-ov-file#emulated-hardware-with-qemu) or [confidential](https://github.com/usbarmory/go-boot/?tab=readme-ov-file#confidential-vms) KVM
+  * Google Compute Engine [plain](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine) or [confidential](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine-(AMD-SEV%E2%80%90SNP)) KVM
+
 Authors
 =======
 
