@@ -15,10 +15,10 @@ import (
 	"github.com/usbarmory/go-boot/uefi"
 )
 
-//go:linkname _unused runtime.ramStart
+//go:linkname _unused runtime/goos.RamStart
 var _unused uint64 = 0x00100000 // overridden in x64.s
 
-//go:linkname RamSize runtime.ramSize
+//go:linkname RamSize runtime/goos.RamSize
 var RamSize uint64 = 0x2c000000 // 704MB
 
 var dmaSize int

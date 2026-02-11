@@ -26,7 +26,7 @@ LDFLAGS := -s -w -E cpuinit -T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOL
 LDFLAGS += -X 'github.com/usbarmory/go-boot/cmd.DefaultEFIEntry=${DEFAULT_EFI_ENTRY}'
 LDFLAGS += -X 'github.com/usbarmory/go-boot/cmd.DefaultLinuxEntry=${DEFAULT_LINUX_ENTRY}'
 GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "${LDFLAGS}"
-GOENV := GOOS=tamago GOARCH=amd64
+GOENV := GOOS=tamago GOOSPKG=github.com/usbarmory/tamago GOARCH=amd64
 
 OVMF ?= OVMF.fd
 OVMFCODE ?= OVMF_CODE.fd
