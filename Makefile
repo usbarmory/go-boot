@@ -105,7 +105,7 @@ $(APP): check_tamago
 $(APP).efi: $(APP)
 	objcopy \
 		--strip-debug \
-		--target efi-app-x86_64 \
+		--output-target efi-app-x86_64 \
 		--subsystem=efi-app \
 		--image-base 0x$(IMAGE_BASE) \
 		--stack=0x10000 \
