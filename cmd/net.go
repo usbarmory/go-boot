@@ -9,9 +9,12 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"regexp"
 	"strings"
 
@@ -107,6 +110,10 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 				Banner:     Banner,
 				ReadWriter: s,
 			}
+
+			log.SetOutput(io.MultiWriter(os.Stdout, s))
+			defer log.SetOutput(os.Stdout)
+
 			c.Start(true)
 		})
 
