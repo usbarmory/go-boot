@@ -125,7 +125,7 @@ func lspciCmd(_ *shell.Interface, arg []string) (string, error) {
 
 	fmt.Fprintf(&res, "Bus Vendor Device Bar0\n")
 
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		for _, d := range pci.Devices(i) {
 			fmt.Fprintf(&res, "%03d %04x   %04x   %#016x\n", i, d.Vendor, d.Device, d.BaseAddress(0))
 		}

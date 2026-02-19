@@ -172,7 +172,7 @@ func boot(image *exec.LinuxImage) (err error) {
 		log.Printf("could not detect screen information, %v\n", err)
 	}
 
-	for i := 0; i < exitRetries; i++ {
+	for range exitRetries {
 		// own all available memory
 		if memoryMap, err = x64.UEFI.Boot.ExitBootServices(); err != nil {
 			log.Print("go-boot exiting EFI boot services (retrying)")
