@@ -147,7 +147,7 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	var s []uint16
 
 	t := x64.UEFI.SystemTable
-	b := mem(uint(t.FirmwareVendor), maxVendorSize, nil)
+	b := memCopy(uint(t.FirmwareVendor), maxVendorSize, nil)
 
 	for i := 0; i < maxVendorSize; i += 2 {
 		if b[i] == 0x00 && b[i+1] == 0 {

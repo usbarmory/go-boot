@@ -59,46 +59,52 @@ func memCopy(start uint, size int, w []byte) (b []byte) {
 }
 
 func memReadCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	addr, err := strconv.ParseUint(arg[0], 16, 64)
+	addr, err := strconv.ParseUint(arg[0], 16, dma.DefaultAlignment*8)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid address, %v", err)
 	}
 
-	size, err := strconv.ParseUint(arg[1], 10, 64)
+	size, err := strconv.ParseUint(arg[1], 10, 32)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid size, %v", err)
 	}
 
-	if (addr%8) != 0 || (size%8) != 0 {
-		return "", fmt.Errorf("only 64-bit aligned accesses are supported")
+	if (addr%dma.DefaultAlignment) != 0 || (size%dma.DefaultAlignment) != 0 {
+		return "", fmt.Errorf("only %d-bit aligned accesses are supported", dma.DefaultAlignment*8)
 	}
 
 	if size > maxBufferSize {
 		return "", fmt.Errorf("size argument must be <= %d", maxBufferSize)
 	}
 
-	return hex.Dump(mem(uint(addr), int(size), nil)), nil
+	return hex.Dump(memCopy(uint(addr), int(size), nil)), nil
 }
 
 func memWriteCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	addr, err := strconv.ParseUint(arg[0], 16, 64)
+	addr, err := strconv.ParseUint(arg[0], 16, dma.DefaultAlignment*8)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid address, %v", err)
 	}
 
-	val, err := strconv.ParseUint(arg[1], 16, 64)
+	val, err := strconv.ParseUint(arg[1], 16, 32)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid data, %v", err)
 	}
 
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, val)
+	size := 4
 
-	mem(uint(addr), 8, buf)
+	if (addr%dma.DefaultAlignment) != 0 || (size%dma.DefaultAlignment) != 0 {
+		return "", fmt.Errorf("only %d-bit aligned accesses are supported", dma.DefaultAlignment*8)
+	}
+
+	buf := make([]byte, size)
+	binary.BigEndian.PutUint32(buf, uint32(val))
+
+	memCopy(uint(addr), size, buf)
 
 	return
 }
