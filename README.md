@@ -262,6 +262,10 @@ image for cloud deployments:
 * [Google Compute Engine](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine)
 * [Google Compute Engine - Confidential VM (AMD SEV-SNP)](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine-(AMD-SEV%E2%80%90SNP))
 
+For a stand-alone AMD SEV-SNP unikernel, based on go-boot code but capable of
+terminating EFI Boot Services and using additional network drivers, see
+[tamago-sev-example](https://github.com/usbarmory/tamago-sev-example).
+
 License
 =======
 
