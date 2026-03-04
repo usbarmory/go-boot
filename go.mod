@@ -2,6 +2,8 @@ module github.com/usbarmory/go-boot
 
 go 1.26.0
 
+tool github.com/usbarmory/tamago/cmd/tamago
+
 require (
 	github.com/arl/statsviz v0.8.0
 	github.com/gliderlabs/ssh v0.3.8

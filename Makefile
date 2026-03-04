@@ -5,6 +5,7 @@
 
 NET ?= 0
 DEBUG ?= 0
+TAMAGO ?= $(shell go tool -n github.com/usbarmory/tamago/cmd/tamago)
 BUILD_TAGS = linkcpuinit,linkramsize,linkramstart,linkprintk
 SHELL = /bin/bash
 APP ?= go-boot
