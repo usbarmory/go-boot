@@ -10,6 +10,7 @@ require (
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/u-root/u-root v0.15.0
 	github.com/usbarmory/armory-boot v0.0.0-20260202115234-edf170b30f66
+	github.com/usbarmory/boot-transparency v0.0.0-20260311132025-a6323d45a3df
 	github.com/usbarmory/go-net v0.0.0-20251003201608-93d9ffe808de
 	github.com/usbarmory/tamago v1.26.1
 	golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e
@@ -39,8 +40,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
+	golang.org/x/mod v0.28.0 // indirect
+	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/time v0.7.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/time v0.12.0 // indirect
 	gvisor.dev/gvisor v0.0.0-20250911055229-61a46406f068 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	sigsum.org/sigsum-go v0.11.2 // indirect
