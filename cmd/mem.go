@@ -89,20 +89,27 @@ func memWriteCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("invalid address, %v", err)
 	}
 
-	val, err := strconv.ParseUint(arg[1], 16, 32)
+	size := dma.DefaultAlignment
+	val, err := strconv.ParseUint(arg[1], 16, size*8)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid data, %v", err)
 	}
 
-	size := 4
-
-	if (addr%dma.DefaultAlignment) != 0 || (size%dma.DefaultAlignment) != 0 {
+	if (addr%dma.DefaultAlignment) != 0 {
 		return "", fmt.Errorf("only %d-bit aligned accesses are supported", dma.DefaultAlignment*8)
 	}
 
 	buf := make([]byte, size)
-	binary.BigEndian.PutUint32(buf, uint32(val))
+
+	switch size {
+	case 4:
+		binary.BigEndian.PutUint32(buf, uint32(val))
+	case 8:
+		binary.BigEndian.PutUint64(buf, uint64(val))
+	default:
+		return "", fmt.Errorf("invalid size (%d)", size)
+	}
 
 	memCopy(uint(addr), size, buf)
 
