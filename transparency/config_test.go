@@ -9,10 +9,10 @@
 package transparency
 
 import (
-	"encoding/hex"
 	"testing"
 
 	"github.com/usbarmory/boot-transparency/artifact"
+	"github.com/usbarmory/boot-transparency/policy"
 	"github.com/usbarmory/boot-transparency/transparency"
 )
 
@@ -22,49 +22,24 @@ func TestPath(t *testing.T) {
 		Engine: transparency.Sigsum,
 	}
 
-	b := BootEntry{
-		Artifact{
+	b := policy.BootEntry{
+		policy.BootArtifact{
 			Category: artifact.LinuxKernel,
-			Hash:     kernelHash,
+			Data:     []byte(testKernel),
 		},
-		Artifact{
+		policy.BootArtifact{
 			Category: artifact.Initrd,
-			Hash:     initrdHash,
+			Data:     []byte(testInitrd),
 		},
 	}
 
-	p, err := c.Path(b)
+	p, err := c.Path(&b)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if p != testEntryPath {
 		t.Fatal("got an invalid path.")
-	}
-}
-
-func TestPathInvalidHash(t *testing.T) {
-	invalidKernelHash, _ := hex.DecodeString(testInvalidKernelHash)
-
-	c := Config{
-		Status: Offline,
-		Engine: transparency.Sigsum,
-	}
-
-	b := BootEntry{
-		Artifact{
-			Category: artifact.LinuxKernel,
-			Hash:     invalidKernelHash,
-		},
-		Artifact{
-			Category: artifact.Initrd,
-			Hash:     initrdHash,
-		},
-	}
-
-	// Error expected due to the invalid hash in the test entry.
-	if _, err := c.Path(b); err == nil {
-		t.Fatal(err)
 	}
 }
 

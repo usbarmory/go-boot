@@ -9,7 +9,6 @@
 package transparency
 
 import (
-	"encoding/hex"
 	"errors"
 	"testing"
 
@@ -20,16 +19,9 @@ import (
 	_ "github.com/usbarmory/boot-transparency/engine/tessera"
 )
 
-var kernelHash []byte
-var initrdHash []byte
-var incorrectKernelHash []byte
 var testConfig Config
 
 func init() {
-	kernelHash, _ = hex.DecodeString(testKernelHash)
-	incorrectKernelHash, _ = hex.DecodeString(testIncorrectKernelHash)
-	initrdHash, _ = hex.DecodeString(testInitrdHash)
-
 	testConfig = Config{
 		Status: Offline,
 		Engine: transparency.Sigsum,
@@ -45,18 +37,18 @@ func init() {
 func TestOfflineValidate(t *testing.T) {
 	c := testConfig
 
-	b := BootEntry{
-		Artifact{
+	b := policy.BootEntry{
+		policy.BootArtifact{
 			Category: artifact.LinuxKernel,
-			Hash:     kernelHash,
+			Data:     []byte(testKernel),
 		},
-		Artifact{
+		policy.BootArtifact{
 			Category: artifact.Initrd,
-			Hash:     initrdHash,
+			Data:     []byte(testInitrd),
 		},
 	}
 
-	if err := b.Validate(&c); err != nil {
+	if err := Validate(&c, &b); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -65,18 +57,18 @@ func TestOnlineValidate(t *testing.T) {
 	c := testConfig
 	c.Status = Online
 
-	b := BootEntry{
-		Artifact{
+	b := policy.BootEntry{
+		policy.BootArtifact{
 			Category: artifact.LinuxKernel,
-			Hash:     kernelHash,
+			Data:     []byte(testKernel),
 		},
-		Artifact{
+		policy.BootArtifact{
 			Category: artifact.Initrd,
-			Hash:     initrdHash,
+			Data:     []byte(testInitrd),
 		},
 	}
 
-	if err := b.Validate(&c); err != nil {
+	if err := Validate(&c, &b); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -84,39 +76,39 @@ func TestOnlineValidate(t *testing.T) {
 func TestOfflineValidateInvalidBootEntry(t *testing.T) {
 	c := testConfig
 
-	b := BootEntry{
-		Artifact{
+	b := policy.BootEntry{
+		policy.BootArtifact{
 			Category: artifact.LinuxKernel,
-			Hash:     kernelHash,
+			Data:     []byte(testKernel),
 		},
-		Artifact{
+		policy.BootArtifact{
 			Category: artifact.Initrd,
-			// missing Hash
+			// missing Data
 		},
 	}
 
-	// Error expected: missing required Hash.
-	if err := b.Validate(&c); err == nil || !errors.Is(err, ErrHashInvalid) {
-		t.Fatal("missing invalid hash error")
+	// Error expected: invalid boot entry error.
+	if err := Validate(&c, &b); err == nil || !errors.Is(err, policy.ErrInvalidBootEntry) {
+		t.Fatal("missing invalid boot entry error")
 	}
 }
 
 func TestOfflineValidateHashMismatch(t *testing.T) {
 	c := testConfig
 
-	b := BootEntry{
-		Artifact{
+	b := policy.BootEntry{
+		policy.BootArtifact{
 			Category: artifact.LinuxKernel,
-			Hash:     incorrectKernelHash,
+			Data:     []byte(testIncorrectKernel),
 		},
-		Artifact{
+		policy.BootArtifact{
 			Category: artifact.Initrd,
-			Hash:     initrdHash,
+			Data:     []byte(testInitrd),
 		},
 	}
 
 	// Error expected: incorrect hash.
-	if err := b.Validate(&c); err == nil || !errors.Is(err, ErrHashMismatch) {
+	if err := Validate(&c, &b); err == nil || !errors.Is(err, policy.ErrValidate) {
 		t.Fatal("missing incorrect hash error")
 	}
 }
@@ -125,19 +117,19 @@ func TestOfflineValidatePolicyNotMet(t *testing.T) {
 	c := testConfig
 	c.BootPolicy = []byte(testBootPolicyUnauthorized)
 
-	b := BootEntry{
-		Artifact{
+	b := policy.BootEntry{
+		policy.BootArtifact{
 			Category: artifact.LinuxKernel,
-			Hash:     kernelHash,
+			Data:     []byte(testKernel),
 		},
-		Artifact{
+		policy.BootArtifact{
 			Category: artifact.Initrd,
-			Hash:     initrdHash,
+			Data:     []byte(testInitrd),
 		},
 	}
 
 	// Error expected: requirement not met.
-	if err := b.Validate(&c); err == nil || !errors.Is(err, policy.ErrValidate) {
+	if err := Validate(&c, &b); err == nil || !errors.Is(err, policy.ErrValidate) {
 		t.Fatal("missing policy validation error")
 	}
 }

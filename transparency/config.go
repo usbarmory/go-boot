@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/usbarmory/boot-transparency/transparency"
+	"github.com/usbarmory/boot-transparency/policy"
 )
 
 // Status represents the status of the boot-transparency functionality.
@@ -98,12 +99,12 @@ type Config struct {
 // artifacts (i.e. boot entry).
 // Returns error if one of the artifacts does not include a valid
 // SHA-256 hash.
-func (c *Config) Path(b BootEntry) (entryPath string, err error) {
-	if len(b) == 0 {
+func (c *Config) Path(b *policy.BootEntry) (entryPath string, err error) {
+	if len(*b) == 0 {
 		return "", fmt.Errorf("invalid boot entry")
 	}
 
-	artifacts := b
+	artifacts := *b
 
 	// Sort the passed artifacts, by their Category, to ensure
 	// consistency in the way the entry path is built.
@@ -113,11 +114,7 @@ func (c *Config) Path(b BootEntry) (entryPath string, err error) {
 
 	entryPath = transparencyRoot
 	for _, artifact := range artifacts {
-		if err = artifact.validHash(); err != nil {
-			return "", fmt.Errorf("cannot build configuration path, %v", err)
-		}
-
-		entryPath = path.Join(entryPath, hex.EncodeToString(artifact.Hash))
+		entryPath = path.Join(entryPath, hex.EncodeToString(artifact.Hash()))
 	}
 
 	// Rewrite paths only when the pkg is used in the context
