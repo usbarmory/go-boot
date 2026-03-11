@@ -9,9 +9,12 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"regexp"
 	"strings"
 
@@ -22,7 +25,7 @@ import (
 	"github.com/usbarmory/go-boot/uefi"
 	"github.com/usbarmory/go-boot/uefi/x64"
 
-	// maintained set of TLD roots for any potential TLS client request
+	// maintained set of TLS roots for any potential TLS client requests
 	_ "golang.org/x/crypto/x509roots/fallback"
 )
 
@@ -102,24 +105,23 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		fmt.Printf("\thttp://%s:80/debug/pprof\n", ip)
 		fmt.Printf("\tssh://%s:22\n", ip)
 
-		go func() {
-			ssh.Handle(func(s ssh.Session) {
-				c := &shell.Interface{
-					Banner:     Banner,
-					ReadWriter: s,
-				}
-				c.Start(true)
-			})
+		ssh.Handle(func(s ssh.Session) {
+			c := &shell.Interface{
+				Banner:     Banner,
+				ReadWriter: s,
+			}
 
-			ssh.ListenAndServe(":22", nil)
-		}()
+			log.SetOutput(io.MultiWriter(os.Stdout, s))
+			defer log.SetOutput(os.Stdout)
 
-		go func() {
-			http.ListenAndServe(":80", nil)
-		}()
+			c.Start(true)
+		})
+
+		go ssh.ListenAndServe(":22", nil)
+		go http.ListenAndServe(":80", nil)
 	}
 
-	return fmt.Sprintf("network initialized (%s %s)", arg[0], iface.NIC.MAC), nil
+	return fmt.Sprintf("network initialized (%s %s)\n", arg[0], iface.NIC.MAC), nil
 }
 
 func dnsCmd(_ *shell.Interface, arg []string) (res string, err error) {
@@ -129,5 +131,5 @@ func dnsCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("query error: %v", err)
 	}
 
-	return fmt.Sprintf("%+v", cname), nil
+	return fmt.Sprintf("%+v\n", cname), nil
 }

@@ -23,7 +23,7 @@ func init() {
 		Name:    "peek",
 		Args:    2,
 		Pattern: regexp.MustCompile(`^peek ([[:xdigit:]]+) (\d+)$`),
-		Syntax:  "<hex offset> <size>",
+		Syntax:  "<hex addr> <size>",
 		Help:    "memory display (use with caution)",
 		Fn:      memReadCmd,
 	})
@@ -32,7 +32,7 @@ func init() {
 		Name:    "poke",
 		Args:    2,
 		Pattern: regexp.MustCompile(`^poke ([[:xdigit:]]+) ([[:xdigit:]]+)$`),
-		Syntax:  "<hex offset> <hex value>",
+		Syntax:  "<hex addr> <hex value>",
 		Help:    "memory write   (use with caution)",
 		Fn:      memWriteCmd,
 	})
@@ -59,46 +59,59 @@ func memCopy(start uint, size int, w []byte) (b []byte) {
 }
 
 func memReadCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	addr, err := strconv.ParseUint(arg[0], 16, 64)
+	addr, err := strconv.ParseUint(arg[0], 16, dma.DefaultAlignment*8)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid address, %v", err)
 	}
 
-	size, err := strconv.ParseUint(arg[1], 10, 64)
+	size, err := strconv.ParseUint(arg[1], 10, 32)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid size, %v", err)
 	}
 
-	if (addr%8) != 0 || (size%8) != 0 {
-		return "", fmt.Errorf("only 64-bit aligned accesses are supported")
+	if (addr%dma.DefaultAlignment) != 0 || (size%dma.DefaultAlignment) != 0 {
+		return "", fmt.Errorf("only %d-bit aligned accesses are supported", dma.DefaultAlignment*8)
 	}
 
 	if size > maxBufferSize {
 		return "", fmt.Errorf("size argument must be <= %d", maxBufferSize)
 	}
 
-	return hex.Dump(mem(uint(addr), int(size), nil)), nil
+	return hex.Dump(memCopy(uint(addr), int(size), nil)), nil
 }
 
 func memWriteCmd(_ *shell.Interface, arg []string) (res string, err error) {
-	addr, err := strconv.ParseUint(arg[0], 16, 64)
+	addr, err := strconv.ParseUint(arg[0], 16, dma.DefaultAlignment*8)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid address, %v", err)
 	}
 
-	val, err := strconv.ParseUint(arg[1], 16, 64)
+	size := dma.DefaultAlignment
+	val, err := strconv.ParseUint(arg[1], 16, size*8)
 
 	if err != nil {
 		return "", fmt.Errorf("invalid data, %v", err)
 	}
 
-	buf := make([]byte, 8)
-	binary.BigEndian.PutUint32(buf, uint32(val))
+	if (addr%dma.DefaultAlignment) != 0 {
+		return "", fmt.Errorf("only %d-bit aligned accesses are supported", dma.DefaultAlignment*8)
+	}
 
-	mem(uint(addr), 8, buf)
+	buf := make([]byte, size)
+
+	switch size {
+	case 4:
+		binary.BigEndian.PutUint32(buf, uint32(val))
+	case 8:
+		binary.BigEndian.PutUint64(buf, uint64(val))
+	default:
+		return "", fmt.Errorf("invalid size (%d)", size)
+	}
+
+	memCopy(uint(addr), size, buf)
 
 	return
 }

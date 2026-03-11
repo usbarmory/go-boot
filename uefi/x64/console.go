@@ -18,7 +18,7 @@ var Console = &uefi.Console{
 	Out:       conOut,
 }
 
-//go:linkname printk runtime.printk
+//go:linkname printk runtime/goos.Printk
 func printk(c byte) {
 	if Console.Out == 0 {
 		return

@@ -5,7 +5,7 @@
 
 package uefi
 
-const EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID = "9042a9de-23dc-4a38-96fb-7aded080516a"
+var EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID = MustParseGUID("9042a9de-23dc-4a38-96fb-7aded080516a")
 
 // EFI Graphics Output Protocol offsets
 const (
@@ -47,9 +47,9 @@ type ProtocolMode struct {
 }
 
 // GetInfo returns the EFI Graphics Output Mode information instance.
-func (d *ProtocolMode) GetInfo() (mi *ModeInformation, err error) {
-	mi = &ModeInformation{}
-	err = decode(mi, d.Info)
+func (d *ProtocolMode) GetInfo() (m *ModeInformation, err error) {
+	m = &ModeInformation{}
+	err = decode(m, d.Info)
 	return
 }
 

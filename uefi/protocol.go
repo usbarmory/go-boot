@@ -16,7 +16,7 @@ func (s *BootServices) HandleProtocol(handle uint64, guid GUID) (addr uint64, er
 	status := callService(s.base+handleProtocol,
 		[]uint64{
 			handle,
-			guid.ptrval(),
+			ptrval(&guid[0]),
 			ptrval(&addr),
 		},
 	)
@@ -28,7 +28,7 @@ func (s *BootServices) HandleProtocol(handle uint64, guid GUID) (addr uint64, er
 func (s *BootServices) LocateProtocol(guid GUID) (addr uint64, err error) {
 	status := callService(s.base+locateProtocol,
 		[]uint64{
-			guid.ptrval(),
+			ptrval(&guid[0]),
 			0,
 			ptrval(&addr),
 		},

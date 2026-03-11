@@ -5,6 +5,7 @@
 
 NET ?= 0
 DEBUG ?= 0
+TAMAGO ?= $(shell go tool -n github.com/usbarmory/tamago/cmd/tamago)
 BUILD_TAGS = linkcpuinit,linkramsize,linkramstart,linkprintk
 SHELL = /bin/bash
 APP ?= go-boot
@@ -26,26 +27,40 @@ LDFLAGS := -s -w -E cpuinit -T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOL
 LDFLAGS += -X 'github.com/usbarmory/go-boot/cmd.DefaultEFIEntry=${DEFAULT_EFI_ENTRY}'
 LDFLAGS += -X 'github.com/usbarmory/go-boot/cmd.DefaultLinuxEntry=${DEFAULT_LINUX_ENTRY}'
 GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "${LDFLAGS}"
-GOENV := GOOS=tamago GOARCH=amd64
+GOENV := GOOS=tamago GOOSPKG=github.com/usbarmory/tamago GOARCH=amd64
 
+OVMF ?= OVMF.fd
 OVMFCODE ?= OVMF_CODE.fd
 OVMFVARS ?=
 LOG ?= qemu.log
 
 QEMU ?= qemu-system-x86_64 \
         -enable-kvm -cpu host,invtsc=on -m 8G \
-        -drive file=fat:rw:$(CURDIR)/qemu-disk \
+        -drive format=raw,file=fat:rw:$(CURDIR)/qemu-disk \
         -drive if=pflash,format=raw,readonly,file=$(OVMFCODE) \
         -global isa-debugcon.iobase=0x402 \
         -serial stdio -vga virtio \
         # -debugcon file:$(LOG)
 
+QEMU_SNP ?= qemu-system-x86_64 \
+        -enable-kvm -cpu host,invtsc=on \
+        -machine q35,confidential-guest-support=sev0,vmport=off,memory-backend=ram1 \
+        -object memory-backend-memfd,id=ram1,size=4G,share=true,prealloc=false \
+        -drive format=raw,file=fat:rw:$(CURDIR)/qemu-disk \
+        -bios $(OVMF) \
+        -global isa-debugcon.iobase=0x402 \
+        -serial stdio -nographic -monitor none \
+        -object sev-snp-guest,id=sev0,cbitpos=51,reduced-phys-bits=1,policy=0x30000
+        # -monitor unix:qemu-monitor-socket,server,nowait
+
 ifneq ($(OVMFVARS),)
         QEMU := $(QEMU) -drive if=pflash,format=raw,file=$(OVMFVARS)
+        QEMU_SNP := $(QEMU_SNP) -drive if=pflash,format=raw,file=$(OVMFVARS)
 endif
 
 ifeq ($(NET),1)
         QEMU := $(QEMU) -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
+        QEMU_SNP := $(QEMU_SNP) -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
 endif
 
 .PHONY: clean
@@ -61,6 +76,10 @@ efi: $(APP).efi
 qemu: $(APP).efi
 	mkdir -p $(CURDIR)/qemu-disk/efi/boot && cp $(CURDIR)/$(APP).efi $(CURDIR)/qemu-disk/efi/boot/bootx64.efi
 	$(QEMU)
+
+qemu-snp: $(APP).efi
+	mkdir -p $(CURDIR)/qemu-disk/efi/boot && cp $(CURDIR)/$(APP).efi $(CURDIR)/qemu-disk/efi/boot/bootx64.efi
+	$(QEMU_SNP)
 
 qemu-gdb: GOFLAGS := $(GOFLAGS:-w=)
 qemu-gdb: GOFLAGS := $(GOFLAGS:-s=)
@@ -87,7 +106,7 @@ $(APP): check_tamago
 $(APP).efi: $(APP)
 	objcopy \
 		--strip-debug \
-		--target efi-app-x86_64 \
+		--output-target efi-app-x86_64 \
 		--subsystem=efi-app \
 		--image-base 0x$(IMAGE_BASE) \
 		--stack=0x10000 \

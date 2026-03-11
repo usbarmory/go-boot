@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"strings"
 )
 
 // EFI system partition (FAT) limits
@@ -17,11 +18,13 @@ const (
 	MaxDirEntries = 65536
 )
 
-const (
-	EFI_LOADED_IMAGE_PROTOCOL_GUID             = "5b1b31a1-9562-11d2-8e3f-00a0c969723b"
-	EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID = "09576e91-6d3f-11d2-8e39-00a0c969723b"
-	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID       = "964e5b22-6459-11d2-8e39-00a0c969723b"
+var (
+	EFI_LOADED_IMAGE_PROTOCOL_GUID             = MustParseGUID("5b1b31a1-9562-11d2-8e3f-00a0c969723b")
+	EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID = MustParseGUID("09576e91-6d3f-11d2-8e39-00a0c969723b")
+	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID       = MustParseGUID("964e5b22-6459-11d2-8e39-00a0c969723b")
+)
 
+const (
 	EFI_LOADED_IMAGE_PROTOCOL_REVISION       = 0x00001000
 	EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_REVISION = 0x00010000
 )
@@ -99,6 +102,8 @@ func (root *FS) Open(name string) (fs.File, error) {
 	if root.volume == nil || root.volume.file == nil || root.volume.addr == 0 {
 		return nil, errors.New("invalid file system instance")
 	}
+
+	name = strings.ReplaceAll(name, `/`, `\`)
 
 	if f.file, f.addr, err = root.volume.file.open(root.volume.addr, name, EFI_FILE_MODE_READ); err != nil {
 		return nil, err

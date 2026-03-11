@@ -32,21 +32,24 @@ func init() {
 }
 
 func main() {
-	iface := &shell.Interface{
+	// disable UEFI watchdog
+	x64.UEFI.Boot.SetWatchdogTimer(0)
+
+	console := &shell.Interface{
 		Banner:  cmd.Banner,
 		Console: x64.UEFI.Console,
 	}
 
-	// disable UEFI watchdog
-	x64.UEFI.Boot.SetWatchdogTimer(0)
-
 	switch Console {
 	case "COM1", "com1", "":
-		iface.ReadWriter = x64.UART0
-		iface.Start(true)
+		console.ReadWriter = x64.UART0
+		console.Start(true)
 	case "TEXT", "text":
-		iface.ReadWriter = x64.UEFI.Console
-		iface.Start(false)
+		console.Console.EnableCursor(true)
+		console.Pagination = true
+
+		console.ReadWriter = x64.UEFI.Console
+		console.Start(false)
 	}
 
 	log.Print("exit")

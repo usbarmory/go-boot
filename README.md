@@ -15,6 +15,12 @@ The support of
 [boot-transparency](https://github.com/usbarmory/boot-transparency) is planned
 for future releases.
 
+The unikernel can be executed as:
+  * EFI application by an [existing loader](https://github.com/usbarmory/go-boot/tree/main?tab=readme-ov-file#executing-as-uefi-application) (e.g. [UEFI shell](https://github.com/pbatard/UEFI-Shell), [systemd-boot](https://www.freedesktop.org/wiki/Software/systemd/systemd-boot/))
+  * [EFI boot entry](https://github.com/usbarmory/go-boot/tree/main?tab=readme-ov-file#uefi-boot-manager-entry)
+  * QEMU [plain](https://github.com/usbarmory/go-boot/?tab=readme-ov-file#emulated-hardware-with-qemu) or [confidential](https://github.com/usbarmory/go-boot/?tab=readme-ov-file#confidential-vms) KVM
+  * Google Compute Engine [plain](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine) or [confidential](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine-(AMD-SEV%E2%80%90SNP)) KVM
+
 Authors
 =======
 
@@ -43,6 +49,7 @@ cat             <path>                   # show file contents
 clear                                    # clear screen
 cpuid           <leaf> <subleaf>         # show CPU capabilities
 date            (time in RFC339 format)? # show/change runtime date and time
+efivar          (verbose)?               # list UEFI variables
 dns             <host>                   # resolve domain
 exit,quit                                # exit application
 halt,shutdown                            # shutdown system
@@ -50,15 +57,19 @@ info                                     # runtime information
 linux,l         (loader entry path)?     # boot Linux kernel image
 linux,l,\r                               # `l \loader\entries\arch.conf`
 log                                      # show runtime logs
-ls              (path)?                  # list directory contents
+ls              (<path>)?                # list directory contents
 lspci                                    # list PCI devices
 memmap          (e820)?                  # show UEFI memory map
 mode            <mode>                   # set screen mode
+msr             <hex addr>               # read model-specific register
 net             <ip> <mac> <gw> (debug)? # start UEFI networking
-peek            <hex offset> <size>      # memory display (use with caution)
-poke            <hex offset> <hex value> # memory write   (use with caution)
+peek            <hex addr> <size>        # memory display (use with caution)
+poke            <hex addr> <hex value>   # memory write   (use with caution)
 protocol        <registry format GUID>   # locate UEFI protocol
 reset           (cold|warm)?             # reset system
+sev                                      # AMD SEV-SNP information
+sev-kdf                                  # AMD SEV-SNP key derivation
+sev-report      (raw)?                   # AMD SEV-SNP attestation report
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
 stat            <path>                   # show file information
@@ -106,10 +117,13 @@ The list provides test `IMAGE_BASE` values to pass while _Compiling_.
 Compiling
 =========
 
-Build the [TamaGo compiler](https://github.com/usbarmory/tamago-go)
-(or use the [latest binary release](https://github.com/usbarmory/tamago-go/releases/latest)):
+The [TamaGo compiler](https://github.com/usbarmory/tamago-go) is automatically
+downloaded and compiled as a `go tool` by the `Makefile`.
 
-```
+Alternatively the `TAMAGO` environment variable can overridden to use the
+[latest binary release](https://github.com/usbarmory/tamago-go/releases/latest):
+
+```sh
 wget https://github.com/usbarmory/tamago-go/archive/refs/tags/latest.zip
 unzip latest.zip
 cd tamago-go-latest/src && ./all.bash
@@ -233,13 +247,25 @@ b cpuinit
 continue
 ```
 
+Confidential VMs
+----------------
+
+The `qemu-snp` target provides an example of execution under
+[AMD Secure Encrypted Virtualization (SEV)](https://www.qemu.org/docs/master/system/i386/amd-memory-encryption.html)
+and can be used on [compatible hardware](https://www.amd.com/en/developer/sev.html).
+
 Cloud deployments
 =================
 
-The following example demonstrates how to create, and deploy, a UEFI-bootable image
-for Google Compute Engine:
+The following example demonstrates how to create, and deploy, a UEFI-bootable
+image for cloud deployments:
 
 * [Google Compute Engine](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine)
+* [Google Compute Engine - Confidential VM (AMD SEV-SNP)](https://github.com/usbarmory/go-boot/wiki/Google-Compute-Engine-(AMD-SEV%E2%80%90SNP))
+
+For a stand-alone AMD SEV-SNP unikernel, based on go-boot code but capable of
+terminating EFI Boot Services and using additional network drivers, see
+[tamago-sev-example](https://github.com/usbarmory/tamago-sev-example).
 
 Boot transparency
 =================

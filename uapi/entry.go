@@ -33,7 +33,6 @@ type Entry struct {
 }
 
 func (e *Entry) loadKeyValue(v string) ([]byte, error) {
-	v = strings.ReplaceAll(v, `/`, `\`)
 	return fs.ReadFile(e.fsys, v)
 }
 

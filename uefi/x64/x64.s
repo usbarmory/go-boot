@@ -31,11 +31,11 @@ TEXT cpuinit(SB),NOSPLIT|NOFRAME,$0
 	// ramStart is relocated based on build time variable IMAGE_BASE.
 	MOVQ	$runtime·text(SB), AX
 	SUBQ	$(64*1024), AX
-	MOVQ	AX, runtime·ramStart(SB)
+	MOVQ	AX, runtime∕goos·RamStart(SB)
 
-	MOVQ	runtime·ramStart(SB), SP
-	MOVQ	runtime·ramSize(SB), AX
-	MOVQ	runtime·ramStackOffset(SB), BX
+	MOVQ	runtime∕goos·RamStart(SB), SP
+	MOVQ	runtime∕goos·RamSize(SB), AX
+	MOVQ	runtime∕goos·RamStackOffset(SB), BX
 	ADDQ	AX, SP
 	SUBQ	BX, SP
 

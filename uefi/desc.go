@@ -25,6 +25,28 @@ func toUTF16(s string) (buf []byte) {
 	return append([]byte(buf), []byte{0x00, 0x00}...)
 }
 
+func fromUTF16(buf []byte) string {
+	if len(buf)%2 != 0 {
+		// invalid UTF-16 byte slice
+		return ""
+	}
+
+	codes := make([]uint16, len(buf)/2)
+
+	for i := 0; i < len(codes); i++ {
+		codes[i] = uint16(buf[i*2]) | (uint16(buf[i*2+1]) << 8)
+	}
+
+	for i, code := range codes {
+		if code == null {
+			codes = codes[:i]
+			break
+		}
+	}
+
+	return string(utf16.Decode(codes))
+}
+
 func marshalBinary(data any) (buf []byte, err error) {
 	b := new(bytes.Buffer)
 	err = binary.Write(b, binary.LittleEndian, data)

@@ -10,8 +10,9 @@ import (
 	"time"
 )
 
+var EFI_SIMPLE_NETWORK_PROTOCOL_GUID = MustParseGUID("a19832b9-ac25-11d3-9a2d-0090273fc14d")
+
 const (
-	EFI_SIMPLE_NETWORK_PROTOCOL_GUID     = "a19832b9-ac25-11d3-9a2d-0090273fc14d"
 	EFI_SIMPLE_NETWORK_PROTOCOL_REVISION = 0x00010000
 
 	EFI_SIMPLE_NETWORK_TRANSMIT_INTERRUPT = 0x02
@@ -158,22 +159,25 @@ func (sn *SimpleNetwork) GetStatus() (interruptStatus uint32, txBuf uintptr, err
 // [TransmitTimeout] before returning.
 func (sn *SimpleNetwork) Transmit(buf []byte) (err error) {
 	var txBuf uintptr
-
-	status := callService(sn.base+transmit,
-		[]uint64{
-			sn.base,
-			0,
-			uint64(len(buf)),
-			ptrval(&buf[0]),
-			0,
-			0,
-			0,
-		},
-	)
-
-	start := time.Now()
+	var start time.Time
 
 	for {
+		status := callService(sn.base+transmit,
+			[]uint64{
+				sn.base,
+				0,
+				uint64(len(buf)),
+				ptrval(&buf[0]),
+				0,
+				0,
+				0,
+			},
+		)
+
+		if start.IsZero() {
+			start = time.Now()
+		}
+
 		if status&0xff == EFI_NOT_READY {
 			continue
 		}

@@ -13,6 +13,7 @@ import (
 	"strconv"
 
 	"github.com/usbarmory/tamago/amd64"
+	"github.com/usbarmory/tamago/dma"
 	"github.com/usbarmory/tamago/soc/intel/pci"
 
 	"github.com/usbarmory/go-boot/shell"
@@ -36,14 +37,19 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
+		Name:    "msr",
+		Args:    1,
+		Pattern: regexp.MustCompile(`^msr\s+([[:xdigit:]]+)$`),
+		Syntax:  "<hex addr>",
+		Help:    "read model-specific register",
+		Fn:      msrCmd,
+	})
+
+	shell.Add(shell.Cmd{
 		Name: "lspci",
 		Help: "list PCI devices",
 		Fn:   lspciCmd,
 	})
-}
-
-func mem(start uint, size int, w []byte) (b []byte) {
-	return memCopy(start, size, w)
 }
 
 func infoCmd(_ *shell.Interface, _ []string) (string, error) {
@@ -58,6 +64,11 @@ func infoCmd(_ *shell.Interface, _ []string) (string, error) {
 
 	fmt.Fprintf(&res, "Runtime ......: %s %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	fmt.Fprintf(&res, "RAM ..........: %#08x-%#08x (%d MiB)\n", ramStart, ramEnd, (ramEnd-ramStart)/(1024*1024))
+
+	if region := dma.Default(); region != nil {
+		fmt.Fprintf(&res, "DMA ..........: %#08x-%#08x (%d MiB)\n", region.Start(), region.End(), region.Size()/(1024*1024))
+	}
+
 	fmt.Fprintf(&res, "Text .........: %#08x-%#08x\n", textStart, textEnd)
 	fmt.Fprintf(&res, "Heap .........: %#08x-%#08x Alloc:%d MiB Sys:%d MiB\n", heapStart, ramEnd, m.HeapAlloc/(1024*1024), m.HeapSys/(1024*1024))
 	fmt.Fprintf(&res, "CPU ..........: %s\n", x64.AMD64.Name())
@@ -90,12 +101,27 @@ func cpuidCmd(_ *shell.Interface, arg []string) (string, error) {
 	return res.String(), nil
 }
 
+func msrCmd(_ *shell.Interface, arg []string) (string, error) {
+	var res bytes.Buffer
+
+	addr, err := strconv.ParseUint(arg[0], 16, 64)
+
+	if err != nil {
+		return "", fmt.Errorf("invalid address, %v", err)
+	}
+
+	val := x64.AMD64.MSR(addr)
+	fmt.Fprintf(&res, "%x\n", val)
+
+	return res.String(), nil
+}
+
 func lspciCmd(_ *shell.Interface, arg []string) (string, error) {
 	var res bytes.Buffer
 
 	fmt.Fprintf(&res, "Bus Vendor Device Bar0\n")
 
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		for _, d := range pci.Devices(i) {
 			fmt.Fprintf(&res, "%03d %04x   %04x   %#016x\n", i, d.Vendor, d.Device, d.BaseAddress(0))
 		}
