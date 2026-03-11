@@ -16,7 +16,7 @@ const (
 	testKernel = `test linux kernel`
 	testInitrd = `test initrd`
 	testIncorrectKernel = `test incorrect linux kernel`
-	testEntryPath       = "/transparency/5e6d8e01d75e3e0396d672b0e8c3e31f78532eef9fa2a3f464299ee7cc44a12e/b868d20383e979c588e7b16d24b9d3fcb9c1213c89135e6c656edf94cbf31542"
+	testEntryPath       = "transparency/5e6d8e01d75e3e0396d672b0e8c3e31f78532eef9fa2a3f464299ee7cc44a12e/b868d20383e979c588e7b16d24b9d3fcb9c1213c89135e6c656edf94cbf31542"
 
 	testBootPolicy = `[
 	{
@@ -151,7 +151,7 @@ quorum demo-quorum-rule
 ]`
 )
 
-var testUefiRoot = fstest.MapFS{
+var testRoot = fstest.MapFS{
 	bootPolicy: {
 		Data: []byte(testBootPolicy),
 	},

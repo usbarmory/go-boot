@@ -12,9 +12,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/fs"
-	"path"
+	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/usbarmory/boot-transparency/transparency"
 	"github.com/usbarmory/boot-transparency/policy"
@@ -48,8 +47,6 @@ func (s Status) String() string {
 
 // Boot-transparency configuration root directory and filenames.
 const (
-	transparencyRoot = `/transparency`
-
 	bootPolicy    = `policy.json`
 	witnessPolicy = `trust_policy`
 	proofBundle   = `proof-bundle.json`
@@ -66,11 +63,9 @@ type Config struct {
 	// Status represents the status of the boot-transparency functionality.
 	Status Status
 
-	// UefiRoot represents the UEFI filesystem to "automatically" load the
-	// configuration files when running within the boot loader context.
-	// If the transparency pkg is imported "externally" by user-space tools
-	// this field is not set.
-	UefiRoot fs.FS
+	// Root represents the filesystem root directory where the transparency assets
+	// are stored.
+	Root fs.FS
 
 	// BootPolicy represents the boot policy in JSON format
 	// following the policy syntax supported by boot-transparency library.
@@ -112,23 +107,17 @@ func (c *Config) Path(b *policy.BootEntry) (entryPath string, err error) {
 		return artifacts[i].Category < artifacts[j].Category
 	})
 
-	entryPath = transparencyRoot
+	entryPath = `transparency`
 	for _, artifact := range artifacts {
-		entryPath = path.Join(entryPath, hex.EncodeToString(artifact.Hash()))
-	}
-
-	// Rewrite paths only when the pkg is used in the context
-	// of the UEFI boot loader.
-	if c.UefiRoot != nil {
-		entryPath = strings.ReplaceAll(entryPath, `/`, `\`)
+		entryPath = filepath.Join(entryPath, hex.EncodeToString(artifact.Hash()))
 	}
 
 	return
 }
 
-// loadFromUefiRoot reads the transparency configuration files from
-// the UEFI partition. The entry argument allows per-bundle configurations.
-func (c *Config) loadFromUefiRoot(entryPath string) (err error) {
+// loadFromRoot reads the transparency configuration files from
+// the disk root filesystem. The entry argument allows per-bundle configurations.
+func (c *Config) loadFromRoot(entryPath string) (err error) {
 	assets := map[string]*[]byte{
 		bootPolicy:    &c.BootPolicy,
 		witnessPolicy: &c.WitnessPolicy,
@@ -137,15 +126,14 @@ func (c *Config) loadFromUefiRoot(entryPath string) (err error) {
 		proofBundle:   &c.ProofBundle,
 	}
 
-	if c.UefiRoot == nil {
-		return fmt.Errorf("cannot open uefi root filesystem")
+	if c.Root == nil {
+		return fmt.Errorf("cannot open root filesystem")
 	}
 
 	for filename, dst := range assets {
-		p := path.Join(entryPath, filename)
-		p = strings.ReplaceAll(p, `/`, `\`)
+		p := filepath.Join(entryPath, filename)
 
-		if *dst, err = fs.ReadFile(c.UefiRoot, p); err != nil {
+		if *dst, err = fs.ReadFile(c.Root, p); err != nil {
 			return fmt.Errorf("cannot load configuration file: %v", filename)
 		}
 	}

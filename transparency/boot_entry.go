@@ -28,15 +28,14 @@ func Validate(c *Config, b *policy.BootEntry) (err error) {
 		return fmt.Errorf("invalid boot entry")
 	}
 
-	// Automatically load the configuration from the UEFI partition
-	// when the function is used within the UEFI boot loader.
-	if c.UefiRoot != nil {
+	// Automatically load the configuration from the configured root filesystem.
+	if c.Root != nil {
 		entryPath, err := c.Path(b)
 		if err != nil {
 			return fmt.Errorf("cannot load boot-transparency configuration, %v", err)
 		}
 
-		if err = c.loadFromUefiRoot(entryPath); err != nil {
+		if err = c.loadFromRoot(entryPath); err != nil {
 			return fmt.Errorf("cannot load boot-transparency configuration, %v", err)
 		}
 	}

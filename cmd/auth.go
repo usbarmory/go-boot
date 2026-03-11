@@ -79,7 +79,7 @@ func btValidateLinux(entry *uapi.Entry, root fs.FS) (err error) {
 		return errors.New("invalid kernel entry")
 	}
 
-	btConfig.UefiRoot = root
+	btConfig.Root = root
 
 	btEntry := policy.BootEntry{
 		policy.BootArtifact{

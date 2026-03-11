@@ -47,10 +47,10 @@ func TestLoadFromUefiRoot(t *testing.T) {
 	c := Config{
 		Status:   Offline,
 		Engine:   transparency.Sigsum,
-		UefiRoot: testUefiRoot,
+		Root:     testRoot,
 	}
 
-	if err := c.loadFromUefiRoot(""); err != nil {
+	if err := c.loadFromRoot(""); err != nil {
 		t.Fatal(err)
 	}
 }
