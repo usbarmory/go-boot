@@ -15,8 +15,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/usbarmory/boot-transparency/transparency"
 	"github.com/usbarmory/boot-transparency/policy"
+	"github.com/usbarmory/boot-transparency/transparency"
 )
 
 // Status represents the status of the boot-transparency functionality.
@@ -47,6 +47,8 @@ func (s Status) String() string {
 
 // Boot-transparency configuration root directory and filenames.
 const (
+	defaultPathPrefix = `transparency`
+
 	bootPolicy    = `policy.json`
 	witnessPolicy = `trust_policy`
 	proofBundle   = `proof-bundle.json`
@@ -66,6 +68,12 @@ type Config struct {
 	// Root represents the filesystem root directory where the transparency assets
 	// are stored.
 	Root fs.FS
+
+	// PathPrefix represent the directory used to load the boot entry
+	// assets from their correspondent unique paths (see [*Config Path()]).
+	// If left not configured, by default the 'transparency/' prefix will
+	// be pre-pended to all the asset paths.
+	PathPrefix string
 
 	// BootPolicy represents the boot policy in JSON format
 	// following the policy syntax supported by boot-transparency library.
@@ -107,7 +115,11 @@ func (c *Config) Path(b *policy.BootEntry) (entryPath string, err error) {
 		return artifacts[i].Category < artifacts[j].Category
 	})
 
-	entryPath = `transparency`
+	entryPath = defaultPathPrefix
+	if c.PathPrefix != "" {
+		entryPath = c.PathPrefix
+	}
+
 	for _, artifact := range artifacts {
 		entryPath = filepath.Join(entryPath, hex.EncodeToString(artifact.Hash()))
 	}
