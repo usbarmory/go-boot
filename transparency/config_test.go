@@ -43,7 +43,7 @@ func TestPath(t *testing.T) {
 	}
 }
 
-func TestLoadFromUefiRoot(t *testing.T) {
+func TestLoadFromRoot(t *testing.T) {
 	c := Config{
 		Status:   Offline,
 		Engine:   transparency.Sigsum,
