@@ -85,7 +85,6 @@ func btValidateLinux(entry *uapi.Entry, root fs.FS) (err error) {
 		policy.BootArtifact{
 			Category: artifact.LinuxKernel,
 			Data:     entry.Linux,
-			Metadata: map[string]string{"Options": entry.Options},
 		},
 		policy.BootArtifact{
 			Category: artifact.Initrd,
