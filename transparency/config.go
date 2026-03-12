@@ -47,7 +47,8 @@ func (s Status) String() string {
 
 // Boot-transparency configuration root directory and filenames.
 const (
-	defaultPathPrefix = `transparency`
+	// DefaultPathPrefix represents the default prefix to the asset paths.
+	DefaultPathPrefix = `transparency`
 
 	bootPolicy    = `policy.json`
 	witnessPolicy = `trust_policy`
@@ -71,8 +72,8 @@ type Config struct {
 
 	// PathPrefix represent the directory used to load the boot entry
 	// assets from their correspondent unique paths (see [*Config Path()]).
-	// If left not configured, by default the 'transparency/' prefix will
-	// be pre-pended to all the asset paths.
+	// If left not configured, by default the [DefaultPathPrefix] is pre-pended
+	// to all the asset paths.
 	PathPrefix string
 
 	// BootPolicy represents the boot policy in JSON format
@@ -115,7 +116,7 @@ func (c *Config) Path(b *policy.BootEntry) (entryPath string, err error) {
 		return artifacts[i].Category < artifacts[j].Category
 	})
 
-	entryPath = defaultPathPrefix
+	entryPath = DefaultPathPrefix
 	if c.PathPrefix != "" {
 		entryPath = c.PathPrefix
 	}
