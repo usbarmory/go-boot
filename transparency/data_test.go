@@ -9,6 +9,7 @@
 package transparency
 
 import (
+	"path/filepath"
 	"testing/fstest"
 )
 
@@ -165,6 +166,24 @@ var testRoot = fstest.MapFS{
 		Data: []byte(testLogKey),
 	},
 	proofBundle: {
+		Data: []byte(testProofBundle),
+	},
+}
+
+var testRootWithPrefix = fstest.MapFS{
+	filepath.Join(testEntryPath, bootPolicy): {
+		Data: []byte(testBootPolicy),
+	},
+	filepath.Join(testEntryPath, witnessPolicy): {
+		Data: []byte(testWitnessPolicy),
+	},
+	filepath.Join(testEntryPath, submitKey): {
+		Data: []byte(testSubmitKey),
+	},
+	filepath.Join(testEntryPath, logKey): {
+		Data: []byte(testLogKey),
+	},
+	filepath.Join(testEntryPath, proofBundle): {
 		Data: []byte(testProofBundle),
 	},
 }

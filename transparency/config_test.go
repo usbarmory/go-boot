@@ -45,12 +45,70 @@ func TestPath(t *testing.T) {
 
 func TestLoadFromRoot(t *testing.T) {
 	c := Config{
-		Status:   Offline,
-		Engine:   transparency.Sigsum,
-		Root:     testRoot,
+		Status: Offline,
+		Engine: transparency.Sigsum,
+		Root:   testRoot,
 	}
 
 	if err := c.loadFromRoot(""); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestLoadFromRootWithPathPrefix(t *testing.T) {
+	c := Config{
+		Status:     Offline,
+		Engine:     transparency.Sigsum,
+		Root:       testRootWithPrefix,
+		PathPrefix: `transparency`,
+	}
+
+	b := policy.BootEntry{
+		policy.BootArtifact{
+			Category: artifact.LinuxKernel,
+			Data:     []byte(testKernel),
+		},
+		policy.BootArtifact{
+			Category: artifact.Initrd,
+			Data:     []byte(testInitrd),
+		},
+	}
+
+	entryPath, err := c.Path(&b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = c.loadFromRoot(entryPath); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestLoadFromRootInCorrectPathPrefix(t *testing.T) {
+	c := Config{
+		Status:     Offline,
+		Engine:     transparency.Sigsum,
+		Root:       testRootWithPrefix,
+		PathPrefix: `FOO`,
+	}
+
+	b := policy.BootEntry{
+		policy.BootArtifact{
+			Category: artifact.LinuxKernel,
+			Data:     []byte(testKernel),
+		},
+		policy.BootArtifact{
+			Category: artifact.Initrd,
+			Data:     []byte(testInitrd),
+		},
+	}
+
+	entryPath, err := c.Path(&b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = c.loadFromRoot(entryPath); err == nil {
+		t.Fatal("missing error due to incorrect path prefix")
 	}
 }
