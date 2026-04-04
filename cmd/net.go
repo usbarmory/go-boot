@@ -1,3 +1,5 @@
+//go:build net
+
 // Copyright (c) The go-boot authors. All Rights Reserved.
 //
 // Use of this source code is governed by the license
