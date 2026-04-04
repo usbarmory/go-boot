@@ -3,8 +3,6 @@
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
 
-//go:build net
-
 package cmd
 
 import (
@@ -19,7 +17,7 @@ import (
 	"strings"
 
 	"github.com/gliderlabs/ssh"
-	"github.com/usbarmory/go-net"
+	gnet "github.com/usbarmory/go-net"
 
 	"github.com/usbarmory/go-boot/shell"
 	"github.com/usbarmory/go-boot/uefi"
@@ -58,6 +56,10 @@ func init() {
 	net.SetDefaultNS([]string{Resolver})
 }
 
+func newDefaultStack() gnet.Stack {
+	return gnet.NewGVisorStack(1)
+}
+
 func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	nic, err := x64.UEFI.Boot.GetNetwork()
 
@@ -84,19 +86,26 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		arg[1] = ""
 	}
 
-	if err := iface.Init(nic, arg[0], arg[1], arg[2]); err != nil {
+	if err := iface.Init(nic, newDefaultStack(), arg[0], arg[1], arg[2]); err != nil {
 		return "", fmt.Errorf("could not initialize networking, %v", err)
 	}
-
-	if err = nic.StationAddress(false, iface.NIC.MAC); err != nil {
-		fmt.Errorf("could not set permanent station address, %v\n", err)
+	stack := iface.NetworkingStack()
+	mac, err := stack.HardwareAddress()
+	if err != nil {
+		return "", fmt.Errorf("network stack failed on MAC get: %v", err)
+	}
+	if err = nic.StationAddress(false, mac); err != nil {
+		fmt.Printf("could not set permanent station address, %v\n", err)
 	}
 
-	iface.EnableICMP()
-	go iface.NIC.Start()
+	err = stack.EnableICMP()
+	if err != nil {
+		fmt.Printf("could not enable ICMP, %v\n", err)
+	}
+	go iface.StartRx()
 
 	// hook interface into Go runtime
-	net.SocketFunc = iface.Socket
+	net.SocketFunc = stack.Socket
 
 	if len(arg[3]) > 0 {
 		ip, _, _ := strings.Cut(arg[0], `/`)
