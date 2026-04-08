@@ -1,9 +1,9 @@
-//go:build net
-
 // Copyright (c) The go-boot authors. All Rights Reserved.
 //
 // Use of this source code is governed by the license
 // that can be found in the LICENSE file.
+
+//go:build net
 
 package cmd
 
@@ -56,10 +56,6 @@ func init() {
 	})
 
 	net.SetDefaultNS([]string{Resolver})
-}
-
-func newDefaultStack() gnet.Stack {
-	return gnet.NewGVisorStack(1)
 }
 
 func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
