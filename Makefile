@@ -3,7 +3,7 @@
 # Use of this source code is governed by the license
 # that can be found in the LICENSE file.
 
-NET ?= 0
+NET ?= none
 DEBUG ?= 0
 TAMAGO ?= $(shell go tool -n github.com/usbarmory/tamago/cmd/tamago)
 BUILD_TAGS = linkcpuinit,linkramsize,linkramstart,linkprintk
@@ -13,8 +13,8 @@ CONSOLE ?= text
 DEFAULT_EFI_ENTRY = \efi\boot\bootx64.efi
 DEFAULT_LINUX_ENTRY = \loader\entries\arch.conf
 
-ifeq ($(NET),1)
-    BUILD_TAGS := $(BUILD_TAGS),net
+ifeq ($(NET),gvisor)
+    BUILD_TAGS := $(BUILD_TAGS),net,gvisor
 endif
 
 ifeq ($(DEBUG),1)
@@ -58,7 +58,7 @@ ifneq ($(OVMFVARS),)
         QEMU_SNP := $(QEMU_SNP) -drive if=pflash,format=raw,file=$(OVMFVARS)
 endif
 
-ifeq ($(NET),1)
+ifneq ($(NET),none)
         QEMU := $(QEMU) -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
         QEMU_SNP := $(QEMU_SNP) -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
 endif

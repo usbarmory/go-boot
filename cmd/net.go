@@ -78,7 +78,9 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not set receive filters, %v", err)
 	}
 
-	iface := gnet.Interface{}
+	iface := gnet.Interface{
+		Stack: newStack(),
+	}
 
 	if arg[1] == ":" {
 		arg[1] = ""
@@ -88,15 +90,24 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not initialize networking, %v", err)
 	}
 
-	if err = nic.StationAddress(false, iface.NIC.MAC); err != nil {
-		fmt.Errorf("could not set permanent station address, %v\n", err)
+	mac, err := iface.Stack.HardwareAddress()
+
+	if err != nil {
+		return "", fmt.Errorf("could not get stack hw address: %v", err)
 	}
 
-	iface.EnableICMP()
-	go iface.NIC.Start()
+	if err = nic.StationAddress(false, mac); err != nil {
+		return "", fmt.Errorf("could not set permanent station address, %v", err)
+	}
+
+	if err = iface.Stack.EnableICMP(); err != nil {
+		return "", fmt.Errorf("could not enable ICMP, %v", err)
+	}
+
+	go iface.Start()
 
 	// hook interface into Go runtime
-	net.SocketFunc = iface.Socket
+	net.SocketFunc = iface.Stack.Socket
 
 	if len(arg[3]) > 0 {
 		ip, _, _ := strings.Cut(arg[0], `/`)
@@ -121,7 +132,7 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		go http.ListenAndServe(":80", nil)
 	}
 
-	return fmt.Sprintf("network initialized (%s %s)\n", arg[0], iface.NIC.MAC), nil
+	return fmt.Sprintf("network initialized (%s %s)\n", arg[0], mac), nil
 }
 
 func dnsCmd(_ *shell.Interface, arg []string) (res string, err error) {
