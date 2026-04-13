@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"github.com/gliderlabs/ssh"
-	gnet "github.com/usbarmory/go-net"
+	"github.com/usbarmory/go-net"
 
 	"github.com/usbarmory/go-boot/shell"
 	"github.com/usbarmory/go-boot/uefi"
@@ -78,32 +78,36 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not set receive filters, %v", err)
 	}
 
-	iface := gnet.Interface{}
+	iface := gnet.Interface{
+		Stack: newStack(),
+	}
 
 	if arg[1] == ":" {
 		arg[1] = ""
 	}
 
-	if err := iface.Init(nic, newDefaultStack(), arg[0], arg[1], arg[2]); err != nil {
+	if err := iface.Init(nic, arg[0], arg[1], arg[2]); err != nil {
 		return "", fmt.Errorf("could not initialize networking, %v", err)
 	}
-	stack := iface.NetworkingStack()
-	mac, err := stack.HardwareAddress()
+
+	mac, err := iface.Stack.HardwareAddress()
+
 	if err != nil {
-		return "", fmt.Errorf("network stack failed on MAC get: %v", err)
-	}
-	if err = nic.StationAddress(false, mac); err != nil {
-		fmt.Printf("could not set permanent station address, %v\n", err)
+		return "", fmt.Errorf("could not get stack hw address: %v", err)
 	}
 
-	err = stack.EnableICMP()
-	if err != nil {
-		fmt.Printf("could not enable ICMP, %v\n", err)
+	if err = nic.StationAddress(false, mac); err != nil {
+		return "", fmt.Errorf("could not set permanent station address, %v", err)
 	}
-	go iface.StartRx()
+
+	if err = iface.Stack.EnableICMP(); err != nil {
+		return "", fmt.Errorf("could not enable ICMP, %v", err)
+	}
+
+	go iface.Start()
 
 	// hook interface into Go runtime
-	net.SocketFunc = stack.Socket
+	net.SocketFunc = iface.Stack.Socket
 
 	if len(arg[3]) > 0 {
 		ip, _, _ := strings.Cut(arg[0], `/`)
@@ -128,7 +132,7 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		go http.ListenAndServe(":80", nil)
 	}
 
-	return fmt.Sprintf("network initialized (%s %s)\n", arg[0], iface.NIC.MAC), nil
+	return fmt.Sprintf("network initialized (%s %s)\n", arg[0], mac), nil
 }
 
 func dnsCmd(_ *shell.Interface, arg []string) (res string, err error) {

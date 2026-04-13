@@ -149,8 +149,8 @@ build:
 * `CONSOLE`: set to either `com1` or `text` (default) controls the output
   console to either serial port or UEFI console.
 
-* `NET`: set to either `0` (default) or `1` controls enabling of UEFI
-  networking support (see _UEFI networking_).
+* `NET`: set to `none` (default) or `gvisor` to control enabling of UEFI
+  networking support with a choice of network stack (see _UEFI networking_).
 
 Build the `go-boot.efi` executable:
 
