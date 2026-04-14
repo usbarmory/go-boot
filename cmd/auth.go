@@ -81,7 +81,7 @@ func btValidateLinux(entry *uapi.Entry, root fs.FS) (err error) {
 
 	btConfig.Root = root
 
-	btEntry := policy.BootEntry{
+	btEntry := &policy.BootEntry{
 		Artifacts: []policy.BootArtifact{
 			policy.BootArtifact{
 				Category: artifact.LinuxKernel,
@@ -94,5 +94,5 @@ func btValidateLinux(entry *uapi.Entry, root fs.FS) (err error) {
 		},
 	}
 
-	return transparency.Validate(&btConfig, &btEntry)
+	return transparency.Validate(&btConfig, btEntry)
 }

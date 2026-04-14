@@ -22,7 +22,7 @@ func TestPath(t *testing.T) {
 		Engine: transparency.Sigsum,
 	}
 
-	be := policy.BootEntry{
+	be := &policy.BootEntry{
 		Artifacts: []policy.BootArtifact{
 			policy.BootArtifact{
 				Category: artifact.LinuxKernel,
@@ -35,7 +35,7 @@ func TestPath(t *testing.T) {
 		},
 	}
 
-	p, err := c.Path(&be)
+	p, err := c.Path(be)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func TestLoadFromRootWithPathPrefix(t *testing.T) {
 		PathPrefix: `transparency`,
 	}
 
-	be := policy.BootEntry{
+	be := &policy.BootEntry{
 		Artifacts: []policy.BootArtifact{
 			policy.BootArtifact{
 				Category: artifact.LinuxKernel,
@@ -78,7 +78,7 @@ func TestLoadFromRootWithPathPrefix(t *testing.T) {
 		},
 	}
 
-	entryPath, err := c.Path(&be)
+	entryPath, err := c.Path(be)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +96,7 @@ func TestLoadFromRootInCorrectPathPrefix(t *testing.T) {
 		PathPrefix: `FOO`,
 	}
 
-	be := policy.BootEntry{
+	be := &policy.BootEntry{
 		Artifacts: []policy.BootArtifact{
 			policy.BootArtifact{
 				Category: artifact.LinuxKernel,
@@ -109,7 +109,7 @@ func TestLoadFromRootInCorrectPathPrefix(t *testing.T) {
 		},
 	}
 
-	entryPath, err := c.Path(&be)
+	entryPath, err := c.Path(be)
 	if err != nil {
 		t.Fatal(err)
 	}
