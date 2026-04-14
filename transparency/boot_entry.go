@@ -19,18 +19,18 @@ import (
 // boot policy and claims consistency) for the argument [Config] representing
 // the boot transparency configuration.
 // Returns error if the boot artifacts are not passing the validation.
-func Validate(c *Config, b *policy.BootEntry) (err error) {
+func Validate(c *Config, be *policy.BootEntry) (err error) {
 	if c.Status == None {
 		return
 	}
 
-	if len(*b) == 0 {
+	if len(be.Artifacts) == 0 {
 		return fmt.Errorf("invalid boot entry")
 	}
 
 	// Automatically load the configuration from the configured root filesystem.
 	if c.Root != nil {
-		entryPath, err := c.Path(b)
+		entryPath, err := c.Path(be)
 		if err != nil {
 			return fmt.Errorf("cannot load boot-transparency configuration, %v", err)
 		}
@@ -87,7 +87,7 @@ func Validate(c *Config, b *policy.BootEntry) (err error) {
 
 	// Validate the matching between the logged claims and the policy requirements,
 	// fot the given set of boot artifacts.
-	if err = policy.Validate(requirements, claims, b); err != nil {
+	if err = be.Validate(requirements, claims); err != nil {
 		// The boot bundle is NOT authorized.
 		return
 	}

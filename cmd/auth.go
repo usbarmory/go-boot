@@ -18,9 +18,9 @@ import (
 	"github.com/usbarmory/go-boot/uapi"
 
 	"github.com/usbarmory/boot-transparency/artifact"
-	"github.com/usbarmory/boot-transparency/policy"
 	_ "github.com/usbarmory/boot-transparency/engine/sigsum"
 	_ "github.com/usbarmory/boot-transparency/engine/tessera"
+	"github.com/usbarmory/boot-transparency/policy"
 	bt_transparency "github.com/usbarmory/boot-transparency/transparency"
 )
 
@@ -82,13 +82,15 @@ func btValidateLinux(entry *uapi.Entry, root fs.FS) (err error) {
 	btConfig.Root = root
 
 	btEntry := policy.BootEntry{
-		policy.BootArtifact{
-			Category: artifact.LinuxKernel,
-			Data:     entry.Linux,
-		},
-		policy.BootArtifact{
-			Category: artifact.Initrd,
-			Data:     entry.Initrd,
+		Artifacts: []policy.BootArtifact{
+			policy.BootArtifact{
+				Category: artifact.LinuxKernel,
+				Data:     entry.Linux,
+			},
+			policy.BootArtifact{
+				Category: artifact.Initrd,
+				Data:     entry.Initrd,
+			},
 		},
 	}
 

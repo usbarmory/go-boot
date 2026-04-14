@@ -10,7 +10,7 @@ require (
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/u-root/u-root v0.15.0
 	github.com/usbarmory/armory-boot v0.0.0-20260202115234-edf170b30f66
-	github.com/usbarmory/boot-transparency v0.0.0-20260311132025-a6323d45a3df
+	github.com/usbarmory/boot-transparency v0.0.0-20260414075008-89b76c203db5
 	github.com/usbarmory/go-net v0.0.0-20251003201608-93d9ffe808de
 	github.com/usbarmory/tamago v1.26.1
 	golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e

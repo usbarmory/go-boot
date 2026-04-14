@@ -22,18 +22,20 @@ func TestPath(t *testing.T) {
 		Engine: transparency.Sigsum,
 	}
 
-	b := policy.BootEntry{
-		policy.BootArtifact{
-			Category: artifact.LinuxKernel,
-			Data:     []byte(testKernel),
-		},
-		policy.BootArtifact{
-			Category: artifact.Initrd,
-			Data:     []byte(testInitrd),
+	be := policy.BootEntry{
+		Artifacts: []policy.BootArtifact{
+			policy.BootArtifact{
+				Category: artifact.LinuxKernel,
+				Data:     []byte(testKernel),
+			},
+			policy.BootArtifact{
+				Category: artifact.Initrd,
+				Data:     []byte(testInitrd),
+			},
 		},
 	}
 
-	p, err := c.Path(&b)
+	p, err := c.Path(&be)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,18 +65,20 @@ func TestLoadFromRootWithPathPrefix(t *testing.T) {
 		PathPrefix: `transparency`,
 	}
 
-	b := policy.BootEntry{
-		policy.BootArtifact{
-			Category: artifact.LinuxKernel,
-			Data:     []byte(testKernel),
-		},
-		policy.BootArtifact{
-			Category: artifact.Initrd,
-			Data:     []byte(testInitrd),
+	be := policy.BootEntry{
+		Artifacts: []policy.BootArtifact{
+			policy.BootArtifact{
+				Category: artifact.LinuxKernel,
+				Data:     []byte(testKernel),
+			},
+			policy.BootArtifact{
+				Category: artifact.Initrd,
+				Data:     []byte(testInitrd),
+			},
 		},
 	}
 
-	entryPath, err := c.Path(&b)
+	entryPath, err := c.Path(&be)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,18 +96,20 @@ func TestLoadFromRootInCorrectPathPrefix(t *testing.T) {
 		PathPrefix: `FOO`,
 	}
 
-	b := policy.BootEntry{
-		policy.BootArtifact{
-			Category: artifact.LinuxKernel,
-			Data:     []byte(testKernel),
-		},
-		policy.BootArtifact{
-			Category: artifact.Initrd,
-			Data:     []byte(testInitrd),
+	be := policy.BootEntry{
+		Artifacts: []policy.BootArtifact{
+			policy.BootArtifact{
+				Category: artifact.LinuxKernel,
+				Data:     []byte(testKernel),
+			},
+			policy.BootArtifact{
+				Category: artifact.Initrd,
+				Data:     []byte(testInitrd),
+			},
 		},
 	}
 
-	entryPath, err := c.Path(&b)
+	entryPath, err := c.Path(&be)
 	if err != nil {
 		t.Fatal(err)
 	}

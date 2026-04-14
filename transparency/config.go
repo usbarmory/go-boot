@@ -103,17 +103,15 @@ type Config struct {
 // artifacts (i.e. boot entry).
 // Returns error if one of the artifacts does not include a valid
 // SHA-256 hash.
-func (c *Config) Path(b *policy.BootEntry) (entryPath string, err error) {
-	if len(*b) == 0 {
+func (c *Config) Path(be *policy.BootEntry) (entryPath string, err error) {
+	if len(be.Artifacts) == 0 {
 		return "", fmt.Errorf("invalid boot entry")
 	}
 
-	artifacts := *b
-
 	// Sort the passed artifacts, by their Category, to ensure
 	// consistency in the way the entry path is built.
-	sort.Slice(artifacts, func(i, j int) bool {
-		return artifacts[i].Category < artifacts[j].Category
+	sort.Slice(be.Artifacts, func(i, j int) bool {
+		return be.Artifacts[i].Category < be.Artifacts[j].Category
 	})
 
 	entryPath = DefaultPathPrefix
@@ -121,7 +119,7 @@ func (c *Config) Path(b *policy.BootEntry) (entryPath string, err error) {
 		entryPath = c.PathPrefix
 	}
 
-	for _, artifact := range artifacts {
+	for _, artifact := range be.Artifacts {
 		entryPath = filepath.Join(entryPath, hex.EncodeToString(artifact.Hash()))
 	}
 

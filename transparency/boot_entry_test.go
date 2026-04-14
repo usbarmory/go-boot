@@ -13,10 +13,10 @@ import (
 	"testing"
 
 	"github.com/usbarmory/boot-transparency/artifact"
-	"github.com/usbarmory/boot-transparency/transparency"
-	"github.com/usbarmory/boot-transparency/policy"
 	_ "github.com/usbarmory/boot-transparency/engine/sigsum"
 	_ "github.com/usbarmory/boot-transparency/engine/tessera"
+	"github.com/usbarmory/boot-transparency/policy"
+	"github.com/usbarmory/boot-transparency/transparency"
 )
 
 var testConfig Config
@@ -38,13 +38,15 @@ func TestOfflineValidate(t *testing.T) {
 	c := testConfig
 
 	b := policy.BootEntry{
-		policy.BootArtifact{
-			Category: artifact.LinuxKernel,
-			Data:     []byte(testKernel),
-		},
-		policy.BootArtifact{
-			Category: artifact.Initrd,
-			Data:     []byte(testInitrd),
+		Artifacts: []policy.BootArtifact{
+			policy.BootArtifact{
+				Category: artifact.LinuxKernel,
+				Data:     []byte(testKernel),
+			},
+			policy.BootArtifact{
+				Category: artifact.Initrd,
+				Data:     []byte(testInitrd),
+			},
 		},
 	}
 
@@ -57,18 +59,20 @@ func TestOnlineValidate(t *testing.T) {
 	c := testConfig
 	c.Status = Online
 
-	b := policy.BootEntry{
-		policy.BootArtifact{
-			Category: artifact.LinuxKernel,
-			Data:     []byte(testKernel),
-		},
-		policy.BootArtifact{
-			Category: artifact.Initrd,
-			Data:     []byte(testInitrd),
+	be := policy.BootEntry{
+		Artifacts: []policy.BootArtifact{
+			policy.BootArtifact{
+				Category: artifact.LinuxKernel,
+				Data:     []byte(testKernel),
+			},
+			policy.BootArtifact{
+				Category: artifact.Initrd,
+				Data:     []byte(testInitrd),
+			},
 		},
 	}
 
-	if err := Validate(&c, &b); err != nil {
+	if err := Validate(&c, &be); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -76,19 +80,21 @@ func TestOnlineValidate(t *testing.T) {
 func TestOfflineValidateInvalidBootEntry(t *testing.T) {
 	c := testConfig
 
-	b := policy.BootEntry{
-		policy.BootArtifact{
-			Category: artifact.LinuxKernel,
-			Data:     []byte(testKernel),
-		},
-		policy.BootArtifact{
-			Category: artifact.Initrd,
-			// missing Data
+	be := policy.BootEntry{
+		Artifacts: []policy.BootArtifact{
+			policy.BootArtifact{
+				Category: artifact.LinuxKernel,
+				Data:     []byte(testKernel),
+			},
+			policy.BootArtifact{
+				Category: artifact.Initrd,
+				// missing Data
+			},
 		},
 	}
 
 	// Error expected: invalid boot entry error.
-	if err := Validate(&c, &b); err == nil || !errors.Is(err, policy.ErrInvalidBootEntry) {
+	if err := Validate(&c, &be); err == nil || !errors.Is(err, policy.ErrInvalidBootEntry) {
 		t.Fatal("missing invalid boot entry error")
 	}
 }
@@ -96,19 +102,21 @@ func TestOfflineValidateInvalidBootEntry(t *testing.T) {
 func TestOfflineValidateHashMismatch(t *testing.T) {
 	c := testConfig
 
-	b := policy.BootEntry{
-		policy.BootArtifact{
-			Category: artifact.LinuxKernel,
-			Data:     []byte(testIncorrectKernel),
-		},
-		policy.BootArtifact{
-			Category: artifact.Initrd,
-			Data:     []byte(testInitrd),
+	be := policy.BootEntry{
+		Artifacts: []policy.BootArtifact{
+			policy.BootArtifact{
+				Category: artifact.LinuxKernel,
+				Data:     []byte(testIncorrectKernel),
+			},
+			policy.BootArtifact{
+				Category: artifact.Initrd,
+				Data:     []byte(testInitrd),
+			},
 		},
 	}
 
 	// Error expected: incorrect hash.
-	if err := Validate(&c, &b); err == nil || !errors.Is(err, policy.ErrValidate) {
+	if err := Validate(&c, &be); err == nil || !errors.Is(err, policy.ErrValidate) {
 		t.Fatal("missing incorrect hash error")
 	}
 }
@@ -117,19 +125,21 @@ func TestOfflineValidatePolicyNotMet(t *testing.T) {
 	c := testConfig
 	c.BootPolicy = []byte(testBootPolicyUnauthorized)
 
-	b := policy.BootEntry{
-		policy.BootArtifact{
-			Category: artifact.LinuxKernel,
-			Data:     []byte(testKernel),
-		},
-		policy.BootArtifact{
-			Category: artifact.Initrd,
-			Data:     []byte(testInitrd),
+	be := policy.BootEntry{
+		Artifacts: []policy.BootArtifact{
+			policy.BootArtifact{
+				Category: artifact.LinuxKernel,
+				Data:     []byte(testKernel),
+			},
+			policy.BootArtifact{
+				Category: artifact.Initrd,
+				Data:     []byte(testInitrd),
+			},
 		},
 	}
 
 	// Error expected: requirement not met.
-	if err := Validate(&c, &b); err == nil || !errors.Is(err, policy.ErrValidate) {
+	if err := Validate(&c, &be); err == nil || !errors.Is(err, policy.ErrValidate) {
 		t.Fatal("missing policy validation error")
 	}
 }
