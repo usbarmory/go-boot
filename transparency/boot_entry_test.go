@@ -19,23 +19,19 @@ import (
 	"github.com/usbarmory/boot-transparency/transparency"
 )
 
-var testConfig Config
+var testConfig = &Config{
+	Status: Offline,
+	Engine: transparency.Sigsum,
 
-func init() {
-	testConfig = Config{
-		Status: Offline,
-		Engine: transparency.Sigsum,
-
-		BootPolicy:    []byte(testBootPolicy),
-		WitnessPolicy: []byte(testWitnessPolicy),
-		SubmitKey:     []byte(testSubmitKey),
-		LogKey:        []byte(testLogKey),
-		ProofBundle:   []byte(testProofBundle),
-	}
+	BootPolicy:    []byte(testBootPolicy),
+	WitnessPolicy: []byte(testWitnessPolicy),
+	SubmitKey:     []byte(testSubmitKey),
+	LogKey:        []byte(testLogKey),
+	ProofBundle:   []byte(testProofBundle),
 }
 
 func TestOfflineValidate(t *testing.T) {
-	c := &testConfig
+	testConfig.Status = Offline
 
 	b := &policy.BootEntry{
 		Artifacts: []policy.BootArtifact{
@@ -50,14 +46,13 @@ func TestOfflineValidate(t *testing.T) {
 		},
 	}
 
-	if err := Validate(c, b); err != nil {
+	if err := Validate(testConfig, b); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestOnlineValidate(t *testing.T) {
-	c := &testConfig
-	c.Status = Online
+	testConfig.Status = Online
 
 	be := &policy.BootEntry{
 		Artifacts: []policy.BootArtifact{
@@ -72,13 +67,13 @@ func TestOnlineValidate(t *testing.T) {
 		},
 	}
 
-	if err := Validate(c, be); err != nil {
+	if err := Validate(testConfig, be); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestOfflineValidateInvalidBootEntry(t *testing.T) {
-	c := &testConfig
+	testConfig.Status = Offline
 
 	be := &policy.BootEntry{
 		Artifacts: []policy.BootArtifact{
@@ -94,13 +89,13 @@ func TestOfflineValidateInvalidBootEntry(t *testing.T) {
 	}
 
 	// Error expected: invalid boot entry error.
-	if err := Validate(c, be); err == nil || !errors.Is(err, policy.ErrInvalidBootEntry) {
+	if err := Validate(testConfig, be); err == nil || !errors.Is(err, policy.ErrInvalidBootEntry) {
 		t.Fatal("missing invalid boot entry error")
 	}
 }
 
 func TestOfflineValidateHashMismatch(t *testing.T) {
-	c := &testConfig
+	testConfig.Status = Offline
 
 	be := &policy.BootEntry{
 		Artifacts: []policy.BootArtifact{
@@ -116,14 +111,14 @@ func TestOfflineValidateHashMismatch(t *testing.T) {
 	}
 
 	// Error expected: incorrect hash.
-	if err := Validate(c, be); err == nil || !errors.Is(err, policy.ErrValidate) {
+	if err := Validate(testConfig, be); err == nil || !errors.Is(err, policy.ErrValidate) {
 		t.Fatal("missing incorrect hash error")
 	}
 }
 
 func TestOfflineValidatePolicyNotMet(t *testing.T) {
-	c := &testConfig
-	c.BootPolicy = []byte(testBootPolicyUnauthorized)
+	testConfig.Status = Offline
+	testConfig.BootPolicy = []byte(testBootPolicyUnauthorized)
 
 	be := &policy.BootEntry{
 		Artifacts: []policy.BootArtifact{
@@ -139,7 +134,7 @@ func TestOfflineValidatePolicyNotMet(t *testing.T) {
 	}
 
 	// Error expected: requirement not met.
-	if err := Validate(c, be); err == nil || !errors.Is(err, policy.ErrValidate) {
+	if err := Validate(testConfig, be); err == nil || !errors.Is(err, policy.ErrValidate) {
 		t.Fatal("missing policy validation error")
 	}
 }
