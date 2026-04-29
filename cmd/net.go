@@ -112,9 +112,9 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	if len(arg[3]) > 0 {
 		ip, _, _ := strings.Cut(arg[0], `/`)
 
-		fmt.Printf("starting debug servers:\n")
-		fmt.Printf("\thttp://%s:80/debug/pprof\n", ip)
-		fmt.Printf("\tssh://%s:22\n", ip)
+		log.Printf("starting debug servers:\n")
+		log.Printf("\thttp://%s:80/debug/pprof\n", ip)
+		log.Printf("\tssh://%s:22\n", ip)
 
 		ssh.Handle(func(s ssh.Session) {
 			c := &shell.Interface{
