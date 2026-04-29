@@ -18,8 +18,16 @@ var Console = &uefi.Console{
 	Out:       conOut,
 }
 
+// Stdout allows to override [Console] as standard output, useful when exiting
+// UEFI runtime services.
+var Stdout func(byte)
+
 //go:linkname printk runtime/goos.Printk
 func printk(c byte) {
+	if Stdout != nil {
+		Stdout(c)
+	}
+
 	if Console.Out == 0 {
 		return
 	}
