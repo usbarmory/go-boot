@@ -28,6 +28,12 @@ func (s *BootServices) Exit(code int) (err error) {
 // ExitServices calls EFI_BOOT_SERVICES.ExitBootServices(), it is the caller
 // responsability to avoid using any EFI Boot Service after this call is
 // successful.
+//
+// Typically the following actions are required after exiting boot services:
+//   - silencing active UEFI consoles by setting [Console.Out] to 0
+//   - replacing runtime stdout by setting [x64.Stdout]
+//   - trap CPU exceptions with [x64.AMD64.EnableExceptions]
+//   - initializing APs as needed with [x64.AMD64.InitSMP]
 func (s *BootServices) ExitBootServices() (memoryMap *MemoryMap, err error) {
 	if memoryMap, err = s.GetMemoryMap(); err != nil {
 		return
