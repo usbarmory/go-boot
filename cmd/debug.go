@@ -9,7 +9,6 @@ package cmd
 
 import (
 	"github.com/arl/statsviz"
-	_ "net/http/pprof"
 )
 
 func init() {
