@@ -30,8 +30,8 @@ github.com/usbarmory/armory-boot v0.0.0-20260202115234-edf170b30f66 h1:EKfiE4TIq
 github.com/usbarmory/armory-boot v0.0.0-20260202115234-edf170b30f66/go.mod h1:2cCdG4eUnVtrKyfbCc2A+0SHJl62Cgf4jEXTw/OvlW4=
 github.com/usbarmory/go-net v0.0.0-20260413182550-9b714f9ebee5 h1:/ryaG8LY5neLlo2OPShAoqfEFiwuNvRxdur2NYd5TkA=
 github.com/usbarmory/go-net v0.0.0-20260413182550-9b714f9ebee5/go.mod h1:+6WiKCFJtJQZdNM2VpwQsYGo/aBJ39pN7nWx6Td3Z8s=
-github.com/usbarmory/tamago v1.26.2 h1:lSB+tnxVAUFczwBu3oVkoAwJriFrxtQ7x/8Tu6lRQUc=
-github.com/usbarmory/tamago v1.26.2/go.mod h1:+p26O/6sbXO3PWWC22bFEuK4qDBmNzW4EgtXfE+kgyQ=
+github.com/usbarmory/tamago v1.26.4-0.20260518120104-29234f4e43de h1:FLY1rxmA3qruwfVNIsmvIH44qO50drKYTGfdj4Z3KMo=
+github.com/usbarmory/tamago v1.26.4-0.20260518120104-29234f4e43de/go.mod h1:+p26O/6sbXO3PWWC22bFEuK4qDBmNzW4EgtXfE+kgyQ=
 golang.org/x/crypto v0.42.0 h1:chiH31gIWm57EkTXpwnqf8qeuMUi0yekh6mT2AvFlqI=
 golang.org/x/crypto v0.42.0/go.mod h1:4+rDnOTJhQCx2q7/j6rAN5XDw8kPjeaXEUR2eL94ix8=
 golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e h1:G2pNJMnWEb60ip90TMo++m9fpt+d3YIZa0er3buPKRo=

@@ -1,6 +1,6 @@
 module github.com/usbarmory/go-boot
 
-go 1.26.2
+go 1.26.3
 
 tool github.com/usbarmory/tamago/cmd/tamago
 
@@ -11,7 +11,7 @@ require (
 	github.com/u-root/u-root v0.15.0
 	github.com/usbarmory/armory-boot v0.0.0-20260202115234-edf170b30f66
 	github.com/usbarmory/go-net v0.0.0-20260413182550-9b714f9ebee5
-	github.com/usbarmory/tamago v1.26.2
+	github.com/usbarmory/tamago v1.26.4-0.20260518120104-29234f4e43de
 	golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e
 	golang.org/x/term v0.40.0
 )
