@@ -10,6 +10,7 @@ var EFI_MP_SERVICES_PROTOCOL_GUID = MustParseGUID("3fdda605-a76e-4f46-ad29-12f45
 // EFI Multi Processor Services Protocol offsets
 const (
 	getNumberOfProcessors = 0x00
+	startupAllAPs         = 0x10
 )
 
 // MultiProcessor represents an EFI Multi Processor Services instance.
@@ -17,7 +18,7 @@ type MultiProcessor struct {
 	base uint64
 }
 
-// GetNumberOfProcessors calls EFI_MP_SERVICES.GetNumberOfProcessors().
+// GetNumberOfProcessors calls EFI_MP_SERVICES_PROTOCOL.GetNumberOfProcessors().
 func (mp *MultiProcessor) GetNumberOfProcessors() (num uint64, enabled uint64, err error) {
 	status := callService(mp.base+getNumberOfProcessors,
 		[]uint64{
@@ -30,6 +31,23 @@ func (mp *MultiProcessor) GetNumberOfProcessors() (num uint64, enabled uint64, e
 	err = parseStatus(status)
 
 	return
+}
+
+// StartupAllAPs calls EFI_MP_SERVICES_PROTOCOL.StartupAllAPs().
+func (mp *MultiProcessor) StartupAllAPs(pc uintptr) (err error) {
+	status := callService(mp.base+startupAllAPs,
+		[]uint64{
+			mp.base,
+			uint64(pc),
+			0,
+			1,
+			0,
+			0,
+			0,
+		},
+	)
+
+	return parseStatus(status)
 }
 
 // GetMultiProcessor locates and returns the EFI Multi Processor Services
