@@ -79,14 +79,15 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	iface := gnet.Interface{
-		Stack: newStack(),
+		NetworkDevice: nic,
+		Stack:         newStack(),
 	}
 
 	if arg[1] == ":" {
 		arg[1] = ""
 	}
 
-	if err := iface.Init(nic, arg[0], arg[1], arg[2]); err != nil {
+	if err := iface.Init(arg[0], arg[1], arg[2]); err != nil {
 		return "", fmt.Errorf("could not initialize networking, %v", err)
 	}
 

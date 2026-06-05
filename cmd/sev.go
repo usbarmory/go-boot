@@ -130,8 +130,6 @@ func initSharedDMA(dmaSize int) (err error) {
 }
 
 func initGHCB() (err error) {
-	var ghcbAddr uint64
-
 	if ghcb != nil {
 		return
 	}
@@ -140,21 +138,9 @@ func initGHCB() (err error) {
 		return errors.New("AMD SEV-SNP secrets unavailable, run `sev` first")
 	}
 
-	// OVMF allocates 2*ncpu contiguous pages, a first shared page for GHCB
-	// (which we re-use) and a second private one for vCPU variables.
-	if ghcbAddr = x64.AMD64.MSR(sev.MSR_AMD_GHCB); ghcbAddr == 0 {
-		return errors.New("could not find GHCB address")
-	}
-
-	ghcbGPA := uint(ghcbAddr)
-	ghcb = &sev.GHCB{}
-
-	if ghcb.Layout, err = dma.NewRegion(ghcbGPA, uefi.PageSize, false); err != nil {
-		return fmt.Errorf("could not allocate GHCB layout page, %v", err)
-	}
-
-	if err = ghcb.Init(); err != nil {
-		return
+	// initialize vCPU0 GHCB only as this unikernel does not enable SMP
+	ghcb = &sev.GHCB{
+		CPU: x64.AMD64,
 	}
 
 	if err = initSharedDMA(1 << 20); err != nil {
