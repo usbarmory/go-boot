@@ -17,6 +17,10 @@ ifeq ($(NET),gvisor)
     BUILD_TAGS := $(BUILD_TAGS),net,gvisor
 endif
 
+ifeq ($(NET),lneto)
+    BUILD_TAGS := $(BUILD_TAGS),net,lneto
+endif
+
 ifeq ($(DEBUG),1)
     BUILD_TAGS := $(BUILD_TAGS),debug
 endif

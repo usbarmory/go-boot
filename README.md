@@ -40,7 +40,7 @@ Shell> go-boot.efi
 initializing EFI services
 initializing console (text)
 
-go-boot • tamago/amd64 (go1.24.1) • UEFI x64
+go-boot • tamago/amd64 • UEFI x64
 
 .               <path>                   # load and start EFI image
 build                                    # build information
@@ -149,7 +149,7 @@ build:
 * `CONSOLE`: set to either `com1` or `text` (default) controls the output
   console to either serial port or UEFI console.
 
-* `NET`: set to `none` (default) or `gvisor` to control enabling of UEFI
+* `NET`: set to `none` (default), `gvisor` or `lneto` to control UEFI
   networking support with a choice of network stack (see _UEFI networking_).
 
 Build the `go-boot.efi` executable:
@@ -186,8 +186,10 @@ efibootmgr -C -L "go-boot" -d $DISK -p $PART -l '\EFI\go-boot.efi'
 UEFI networking
 ===============
 
-With `NET=1` passed in the environment builds include UEFI networking support
-through the [Simple Network Protocol](https://uefi.org/specs/UEFI/2.10_A/24_Network_Protocols_SNP_PXE_BIS.html)
+With `NET=gvisor` ([gVisor stack](https://github.com/google/gvisor/tree/go)) or
+`NET=lneto` ([lneto stack](https://github.com/soypat/lneto)), passed in the
+build environment, UEFI networking support is enabled through the
+[Simple Network Protocol](https://uefi.org/specs/UEFI/2.10_A/24_Network_Protocols_SNP_PXE_BIS.html)
 (SNP) and [go-net](https://github.com/usbarmory/go-net).
 
 On such builds the `net` and `dns` commands become available and `make qemu`
@@ -269,7 +271,7 @@ terminating EFI Boot Services and using additional network drivers, see
 License
 =======
 
-go-boot | https://github.com/usbarmory/go-boot
+go-boot | https://github.com/usbarmory/go-boot  
 Copyright (c) The go-boot authors. All Rights Reserved.
 
 These source files are distributed under the BSD-style license found in the
