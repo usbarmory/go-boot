@@ -51,7 +51,7 @@ func InitSMP() (err error) {
 	pc := **(**uintptr)(unsafe.Pointer(&fn))
 
 	// initialize APs
-	if err := mp.StartupAllAPs(pc); err != nil {
+	if err := mp.StartupAllAPs(pc, true, 0); err != nil {
 		return fmt.Errorf("could not start APs, %v", err)
 	}
 
