@@ -40,7 +40,7 @@ Shell> go-boot.efi
 initializing EFI services
 initializing console (text)
 
-go-boot • tamago/amd64 (go1.24.4) • UEFI x64
+go-boot • tamago/amd64 (go1.26.5) • UEFI x64
 
 .               <path>                   # load and start EFI image
 build                                    # build information
