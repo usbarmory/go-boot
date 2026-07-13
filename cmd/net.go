@@ -8,6 +8,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -105,7 +106,7 @@ func netCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		return "", fmt.Errorf("could not enable ICMP, %v", err)
 	}
 
-	go iface.Start()
+	go iface.Start(context.Background())
 
 	// hook interface into Go runtime
 	net.SocketFunc = iface.Stack.Socket

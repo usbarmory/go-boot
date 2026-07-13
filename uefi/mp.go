@@ -34,15 +34,21 @@ func (mp *MultiProcessor) GetNumberOfProcessors() (num uint64, enabled uint64, e
 }
 
 // StartupAllAPs calls EFI_MP_SERVICES_PROTOCOL.StartupAllAPs().
-func (mp *MultiProcessor) StartupAllAPs(pc uintptr) (err error) {
+func (mp *MultiProcessor) StartupAllAPs(pc uintptr, singleThread bool, timeout uint64) (err error) {
+	st := uint64(0)
+
+	if singleThread {
+		st = 1
+	}
+
 	status := callService(mp.base+startupAllAPs,
 		[]uint64{
 			mp.base,
 			uint64(pc),
 			0,
-			1,
+			st,
 			0,
-			0,
+			timeout,
 			0,
 		},
 	)
