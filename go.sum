@@ -18,6 +18,8 @@ github.com/pierrec/lz4/v4 v4.1.22 h1:cKFw6uJDK+/gfw5BcDL0JL5aBsAFdsIT18eRtLj7VIU
 github.com/pierrec/lz4/v4 v4.1.22/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
+github.com/soypat/lneto v0.2.0 h1:h+59QBUgWbpq/4LWOp31+6usVybN01mTDMcVW5U8OxM=
+github.com/soypat/lneto v0.2.0/go.mod h1:Be5PjwoYukvHFiUXxpYi8+ppH2F/gw/vjGBvFdv+Ti8=
 github.com/therootcompany/xz v1.0.1 h1:CmOtsn1CbtmyYiusbfmhmkpAAETj0wBIH6kCYaX+xzw=
 github.com/therootcompany/xz v1.0.1/go.mod h1:3K3UH1yCKgBneZYhuQUvJ9HPD19UEXEI0BWbMn8qNMY=
 github.com/u-root/u-root v0.16.0 h1:wY40O83MBVks97+Is0WlFlOPSwKQMIrWP9R1IsrExg8=
@@ -30,6 +32,8 @@ github.com/usbarmory/armory-boot v0.0.0-20260410072034-d4cd302c7f4c h1:BiiEFdNqo
 github.com/usbarmory/armory-boot v0.0.0-20260410072034-d4cd302c7f4c/go.mod h1:Ut0PLSVlEWNDotc43KrCBc1A2mWi+A/py0rvoicUl0I=
 github.com/usbarmory/go-net v0.0.0-20260416163630-1078311e0956 h1:ZjhVXLMT/Ogxs1GIy1g8UJk7yi9G8kt90D0ElAPbaCc=
 github.com/usbarmory/go-net v0.0.0-20260416163630-1078311e0956/go.mod h1:+6WiKCFJtJQZdNM2VpwQsYGo/aBJ39pN7nWx6Td3Z8s=
+github.com/usbarmory/go-net v0.0.0-20260714134120-c2c964e7084c h1:ubYfZqO8u2mV0stDpvCTEfGp6e0aLBda/OAGniDdQzs=
+github.com/usbarmory/go-net v0.0.0-20260714134120-c2c964e7084c/go.mod h1:nzEcbE2bexZNdjKCZaqAEr+IyPQ+WiwWGaYsAwPcwsc=
 github.com/usbarmory/tamago v1.26.5 h1:k21IAFiXGmibfPn3SYx0XLNXdqDrAgXiIgKSbI5LZ1k=
 github.com/usbarmory/tamago v1.26.5/go.mod h1:HZkb+ZkzFl8aCxAuF7exsKX+XaNM0mYG9Iv7ooX1WDY=
 golang.org/x/crypto v0.48.0 h1:/VRzVqiRSggnhY7gNRxPauEQ5Drw9haKdM0jqfcCFts=
