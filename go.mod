@@ -13,7 +13,7 @@ require (
 	github.com/usbarmory/go-net v0.0.0-20260714134120-c2c964e7084c
 	github.com/usbarmory/tamago v1.26.5
 	golang.org/x/crypto/x509roots/fallback v0.0.0-20260604135805-d37c95e27de6
-	golang.org/x/term v0.43.0
+	golang.org/x/term v0.45.0
 )
 
 require (
@@ -27,9 +27,9 @@ require (
 	github.com/therootcompany/xz v1.0.1 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
-	golang.org/x/crypto v0.48.0 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	gvisor.dev/gvisor v0.0.0-20250911055229-61a46406f068 // indirect
 )
