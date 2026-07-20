@@ -30,7 +30,8 @@ const (
 	KBD_PORT = 0x64
 
 	// Communication port
-	COM1 = 0x3f8
+	COM1     = 0x3f8
+	COM1_IRQ = 4
 )
 
 // set in x64.s
@@ -56,6 +57,7 @@ var (
 	UART0 = &uart.UART{
 		Index: 1,
 		Base:  COM1,
+		IRQ:   COM1_IRQ,
 		DTR:   true,
 		RTS:   true,
 	}

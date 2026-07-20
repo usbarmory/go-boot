@@ -11,7 +11,7 @@ require (
 	github.com/u-root/u-root v0.16.0
 	github.com/usbarmory/armory-boot v0.0.0-20260410072034-d4cd302c7f4c
 	github.com/usbarmory/go-net v0.0.0-20260714134120-c2c964e7084c
-	github.com/usbarmory/tamago v1.26.5
+	github.com/usbarmory/tamago v1.26.6-0.20260720101947-d9059b05af59
 	golang.org/x/crypto/x509roots/fallback v0.0.0-20260604135805-d37c95e27de6
 	golang.org/x/term v0.45.0
 )
