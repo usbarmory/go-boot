@@ -76,7 +76,7 @@ func (root *FS) devicePath() (devicePath []*DevicePath, desc []byte, err error) 
 			break
 		}
 
-		if node.Length == 0 || node.Length > 0xff {
+		if node.Length < 4 || node.Length > 0xff {
 			return nil, nil, errors.New("invalid length")
 		}
 
