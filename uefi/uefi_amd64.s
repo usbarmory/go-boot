@@ -63,8 +63,8 @@ TEXT ·callFn(SB),NOSPLIT,$0-48
 
 	MOVQ	R13, R14
 	ANDQ	$1, R14
-	CMPQ	R13, R14
-	JNE	aligned
+	CMPQ	R14, $0
+	JE	aligned
 	PUSHQ	$0		// ensure 16-byte alignment
 aligned:
 	MOVQ	R13, R14
