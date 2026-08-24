@@ -6,82 +6,61 @@
 package uefi
 
 import (
-	"encoding/binary"
-	"encoding/hex"
-	"fmt"
-	"regexp"
+	"uuid"
 )
-
-var guidPattern = regexp.MustCompile(`^([[:xdigit:]]{8})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{4})-([[:xdigit:]]{12})$`)
 
 // GUID represents an EFI GUID (Globally Unique Identifier) as a 16-byte array
 // with the native EFI byte order.
 //
-// Note: The registry string format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-// reorders the first three fields as little-endian. Internally, we keep the
-// native EFI layout (as used in memory), i.e. 16 bytes where the first three
-// fields are little-endian values.
+// Note: The registry string format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), as
+// well as the RFC 9562 encoding used by [uuid.UUID], stores the first three
+// fields as big-endian values. Internally, we keep the native EFI layout (as
+// used in memory), i.e. 16 bytes where the first three fields are
+// little-endian values.
 type GUID [16]byte
 
-// ParseGUID parses a GUID in registry string format into a native EFI GUID
-// byte slice (len 16). On parse error it returns nil and an error.
-func ParseGUID(s string) (out GUID, err error) {
-	var off int
-	var buf []byte
+// swap converts a 16-byte identifier between the RFC 9562 and the native EFI
+// byte order by reversing its first three fields.
+func swap(in [16]byte) (out [16]byte) {
+	out = in
 
-	m := guidPattern.FindStringSubmatch(s)
+	out[0], out[1], out[2], out[3] = in[3], in[2], in[1], in[0]
+	out[4], out[5] = in[5], in[4]
+	out[6], out[7] = in[7], in[6]
 
-	if len(m) != 6 {
-		return GUID{}, fmt.Errorf("invalid GUID format: %q", s)
+	return
+}
+
+// FromUUID converts an RFC 9562 UUID to a native EFI GUID.
+func FromUUID(u uuid.UUID) GUID {
+	return GUID(swap(u))
+}
+
+// UUID converts a native EFI GUID to an RFC 9562 UUID.
+func (g GUID) UUID() uuid.UUID {
+	return uuid.UUID(swap(g))
+}
+
+// ParseGUID parses a GUID, in any of the string formats accepted by
+// [uuid.Parse], into a native EFI GUID.
+func ParseGUID(s string) (g GUID, err error) {
+	var u uuid.UUID
+
+	if u, err = uuid.Parse(s); err != nil {
+		return GUID{}, err
 	}
 
-	m = m[1:]
-
-	for i, b := range m {
-		if buf, err = hex.DecodeString(b); err != nil {
-			return GUID{}, err
-		}
-
-		switch i {
-		case 0:
-			out[off+0] = buf[3]
-			out[off+1] = buf[2]
-			out[off+2] = buf[1]
-			out[off+3] = buf[0]
-			off += 4
-		case 1, 2:
-			out[off+0] = buf[1]
-			out[off+1] = buf[0]
-			off += 2
-		default:
-			copy(out[off:], buf)
-			off += len(buf)
-		}
-	}
-
-	return out, nil
+	return FromUUID(u), nil
 }
 
 // MustParseGUID is like ParseGUID but panics on error. It is intended for package
 // level GUID declarations.
-func MustParseGUID(s string) (g GUID) {
-	var err error
-
-	if g, err = ParseGUID(s); err != nil {
-		panic(err)
-	}
-
-	return
+func MustParseGUID(s string) GUID {
+	return FromUUID(uuid.MustParse(s))
 }
 
 // String returns the registry format string representation of the GUID.
 // https://uefi.org/specs/UEFI/2.10/Apx_A_GUID_and_Time_Formats.html
 func (g GUID) String() string {
-	// First three fields are little-endian 32/16/16
-	return fmt.Sprintf("%08x-%04x-%04x-%x-%x",
-		binary.LittleEndian.Uint32(g[0:4]),
-		binary.LittleEndian.Uint16(g[4:6]),
-		binary.LittleEndian.Uint16(g[6:8]),
-		g[8:10],
-		g[10:])
+	return g.UUID().String()
 }
