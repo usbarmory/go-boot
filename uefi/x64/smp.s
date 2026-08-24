@@ -35,7 +35,7 @@ wait:
 	MOVQ	$0, task_pc(AX)
 
 	MOVQ	g, DI
-	CALL	runtime·settls(SB)
+	CALL	github·com∕usbarmory∕tamago∕amd64·settls(SB)
 	MOVQ	g, (TLS)
 
 	// enable LAPIC
