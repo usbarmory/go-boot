@@ -48,14 +48,21 @@ const (
 	EFI_HTTP_ERROR
 )
 
-var ErrEfiNotFound = errors.New("not found")
+var (
+	ErrEfiNotFound = errors.New("not found")
+	ErrEFIStatus   = errors.New("EFI_STATUS error")
+)
 
-func parseStatus(status uint64) (err error) {
-	code := status & 0xff
-
-	if status != EFI_SUCCESS {
-		err = fmt.Errorf("EFI_STATUS error %#x (%d)", status, code)
+func parseStatus(status uint64) error {
+	if status == EFI_SUCCESS {
+		return nil
 	}
 
-	return
+	code := status & 0xff
+
+	if code == EFI_NOT_FOUND {
+		return fmt.Errorf("%w (%#x)", ErrEfiNotFound, status)
+	}
+
+	return fmt.Errorf("%w %#x (%d)", ErrEFIStatus, status, code)
 }
