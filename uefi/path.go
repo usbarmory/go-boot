@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"strings"
 
 	"github.com/usbarmory/tamago/dma"
 )
@@ -115,6 +116,11 @@ func (d *FilePath) Bytes() []byte {
 
 // FilePath returns the full EFI Device Path associated with the named file.
 func (root *FS) FilePath(name string) (devicePath []*DevicePath, filePath *FilePath, desc []byte, err error) {
+	name = strings.ReplaceAll(name, "/", "\\")
+	if !strings.HasPrefix(name, "\\") {
+		name = "\\" + name
+	}
+
 	pathName := toUTF16(name)
 
 	filePath = &FilePath{
