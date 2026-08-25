@@ -14,6 +14,7 @@ import (
 const (
 	// EFI Boot Services offset for GetMemoryMap
 	getMemoryMap = 0x38
+	freePool     = 0x48
 	maxEntries   = 1000
 )
 
@@ -154,4 +155,11 @@ func (s *BootServices) GetMemoryMap() (m *MemoryMap, err error) {
 	}
 
 	return
+}
+
+// FreePool calls EFI_BOOT_SERVICES.FreePool().
+func (s *BootServices) FreePool(buffer uint64) error {
+	status := callService(s.base+freePool, []uint64{buffer})
+
+	return parseStatus(status)
 }
