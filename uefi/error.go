@@ -49,7 +49,7 @@ const (
 )
 
 var (
-	ErrEfiNotFound = errors.New("not found")
+	ErrEFINotFound = errors.New("not found")
 	ErrEFIStatus   = errors.New("EFI_STATUS error")
 )
 
@@ -61,7 +61,7 @@ func parseStatus(status uint64) error {
 	code := status & 0xff
 
 	if code == EFI_NOT_FOUND {
-		return fmt.Errorf("%w (%#x)", ErrEfiNotFound, status)
+		return fmt.Errorf("%w (%#x)", ErrEFINotFound, status)
 	}
 
 	return fmt.Errorf("%w %#x (%d)", ErrEFIStatus, status, code)

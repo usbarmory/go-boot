@@ -118,7 +118,7 @@ func (s *RuntimeServices) GetNextVariableName(name *string, guid *GUID) (err err
 
 	if err = parseStatus(status); err != nil {
 		if status&0xff == EFI_NOT_FOUND {
-			err = ErrEfiNotFound
+			err = ErrEFINotFound
 		} else {
 			return
 		}

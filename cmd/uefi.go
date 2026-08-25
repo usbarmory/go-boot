@@ -410,7 +410,7 @@ func efivarCmd(_ *shell.Interface, arg []string) (res string, err error) {
 
 	// fix-up error value as GetNextVariableName will return ErrEfiNotFound
 	// if there are no more variables
-	if errors.Is(err, uefi.ErrEfiNotFound) {
+	if errors.Is(err, uefi.ErrEFINotFound) {
 		err = nil
 	}
 
