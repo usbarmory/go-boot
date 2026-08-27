@@ -6,6 +6,7 @@
 package uefi
 
 import (
+	"errors"
 	"io/fs"
 )
 
@@ -23,24 +24,7 @@ func (s *BootServices) LoadImage(boot int, root *FS, name string) (imageHandle u
 		return
 	}
 
-	_, _, devicePath, err := root.FilePath(name)
-
-	if err != nil {
-		return
-	}
-
-	status := callService(s.base+loadImage,
-		[]uint64{
-			uint64(boot),
-			s.imageHandle,
-			ptrval(&devicePath[0]),
-			ptrval(&buf[0]),
-			uint64(len(buf)),
-			ptrval(&imageHandle),
-		},
-	)
-
-	return imageHandle, parseStatus(status)
+	return s.LoadImageFrom(root, name, buf)
 }
 
 // StartImage calls EFI_BOOT_SERVICES.StartImage().
@@ -54,4 +38,31 @@ func (s *BootServices) StartImage(imageHandle uint64) (err error) {
 	)
 
 	return parseStatus(status)
+}
+
+// LoadImageFrom calls EFI_BOOT_SERVICES.LoadImage() with a caller-supplied
+// SourceBuffer.
+func (s *BootServices) LoadImageFrom(root *FS, name string, buf []byte) (imageHandle uint64, err error) {
+	if len(buf) == 0 {
+		return 0, errors.New("empty source buffer")
+	}
+
+	_, _, devicePath, err := root.FilePath(name)
+
+	if err != nil {
+		return
+	}
+
+	status := callService(s.base+loadImage,
+		[]uint64{
+			0,
+			s.imageHandle,
+			ptrval(&devicePath[0]),
+			ptrval(&buf[0]),
+			uint64(len(buf)),
+			ptrval(&imageHandle),
+		},
+	)
+
+	return imageHandle, parseStatus(status)
 }
