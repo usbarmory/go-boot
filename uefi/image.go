@@ -16,30 +16,6 @@ const (
 	startImage = 0xd0
 )
 
-// LoadImage calls EFI_BOOT_SERVICES.LoadImage().
-func (s *BootServices) LoadImage(boot int, root *FS, name string) (imageHandle uint64, err error) {
-	buf, err := fs.ReadFile(root, name)
-
-	if err != nil {
-		return
-	}
-
-	return s.LoadImageFrom(root, name, buf)
-}
-
-// StartImage calls EFI_BOOT_SERVICES.StartImage().
-func (s *BootServices) StartImage(imageHandle uint64) (err error) {
-	status := callService(s.base+startImage,
-		[]uint64{
-			imageHandle,
-			0,
-			0,
-		},
-	)
-
-	return parseStatus(status)
-}
-
 // LoadImageFrom calls EFI_BOOT_SERVICES.LoadImage() with a caller-supplied
 // SourceBuffer.
 func (s *BootServices) LoadImageFrom(root *FS, name string, buf []byte) (imageHandle uint64, err error) {
@@ -65,4 +41,28 @@ func (s *BootServices) LoadImageFrom(root *FS, name string, buf []byte) (imageHa
 	)
 
 	return imageHandle, parseStatus(status)
+}
+
+// LoadImage calls EFI_BOOT_SERVICES.LoadImage().
+func (s *BootServices) LoadImage(boot int, root *FS, name string) (imageHandle uint64, err error) {
+	buf, err := fs.ReadFile(root, name)
+
+	if err != nil {
+		return
+	}
+
+	return s.LoadImageFrom(root, name, buf)
+}
+
+// StartImage calls EFI_BOOT_SERVICES.StartImage().
+func (s *BootServices) StartImage(imageHandle uint64) (err error) {
+	status := callService(s.base+startImage,
+		[]uint64{
+			imageHandle,
+			0,
+			0,
+		},
+	)
+
+	return parseStatus(status)
 }
