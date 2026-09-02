@@ -13,14 +13,13 @@ var EFI_STORAGE_SECURITY_COMMAND_PROTOCOL_GUID = MustParseGUID("c88b0b6d-0dfc-49
 // buffer.
 var ErrTruncated = errors.New("storage security: transfer size exceeds buffer")
 
-
 // EFI_STORAGE_SECURITY_COMMAND_PROTOCOL member offsets.
 const (
 	receiveData = 0x00
 	sendData    = 0x08
 )
 
-// StorageSecurity represents a located EFI_STORAGE_SECURITY_COMMAND_PROTOCOL
+// StorageSecurity represents an EFI_STORAGE_SECURITY_COMMAND_PROTOCOL
 // instance.
 type StorageSecurity struct {
 	base uint64
