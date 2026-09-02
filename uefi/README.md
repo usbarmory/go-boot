@@ -47,7 +47,8 @@ Go distribution supporting `GOOS=tamago`
 
 The [tamago](https://github.com/usbarmory/tamago/tree/latest/cmd/tamago)
 command downloads, compiles, and runs the `go` command from the
-[TamaGo distribution](https://github.com/usbarmory/tamago-go) matching the                                                                                                                                          tamago module version from the application `go.mod`.
+[TamaGo distribution](https://github.com/usbarmory/tamago-go) matching the
+tamago module version from the application `go.mod`.
 
 Applications can add `github.com/usbarmory/tamago` to `go.mod`, and then
 replace the `go` command with:
