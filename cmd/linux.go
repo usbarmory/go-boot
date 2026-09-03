@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	// avoid initial DMA region
-	minLoadAddr = 0x01000000
+	minLoadAddr = 0x01000000 // avoid initial DMA region
 	paramsSize  = 0x1000
+	marginSize  = (16 << 20)
 	exitRetries = 3
 )
 
@@ -54,7 +54,8 @@ func init() {
 }
 
 func reserveMemory(m *uefi.MemoryMap, image *exec.LinuxImage) (err error) {
-	size := len(image.BzImage.KernelCode) + len(image.InitialRamDisk)
+	size := int(image.BzImage.Header.InitSize) + len(image.InitialRamDisk)
+	size += marginSize
 
 	// Convert UEFI Memory Map to E820 as it reflects availability after
 	// exiting EFI Boot Services.
@@ -87,7 +88,7 @@ func reserveMemory(m *uefi.MemoryMap, image *exec.LinuxImage) (err error) {
 			continue
 		}
 
-		log.Printf("reserving memory %#x - %#x", entry.Addr, entry.Addr+entry.Size)
+		log.Printf("reserving memory %#x - %#x (%d bytes)", entry.Addr, entry.Addr+entry.Size, size)
 		image.Region.Reserve(size, 0)
 
 		break
@@ -172,6 +173,11 @@ func boot(image *exec.LinuxImage) (err error) {
 		log.Printf("could not detect screen information, %v\n", err)
 	}
 
+	// parse kernel image
+	if err = image.Parse(); err != nil {
+		return
+	}
+
 	for range exitRetries {
 		// own all available memory
 		if memoryMap, err = x64.UEFI.Boot.ExitBootServices(); err != nil {
@@ -188,11 +194,6 @@ func boot(image *exec.LinuxImage) (err error) {
 	// silence EFI Simple Text console
 	x64.Console.Out = 0
 	x64.UEFI.Console.Out = 0
-
-	// parse kernel image
-	if err = image.Parse(); err != nil {
-		return
-	}
 
 	// reserve runtime memory for kernel loading
 	if err = reserveMemory(memoryMap, image); err != nil {
