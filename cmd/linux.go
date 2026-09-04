@@ -79,17 +79,14 @@ func reserveMemory(m *uefi.MemoryMap, image *exec.LinuxImage) (err error) {
 			}
 		}
 
-		// opportunistic size increase
-		size = int(entry.Size)
-
 		// reserve unallocated UEFI memory for our runtime DMA
-		if image.Region, err = dma.NewRegion(uint(entry.Addr), size, false); err != nil {
+		if image.Region, err = dma.NewRegion(uint(entry.Addr), int(entry.Size), false); err != nil {
 			// skip our own runtime pages
 			continue
 		}
 
-		log.Printf("reserving memory %#x - %#x (%d bytes)", entry.Addr, entry.Addr+entry.Size, size)
-		image.Region.Reserve(size, 0)
+		log.Printf("reserving memory %#x - %#x", entry.Addr, entry.Addr+entry.Size)
+		image.Region.Reserve(int(entry.Size), 0)
 
 		break
 	}
@@ -107,6 +104,8 @@ func reserveMemory(m *uefi.MemoryMap, image *exec.LinuxImage) (err error) {
 
 	image.KernelOffset = image.InitialRamDiskOffset + len(image.InitialRamDisk)
 	image.KernelOffset += -(base + image.KernelOffset) & (align - 1)
+
+	size = int(image.Region.Size())
 
 	// place boot parameters at the far end
 	image.CmdLineOffset = size - int(image.BzImage.Header.CmdLineSize)
