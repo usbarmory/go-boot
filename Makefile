@@ -28,6 +28,7 @@ endif
 IMAGE_BASE := 10000000
 TEXT_START := $(shell echo $$((16#$(IMAGE_BASE) + 16#10000)))
 LDFLAGS := -s -w -E cpuinit -T $(TEXT_START) -R 0x1000 -X 'main.Console=${CONSOLE}'
+LDFLAGS += -X 'main.Mode=${DEFAULT_TEXT_MODE}'
 LDFLAGS += -X 'github.com/usbarmory/go-boot/cmd.DefaultEFIEntry=${DEFAULT_EFI_ENTRY}'
 LDFLAGS += -X 'github.com/usbarmory/go-boot/cmd.DefaultLinuxEntry=${DEFAULT_LINUX_ENTRY}'
 GOFLAGS := -tags ${BUILD_TAGS} -trimpath -ldflags "${LDFLAGS}"

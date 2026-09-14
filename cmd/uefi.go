@@ -163,6 +163,13 @@ func uefiCmd(_ *shell.Interface, _ []string) (res string, err error) {
 	fmt.Fprintf(&buf, "Runtime Services  ..: %#x\n", t.RuntimeServices)
 	fmt.Fprintf(&buf, "Boot Services ......: %#x\n", t.BootServices)
 
+	if pm, err := x64.UEFI.Console.GetMode(); err == nil {
+		cols, rows, _ := x64.UEFI.Console.QueryMode(uint64(pm.Mode))
+
+		fmt.Fprintf(&buf, "Text Mode ..........: %d (%dx%d)\n",
+			pm.Mode, cols, rows)
+	}
+
 	if s, err := screenInfo(); err == nil {
 		fmt.Fprintf(&buf, "Frame Buffer .......: %dx%d @ %#x\n",
 			s.LfbWidth, s.LfbHeight,

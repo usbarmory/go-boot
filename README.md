@@ -82,6 +82,7 @@ Firmware Vendor ....: Lenovo
 Firmware Revision ..: 0x1560
 Runtime Services  ..: 0x90e2eb98
 Boot Services ......: 0x6bd17690
+Text Mode ..........: 0 (80x25)
 Frame Buffer .......: 1920x1200 @ 0x4000000000
 Configuration Tables: 0x8f426018
   ee4e5898-3914-4259-9d6e-dc7bd79403cf (0x8db6dc98)
@@ -138,6 +139,12 @@ build:
   `memmap` command from an [UEFI Shell](https://github.com/pbatard/UEFI-Shell)
   can provide such value, when empty a common default value is set.
 
+* `CONSOLE`: set to either `com1` or `text` (default) controls the output
+  console to either serial port or UEFI console.
+
+* `DEFAULT_TEXT_MODE`: defines the EFI text output mode (e.g. `0` for 80x25),
+  when undefined the UEFI platform default is preserved.
+
 * `DEFAULT_EFI_ENTRY`: defines the `.` shortcut entry path
   for EFI image loading, it defaults to `\efi\boot\bootx64.efi`
   when unspecified.
@@ -145,9 +152,6 @@ build:
 * `DEFAULT_LINUX_ENTRY`: defines the `linux,l,\r` shortcut loader entry path
   for Linux kernel image booting, it defaults to `\loader\entries\arch.conf`
   when unspecified.
-
-* `CONSOLE`: set to either `com1` or `text` (default) controls the output
-  console to either serial port or UEFI console.
 
 * `NET`: set to `none` (default), `gvisor` or `lneto` to control UEFI
   networking support with a choice of network stack (see _UEFI networking_).

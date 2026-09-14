@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/usbarmory/go-boot/cmd"
 	"github.com/usbarmory/go-boot/shell"
@@ -19,8 +20,11 @@ import (
 	"github.com/usbarmory/go-boot/uefi/x64"
 )
 
-// Build time variable
-var Console string
+// Build time variables
+var (
+	Console string
+	Mode    string
+)
 
 func init() {
 	fmt.Printf("initializing console (%s)\n", Console)
@@ -38,6 +42,14 @@ func main() {
 	console := &shell.Interface{
 		Banner:  cmd.Banner,
 		Console: x64.UEFI.Console,
+	}
+
+	if len(Mode) > 0 {
+		if m, err := strconv.Atoi(Mode); err == nil {
+			console.Console.SetMode(uint64(m))
+		}
+	} else {
+		panic("eek")
 	}
 
 	switch Console {
