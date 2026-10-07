@@ -48,8 +48,6 @@ func main() {
 		if m, err := strconv.Atoi(Mode); err == nil {
 			console.Console.SetMode(uint64(m))
 		}
-	} else {
-		panic("eek")
 	}
 
 	switch Console {
