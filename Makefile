@@ -116,4 +116,4 @@ $(APP).efi: $(APP)
 		--image-base 0x$(IMAGE_BASE) \
 		--stack=0x10000 \
 		${APP} ${APP}.efi
-	printf '\x26\x02' | dd of=${APP}.efi bs=1 seek=150 count=2 conv=notrunc,fsync # adjust Characteristics
+	printf '\x27\x02' | dd of=${APP}.efi bs=1 seek=150 count=2 conv=notrunc,fsync # adjust Characteristics
