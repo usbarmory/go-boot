@@ -201,7 +201,7 @@ func imageCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	}
 
 	log.Printf("loading EFI image %s", path)
-	h, err := x64.UEFI.Boot.LoadImage(0, root, path)
+	h, err := x64.UEFI.Boot.LoadImage(root, path)
 
 	if err != nil {
 		return "", fmt.Errorf("could not load image, %v", err)

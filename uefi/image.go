@@ -44,7 +44,7 @@ func (s *BootServices) LoadImageFrom(root *FS, name string, buf []byte) (imageHa
 }
 
 // LoadImage calls EFI_BOOT_SERVICES.LoadImage().
-func (s *BootServices) LoadImage(boot int, root *FS, name string) (imageHandle uint64, err error) {
+func (s *BootServices) LoadImage(root *FS, name string) (imageHandle uint64, err error) {
 	buf, err := fs.ReadFile(root, name)
 
 	if err != nil {
