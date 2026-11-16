@@ -47,6 +47,11 @@ func Add(cmd Cmd) {
 	cmds[cmd.Name] = &cmd
 }
 
+// Remove unregisters a terminal interface command.
+func Add(cmd Cmd) {
+	cmds[cmd.Name] = nil
+}
+
 // Help returns a formatted string with instructions for all registered
 // commands.
 func Help(c *Interface, _ []string) (_ string, _ error) {
