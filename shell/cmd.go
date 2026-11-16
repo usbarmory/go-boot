@@ -49,7 +49,7 @@ func Add(cmd Cmd) {
 
 // Remove unregisters a terminal interface command.
 func Remove(name string) {
-	cmds[name] = nil
+	delete(cmds, name)
 }
 
 // Help returns a formatted string with instructions for all registered
