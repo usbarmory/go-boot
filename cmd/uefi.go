@@ -133,6 +133,12 @@ func init() {
 	})
 
 	shell.Add(shell.Cmd{
+		Name: "terminate",
+		Help: "exit EFI Boot Services",
+		Fn:   terminateCmd,
+	})
+
+	shell.Add(shell.Cmd{
 		Name:    "efivar",
 		Args:    1,
 		Pattern: regexp.MustCompile(`^efivar(?: (verbose))?$`),
@@ -247,6 +253,10 @@ func lsCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		path = "."
 	}
 
+	if x64.Console.Out == 0 {
+		return "", fmt.Errorf("EFI boot services not available")
+	}
+
 	root, err := x64.UEFI.Root()
 
 	if err != nil {
@@ -278,6 +288,10 @@ func lsCmd(_ *shell.Interface, arg []string) (res string, err error) {
 }
 
 func statCmd(_ *shell.Interface, arg []string) (res string, err error) {
+	if x64.Console.Out == 0 {
+		return "", fmt.Errorf("EFI boot services not available")
+	}
+
 	root, err := x64.UEFI.Root()
 
 	if err != nil {
@@ -380,6 +394,37 @@ func shutdownCmd(_ *shell.Interface, _ []string) (_ string, err error) {
 	return resetCmd(nil, []string{"shutdown"})
 }
 
+func terminateCmd(_ *shell.Interface, _ []string) (_ string, err error) {
+	log.Print("exiting EFI boot services")
+
+	if x64.Console.Out == 0 {
+		return "", fmt.Errorf("EFI boot services not available")
+	}
+
+	for range exitRetries {
+		if _, err = x64.UEFI.Boot.ExitBootServices(); err != nil {
+			log.Print("exiting EFI boot services (retrying)")
+			continue
+		}
+		break
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("could not exit EFI boot services, %v\n", err)
+	}
+
+	// silence EFI Simple Text console
+	x64.Console.Out = 0
+
+	// replace runtime standard output
+	x64.Stdout = x64.UART0.Tx
+
+	// trap CPU exceptions
+	x64.AMD64.EnableExceptions()
+
+	return
+}
+
 func efivarCmd(_ *shell.Interface, arg []string) (res string, err error) {
 	var buf bytes.Buffer
 	var guid uefi.GUID
@@ -415,7 +460,7 @@ func efivarCmd(_ *shell.Interface, arg []string) (res string, err error) {
 		fmt.Fprintf(&buf, "    EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS:         %v\n", attr.EnhancedAuthAccess)
 	}
 
-	// fix-up error value as GetNextVariableName will return ErrEfiNotFound
+	// fix-up error value as GetNextVariableName will return ErrEFINotFound
 	// if there are no more variables
 	if errors.Is(err, uefi.ErrEFINotFound) {
 		err = nil
