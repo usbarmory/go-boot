@@ -72,6 +72,7 @@ sev-report      (raw)?                   # AMD SEV-SNP attestation report
 stack                                    # goroutine stack trace (current)
 stackall                                 # goroutine stack trace (all)
 stat            <path>                   # show file information
+terminate                                # exit EFI Boot Services
 uefi                                     # UEFI information
 uptime                                   # show system running time
 windows,win,w                            # launch Windows UEFI boot manager
