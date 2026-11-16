@@ -63,9 +63,9 @@ func main() {
 	}
 
 	log.Print("exit")
+	defer x64.UEFI.Runtime.ResetSystem(uefi.EfiResetCold)
 
-	if err := x64.UEFI.Boot.Exit(0); err != nil {
-		log.Printf("halting due to exit error, %v", err)
-		x64.UEFI.Runtime.ResetSystem(uefi.EfiResetShutdown)
+	if x64.Console.Out != 0 {
+		x64.UEFI.Boot.Exit(0)
 	}
 }
