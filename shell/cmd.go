@@ -48,8 +48,8 @@ func Add(cmd Cmd) {
 }
 
 // Remove unregisters a terminal interface command.
-func Add(cmd Cmd) {
-	cmds[cmd.Name] = nil
+func Remove(name string) {
+	cmds[name] = nil
 }
 
 // Help returns a formatted string with instructions for all registered
