@@ -44,6 +44,7 @@ func allocateHeap() {
 
 	if heapStart == 0 {
 		fmt.Println("WARNING: could not find heap offset")
+		return
 	}
 
 	if err := UEFI.Boot.AllocatePages(
@@ -53,6 +54,7 @@ func allocateHeap() {
 		heapStart,
 	); err != nil {
 		fmt.Printf("WARNING: could not allocate heap at %x, %v\n", heapStart, err)
+		return
 	}
 }
 
